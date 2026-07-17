@@ -54,8 +54,8 @@
       "timestamp": "2026-05-13T21:07:15.476Z",
       "error_message": "Incorrect value in code",
       "file": "api/admin/resend-email.ts",
-      "root_cause": "Had '[Reenvio] A tua fatura – Regional Scrum Gathering",
-      "fix": "Changed to 'A tua fatura – Regional Scrum Gathering Lisbon 20",
+      "root_cause": "Had '[Reenvio] A tua fatura – TugÁgil Experience 2026",
+      "fix": "Changed to 'A tua fatura – TugÁgil Experience - Gaia 2026",
       "tags": [
         "auto-detected",
         "wrong-value",

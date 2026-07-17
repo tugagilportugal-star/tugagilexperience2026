@@ -29,7 +29,7 @@ const generateTicketEmail = (
                     <!-- Header da Marca -->
                     <tr>
                         <td align="center" style="background-color: #003F59; padding: 32px 40px;">
-                            <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">Regional Scrum Gathering</p>
+                            <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">TugÁgil Experience</p>
                             <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">RSG Lisbon 2026</h1>
                         </td>
                     </tr>
@@ -39,7 +39,7 @@ const generateTicketEmail = (
                         <td style="padding: 40px 32px;">
                             <h2 style="font-size: 24px; font-weight: bold; color: #003F59; margin-top: 0;">Olá, ${name},</h2>
                             <p style="font-size: 16px; line-height: 26px; color: #3c4858;">
-                                O teu lugar no <a href="https://www.rsglisbon.com" style="color: #F47A20; font-weight: bold; text-decoration: none;">Regional Scrum Gathering Lisbon 2026</a> está oficialmente confirmado. 🥳
+                                O teu lugar no <a href="https://www.rsglisbon.com" style="color: #F47A20; font-weight: bold; text-decoration: none;">TugÁgil Experience</a> está oficialmente confirmado. 🥳
                             </p>
                             <p style="font-size: 16px; line-height: 26px; color: #3c4858;">
                                 Estamos muito felizes por contar contigo neste grande encontro da comunidade ágil em Portugal. O teu bilhete (<strong>${ticketName}</strong>) garante-te acesso a uma experiência única focada em Agilidade, Inovação e Inteligência Artificial.
@@ -107,7 +107,7 @@ const generateTicketEmail = (
                         <td style="background:#f4f6f8; padding:24px 32px; border-top:1px solid #e6ebf1; text-align:center;">
                             <p style="margin:0; color:#8898aa; font-size:12px; line-height:20px;">
                                 <strong>TugÁgil • Comunidade de Práticas</strong><br>
-                                Organizadora Oficial do RSG Lisbon 2026
+                                Organizadora Oficial do TugÁgil Experience 2026
                             </p>
                         </td>
                     </tr>
@@ -130,8 +130,8 @@ const generateInvoiceEmail = (d: InvoiceEmailData) => `<!DOCTYPE html>
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;width:100%; border: 1px solid #e6ebf1;">
         <!-- Header -->
         <tr><td style="background:#003F59;padding:32px 40px;text-align:center;">
-          <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">Regional Scrum Gathering</p>
-          <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">RSG Lisbon 2026</h1>
+          <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">TugÁgil Experience</p>
+          <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">TugÁgil Experience2026</h1>
         </td></tr>
         <!-- Body -->
         <tr><td style="padding:40px;">
@@ -187,7 +187,7 @@ async function sendInvoicePdfByEmailResend(params: {
   return resend.emails.send({
     from: 'RSG Lisbon 2026 <rsg@rsglisbon.com>',
     to,
-    subject: 'A tua fatura – Regional Scrum Gathering Lisbon 2026',
+    subject: 'A tua fatura – TugÁgil Experience Gaia 2026',
     html: generateInvoiceEmail({ name, ticketName, invoiceId, total, isTest }),
     attachments: [
       {

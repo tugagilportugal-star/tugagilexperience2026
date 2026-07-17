@@ -1,19 +1,18 @@
+// src/config.ts
+
 export const ASSETS = {
-  HERO_BG: "/assets/Lisbon-hero-banner.jpg",
+  // Imagens de fundo (substitua pelos seus links de imagem ou caminhos locais mais tarde)
+  HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80", // Imagem genérica de evento/auditório
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
-  LISBON_BG: "https://i.postimg.cc/Dy9vGwcL/Alto-de-Moinhos.webp",
+  GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80", // Porto/Gaia skyline placeholder
   
-  SPONSOR_LOGO: "/assets/Logo-Horizontal-Full-Color-Scrum-Alliance.png",
-  TUGAGIL_LOGO: "/assets/Group-23.png",
-  SCRUM_ALLIANCE_LOGO: "/assets/Logo-Horizontal-Full-Color-Scrum-Alliance.png",
-  
-  RSG_LOGO_2026: "/assets/LISBON-Navigation-bar-logo-Reversed.png", 
+  // Logótipos (atualizados com placeholders baseados no material)
+  TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png", // Seu logótipo TugÁgil
+  TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png", // Logótipo do evento Gaia 2026
+  ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
 
-  ATELIE_LOGO: "/assets/Logo-Atelie-Software-Transparente.png",
-  TABAQUEIRA_LOGO: "/assets/Logo-Tabaqueira-RGB.png",
-
-  RECAP_VIDEO: "https://youtu.be/DK0RsE584S4",
-  RECAP_VIDEO_POSTER: "https://img.youtube.com/vi/DK0RsE584S4/maxresdefault.jpg",
+  RECAP_VIDEO: "",
+  RECAP_VIDEO_POSTER: "",
   
   GALLERY_IMAGES: [
     "https://i.postimg.cc/CxX1nH6r/Tugagil-18.jpg",
@@ -25,6 +24,5 @@ export const ASSETS = {
     "https://i.postimg.cc/qq7Sn7QN/Tugagil-58.jpg",
     "https://i.postimg.cc/qvcwJTXW/Tugagil-610.jpg",
     "https://i.postimg.cc/br20Kcwk/Tugagil-618.jpg",
-  ], // <--- A vírgula aqui é essencial!
-  
+  ],
 };

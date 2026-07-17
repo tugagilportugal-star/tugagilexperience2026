@@ -1,104 +1,73 @@
+// src/sections/Hero.tsx
 import React from 'react';
-import { useCountdown } from '../hooks/useCountdown';
-import { MapPin, Calendar, ArrowDown } from 'lucide-react';
 import { ASSETS } from '../config';
 
-interface HeroProps {
-  onOpenTicketModal?: () => void;
-}
-
-export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
-  const timeLeft = useCountdown('2026-05-21T08:30:00+01:00');
-
-  const scrollToPriorityList = () => {
-    document.getElementById('tickets')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+export const Hero: React.FC = () => {
   return (
-    <section 
-      id="hero" 
-      className="relative min-h-screen w-full flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed text-white overflow-hidden pt-16"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0, 31, 63, 0.6), rgba(0, 10, 20, 0.9)), url('${ASSETS.HERO_BG}')`
-      }}
-    >
-      {/* Badge Superior Original mantido */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-center pointer-events-none">
-        <div className="mt-24 bg-brand-darkBlue/80 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
-           <span className="text-brand-orange font-bold tracking-[0.2em] uppercase text-[10px] md:text-xs">
-             Official Scrum Alliance Event
-           </span>
-        </div>
+    <section className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden">
+      {/* Imagem de Fundo com Overlay Escuro */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={ASSETS.HERO_BG} 
+          alt="TugÁgil Experience Background" 
+          className="w-full h-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
       </div>
 
-      <div className="relative z-10 text-center px-4 max-w-7xl mx-auto flex flex-col items-center justify-center flex-grow pt-32">
-        
-        {/* Logos e Títulos mantidos exatamente como estavam */}
-        <div className="flex flex-col items-center mb-6 animate-fade-in-up">
-            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-gray-400 font-bold mb-4">
-                ORGANIZADO POR
-            </span>
-            <a href="https://www.tugagil.com/" target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform duration-300">
-                <img src={ASSETS.TUGAGIL_LOGO} alt="TugÁgil" className="h-12 md:h-16 w-auto object-contain drop-shadow-2xl" />
-            </a>
-        </div>
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center flex flex-col items-center">
+        {/* Badge do Evento */}
+        <span className="inline-block bg-[#D3122A] text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+          1ª Edição • Presencial
+        </span>
 
-        <div className="flex flex-col items-center leading-none mb-8">
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter drop-shadow-xl">Regional Scrum</h1>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter drop-shadow-xl pb-2">Gathering</h1>
-        </div>
+        {/* Título Principal */}
+        <h1 className="text-4xl md:text-7xl font-extrabold text-white tracking-tight mb-4 leading-tight">
+          TugÁgil <span className="text-[#0A5C36]">Experience</span>
+        </h1>
+        <h2 className="text-2xl md:text-4xl font-bold text-zinc-300 mb-6">
+          Gaia 2026
+        </h2>
 
-        <div className="text-2xl md:text-4xl lg:text-5xl text-gray-200 font-light uppercase tracking-[0.4em] md:tracking-[0.6em] mb-8 drop-shadow-lg pl-2">
-          LISBON 2026
-        </div>
-
-        <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl mx-auto font-medium drop-shadow-md">
-          A maior celebração da agilidade em Portugal. Reserve a data.
+        {/* Subtítulo / Trilhas */}
+        <p className="text-lg md:text-2xl text-zinc-400 max-w-3xl mb-8 font-medium leading-relaxed">
+          Agilidade, Liderança, Engenharia e Design
         </p>
 
-        {/* Countdown mantido */}
-        <div className="grid grid-cols-4 gap-4 md:gap-8 mb-12 w-full md:w-auto">
-          {[
-            { label: 'Dias', value: timeLeft.days },
-            { label: 'Horas', value: timeLeft.hours },
-            { label: 'Mins', value: timeLeft.minutes },
-            { label: 'Segs', value: timeLeft.seconds },
-          ].map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center p-3 md:p-4 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl min-w-[70px] md:min-w-[100px]">
-              <span className="text-xl md:text-3xl font-black text-brand-orange">{String(item.value).padStart(2, '0')}</span>
-              <span className="text-[9px] md:text-[10px] uppercase tracking-widest mt-1 text-gray-400 font-bold">{item.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Localização mantida */}
-        <div className="flex flex-col md:flex-row justify-center items-start md:items-center gap-4 md:gap-12 mb-10 bg-white/5 p-5 md:px-12 md:py-4 rounded-3xl md:rounded-full backdrop-blur-md border border-white/10 shadow-inner w-full md:w-auto max-w-md md:max-w-none mx-auto">
-          <div className="flex items-start md:items-center gap-3 w-full md:w-auto">
-            <Calendar className="w-5 h-5 text-brand-blue flex-shrink-0 mt-0.5 md:mt-0" />
-            <span className="text-base md:text-lg font-bold text-left">21 Maio 2026 • 08:30h</span>
+        {/* Caixa de Detalhes (Data, Hora e Local) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 md:p-8 max-w-4xl w-full mb-10 backdrop-blur-md">
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Quando</span>
+            <span className="text-base font-semibold text-white">Outubro 2026</span>
+            <span className="text-sm text-zinc-400">08h00</span>
           </div>
-          <div className="hidden md:block h-5 w-px bg-white/20"></div>
-          <div className="flex items-start md:items-center gap-3 w-full md:w-auto">
-            <MapPin className="w-5 h-5 text-brand-blue flex-shrink-0 mt-0.5 md:mt-0" />
-            <span className="text-base md:text-lg font-bold text-left leading-tight">
-              Auditório Alto dos Moinhos<br className="md:hidden"/> - Lisboa, Portugal
-            </span>
+          <div className="flex flex-col items-center border-y md:border-y-0 md:border-x border-zinc-800 py-4 md:py-0">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Onde</span>
+            <span className="text-base font-semibold text-white">ISLA Gaia</span>
+            <span className="text-sm text-zinc-400">Vila Nova de Gaia, Portugal</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Público-alvo</span>
+            <span className="text-base font-semibold text-white">Profissionais & Líderes</span>
+            <span className="text-sm text-zinc-400">Tecnologia, Gestão, Produto</span>
           </div>
         </div>
 
-        {/* NOVO BOTÃO SOLD OUT - Estilo Vermelho Impactante */}
-        <button 
-          onClick={scrollToPriorityList}
-          className="px-10 py-5 bg-red-600 text-white font-black text-xl md:text-2xl uppercase tracking-widest rounded-full shadow-[0_20px_40px_rgba(220,38,38,0.4)] hover:bg-red-700 hover:scale-105 active:scale-95 transition-all duration-300 border-4 border-white/20 mb-24 flex items-center gap-3"
-        >
-          <span>🎫</span>
-          SOLD OUT! Bilhetes Esgotados
-          <span className="hidden md:inline">🎫</span>
-        </button>
-      </div>
-      
-      <div className="absolute bottom-10 animate-bounce text-white/30 hidden md:block">
-        <ArrowDown className="w-8 h-8" />
+        {/* Botões de Ação */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md">
+          <a 
+            href="#tickets" 
+            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-900/20"
+          >
+            Comprar Bilhete
+          </a>
+          <a 
+            href="#program" 
+            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-semibold transition-all text-center"
+          >
+            Ver Programa
+          </a>
+        </div>
       </div>
     </section>
   );
