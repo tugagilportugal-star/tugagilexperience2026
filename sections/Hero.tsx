@@ -2,7 +2,11 @@
 import React from 'react';
 import { ASSETS } from '../config';
 
-export const Hero: React.FC = () => {
+interface HeroProps {
+  onOpenTicketModal: () => void;
+}
+
+export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden">
       {/* Imagem de Fundo com Overlay Escuro */}
@@ -31,14 +35,14 @@ export const Hero: React.FC = () => {
 
         {/* Subtítulo / Trilhas */}
         <p className="text-lg md:text-2xl text-zinc-400 max-w-3xl mb-8 font-medium leading-relaxed">
-          Agilidade, Liderança, Engenharia e Design
+          Agilidade ⚪ Liderança ⚪ Engenharia ⚪ Design
         </p>
 
         {/* Caixa de Detalhes (Data, Hora e Local) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 md:p-8 max-w-4xl w-full mb-10 backdrop-blur-md">
           <div className="flex flex-col items-center">
             <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Quando</span>
-            <span className="text-base font-semibold text-white">Outubro 2026</span>
+            <span className="text-base font-semibold text-white">Outubro de 2026</span>
             <span className="text-sm text-zinc-400">08h00</span>
           </div>
           <div className="flex flex-col items-center border-y md:border-y-0 md:border-x border-zinc-800 py-4 md:py-0">
@@ -55,12 +59,12 @@ export const Hero: React.FC = () => {
 
         {/* Botões de Ação */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md">
-          <a 
-            href="#tickets" 
+          <button 
+            onClick={onOpenTicketModal} 
             className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-900/20"
           >
             Comprar Bilhete
-          </a>
+          </button>
           <a 
             href="#program" 
             className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-semibold transition-all text-center"

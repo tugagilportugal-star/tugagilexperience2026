@@ -1,15 +1,22 @@
 // src/config.ts
 
 export const ASSETS = {
-  // Imagens de fundo (substitua pelos seus links de imagem ou caminhos locais mais tarde)
-  HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80", // Imagem genérica de evento/auditório
+  // Imagens de fundo
+  HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
-  GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80", // Porto/Gaia skyline placeholder
+  GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80",
   
-  // Logótipos (atualizados com placeholders baseados no material)
-  TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png", // Seu logótipo TugÁgil
-  TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png", // Logótipo do evento Gaia 2026
+  // Novos logótipos
+  TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
+  TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png",
   ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
+
+  // Mantidos temporariamente para evitar erros de compilação no NavBar e Sponsors
+  RSG_LOGO_2026: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg", 
+  SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
+  SCRUM_ALLIANCE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
+  ATELIE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
+  TABAQUEIRA_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
 
   RECAP_VIDEO: "",
   RECAP_VIDEO_POSTER: "",
