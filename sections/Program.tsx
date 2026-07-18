@@ -8,7 +8,11 @@ interface ProgramItem {
   description?: string;
 }
 
-export const Program: React.FC = () => {
+interface ProgramProps {
+  onOpenTicketModal: () => void;
+}
+
+export const Program: React.FC<ProgramProps> = ({ onOpenTicketModal }) => {
   const [activeTab, setActiveTab] = useState<'morning' | 'community' | 'workshops'>('morning');
 
   // Programações extraídas do material enviado
