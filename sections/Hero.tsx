@@ -8,68 +8,62 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden">
-      {/* Imagem de Fundo com Overlay Escuro */}
+    <section className="relative min-h-screen flex items-center justify-center bg-[#060a07] overflow-hidden">
+      
+      {/* Imagem de Fundo com Maior Visibilidade */}
       <div className="absolute inset-0 z-0">
         <img 
           src={ASSETS.HERO_BG} 
           alt="TugÁgil Experience Background" 
-          className="w-full h-full object-cover opacity-30"
+          className="w-full h-full object-cover opacity-40 mix-blend-lighten"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+        {/* Gradientes de cor de fundo para criar profundidade e conexão */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#060a07]/80 to-[#060a07]" />
       </div>
 
+      {/* Luzes de Palco Ambientais (Glowing Lights) */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0A5C36]/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-[#D3122A]/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(10,92,54,0.15)_0%,transparent_60%)] pointer-events-none" />
+
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center flex flex-col items-center">
-        {/* Badge do Evento */}
-        <span className="inline-block bg-[#D3122A] text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
-          1ª Edição • Presencial
-        </span>
-
-        {/* Título Principal */}
-        <h1 className="text-4xl md:text-7xl font-extrabold text-white tracking-tight mb-4 leading-tight">
-          TugÁgil <span className="text-[#0A5C36]">Experience</span>
-        </h1>
-        <h2 className="text-2xl md:text-4xl font-bold text-zinc-300 mb-6">
-          Gaia 2026
-        </h2>
-
-        {/* Subtítulo / Trilhas */}
-        <p className="text-lg md:text-2xl text-zinc-400 max-w-3xl mb-8 font-medium leading-relaxed">
-          Agilidade ⚪ Liderança ⚪ Engenharia ⚪ Design
-        </p>
-
-        {/* Caixa de Detalhes (Data, Hora e Local) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 md:p-8 max-w-4xl w-full mb-10 backdrop-blur-md">
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Quando</span>
-            <span className="text-base font-semibold text-white">Outubro de 2026</span>
-            <span className="text-sm text-zinc-400">08h00</span>
-          </div>
-          <div className="flex flex-col items-center border-y md:border-y-0 md:border-x border-zinc-800 py-4 md:py-0">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Onde</span>
-            <span className="text-base font-semibold text-white">ISLA Gaia</span>
-            <span className="text-sm text-zinc-400">Vila Nova de Gaia, Portugal</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Público-alvo</span>
-            <span className="text-base font-semibold text-white">Profissionais & Líderes</span>
-            <span className="text-sm text-zinc-400">Tecnologia, Gestão, Produto</span>
-          </div>
+        
+        {/* Linha Minimalista de Detalhes do Topo */}
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-300 tracking-wider uppercase mb-8">
+          <span className="text-[#D3122A] font-bold">1ª Edição - Presencial</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 hidden sm:inline-block"></span>
+          <span>Outubro de 2026</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 hidden sm:inline-block"></span>
+          <span className="text-emerald-400">ISLA Gaia • Vila Nova de Gaia, Portugal</span>
         </div>
 
-        {/* Botões de Ação */}
+        {/* Título Principal com Gradiente Energético */}
+        <h1 className="text-5xl md:text-8xl font-black text-white tracking-tight leading-none mb-6">
+          TugÁgil <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 bg-clip-text text-transparent">Experience</span>
+        </h1>
+
+        {/* Subtítulo Dinâmico das Trilhas */}
+        <p className="text-xl md:text-3xl text-zinc-300 max-w-3xl mb-4 font-bold tracking-tight">
+          Agilidade, Liderança, Engenharia e Design
+        </p>
+        
+        <p className="text-sm md:text-lg text-zinc-400 max-w-2xl mb-12 font-medium leading-relaxed">
+          O ponto de encontro na região Norte de Portugal para profissionais e líderes que desenham o futuro da inovação, tecnologia e produto nas organizações.
+        </p>
+
+        {/* Botões de Ação com Efeito Glow no Principal */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md">
           <button 
             onClick={onOpenTicketModal} 
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-900/20"
+            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
           >
             Comprar Bilhete
           </button>
           <a 
             href="#program" 
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-semibold transition-all text-center"
+            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 text-zinc-300 font-semibold transition-all backdrop-blur-sm text-center"
           >
-            Ver Programa
+            Ver Agenda
           </a>
         </div>
       </div>
