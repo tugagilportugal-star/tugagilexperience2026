@@ -44,7 +44,7 @@ export const Team: React.FC = () => {
       linkedin: "https://www.linkedin.com/in/matheushaddad/"
     },
     {
-      name: "Priscila Rodrigues",
+      name: "Aline Alvim",
       image: "/assets/Priscila.jpg",
       linkedin: "https://www.linkedin.com/in/pritperes"
     },
@@ -54,7 +54,7 @@ export const Team: React.FC = () => {
     <Section id="team" className="bg-gray-100 border-t border-gray-200">
       <div className="text-center mb-16">
         <span className="text-brand-orange font-bold tracking-[0.2em] uppercase text-xs block mb-3">
-          Quem faz acontecer o RSG Lisbon 2026
+          Quem faz acontecer o TugÁgil Experience2026
         </span>
         <h2 className="text-3xl md:text-4xl font-black text-brand-darkBlue mb-4">
           Equipa Organizadora

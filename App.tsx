@@ -41,6 +41,7 @@ const HomePage: React.FC<{
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} /> */}
     <Team />
+    <Footer />
   </main>
 );
 
