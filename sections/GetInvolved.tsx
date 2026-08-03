@@ -46,7 +46,7 @@ export const SponsorForm: React.FC = () => {
 
   if (status === 'success') {
     return (
-      <SuccessState message="Obrigado pelo seu interesse em patrocinar o RSG Lisbon 2026!" />
+      <SuccessState message="Obrigado pelo seu interesse em patrocinar o TugÁgil Experience 2026!" />
     );
   }
 
@@ -94,7 +94,7 @@ export const SponsorForm: React.FC = () => {
           >
             Aceda ao nosso Media Kit aqui
           </a>{' '}
-          e descubra como a sua organização pode ser parte do RSG Lisbon 2026.
+          e descubra como a sua organização pode ser parte do TugÁgil Experience 2026.
         </p>
       </div>
 
@@ -149,7 +149,7 @@ export const SupporterForm: React.FC = () => {
   };
 
   if (status === 'success') {
-    return <SuccessState message="Obrigado pelo interesse em apoiar o RSG Lisbon 2026!" />;
+    return <SuccessState message="Obrigado pelo interesse em apoiar o TugÁgil Experience 2026!" />;
   }
 
   return (
