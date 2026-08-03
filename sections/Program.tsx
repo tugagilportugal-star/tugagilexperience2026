@@ -1,4 +1,4 @@
-// sections/Program.tsx
+// src/sections/Program.tsx
 import React from 'react';
 
 interface AgendaItem {
@@ -10,7 +10,12 @@ interface AgendaItem {
   avatar: string;
 }
 
-export const Program: React.FC = () => {
+// Declaramos a propriedade para o TypeScript ficar feliz [1.2.7]
+interface ProgramProps {
+  onOpenTicketModal: () => void;
+}
+
+export const Program: React.FC<ProgramProps> = ({ onOpenTicketModal }) => {
   // Dados simulados da programação do material [0.1]
   const morningHighlights: AgendaItem[] = [
     {
@@ -26,7 +31,7 @@ export const Program: React.FC = () => {
       category: "Gestão & Liderança",
       title: "Como Liderar Equipas Autónomas sem Perder o Alinhamento Estratégico (título sugestivo)",
       speaker: "TBD",
-      role: "Agile Leader & Transformation Director (Placeholder)",
+      role: "Agile Leader & Transformation Director (placeholder)",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"
     },
     {
@@ -34,7 +39,7 @@ export const Program: React.FC = () => {
       category: "Engenharia de Software",
       title: "Práticas Modernas de Engenharia de Software no Contexto Ágil (título sugestivo)",
       speaker: "TBD",
-      role: "Principal Tech Lead / Software Architect (Placeholder)",
+      role: "Principal Tech Lead / Software Architect (placeholder)",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
     }
   ];
@@ -52,7 +57,7 @@ export const Program: React.FC = () => {
             Programa da Manhã
           </h2>
           <p className="text-zinc-400 mt-4 text-base font-jakarta max-w-xl">
-            Uma base voltada para toda comunidade no Auditório Principal, abrindo espaço para aprofundamento à tarde.
+            Uma base voltada para toda a comunidade no Auditório Principal, abrindo espaço para aprofundamento à tarde.
           </p>
         </div>
 
@@ -98,11 +103,14 @@ export const Program: React.FC = () => {
           <div>
             <h4 className="font-bold text-white font-sora">E no período da tarde?</h4>
             <p className="text-sm text-zinc-400 font-jakarta mt-1">
-              3 trilhas paralelas com 3 masterclasses e 7 Talks da Comunidade [0.1]!
+              3 trilhas paralelas com 3 Masterclasses e 7 Talks da Comunidade [0.1]!
             </p>
           </div>
-          <button className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-4 py-2.5 rounded-lg border border-zinc-700 font-sora whitespace-nowrap">
-            Explorar Workshops da Tarde
+          <button 
+            onClick={onOpenTicketModal}
+            className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-4 py-2.5 rounded-lg border border-zinc-700 font-sora whitespace-nowrap"
+          >
+            Comprar Bilhete
           </button>
         </div>
 

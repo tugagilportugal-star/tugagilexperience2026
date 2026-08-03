@@ -116,15 +116,23 @@ export const Navbar: React.FC = () => {
         <ArrowUp className="w-6 h-6" />
       </button>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU - MUDAR QUANDO TIVER LOGO OFICIAL */}
       <div 
         className={`fixed inset-0 z-[110] bg-zinc-950/98 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex justify-between items-center p-6 border-b border-white/10">
-             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src={ASSETS.TUGAGIL_LOGO} alt="TugÁgil Experience" className="h-10 w-auto" />
+             {/* Substituímos a imagem antiga pelo logótipo em texto estilizado */}
+             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="group">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md shadow-emerald-900/30">
+                    T
+                  </span>
+                  <span className="text-lg font-black text-white tracking-wider font-sora group-hover:text-emerald-400 transition-colors">
+                    TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
+                  </span>
+                </div>
              </Link>
              <button 
                onClick={() => setIsMobileMenuOpen(false)}
