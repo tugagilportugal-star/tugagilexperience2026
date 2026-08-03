@@ -1,39 +1,46 @@
 // sections/About.tsx
 import React from 'react';
-import { ASSETS } from '../config';
 
 export const About: React.FC = () => {
   return (
-    <section id="about" className="relative bg-zinc-950 text-white py-24 overflow-hidden border-t border-zinc-900">
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        
-        {/* Layout Editorial Alinhado à Esquerda */}
-        <div className="max-w-3xl text-left mb-12">
-          <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-3">
-            O Encontro da Comunidade Ágil
+    <section id="about" className="relative min-h-[90vh] flex items-center bg-zinc-950 py-24 overflow-hidden border-t border-zinc-900">
+      
+      {/* Imagem de Fundo (Vila Nova de Gaia) em Ecrã Inteiro */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
+          alt="Vila Nova de Gaia" 
+          className="w-full h-full object-cover opacity-30 grayscale"
+        />
+        {/* Gradiente escuro para garantir leitura perfeita do texto por cima */}
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/95 to-zinc-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 w-full text-left">
+        <div className="max-w-2xl">
+          
+          {/* Tag Minimalista */}
+          <span className="text-[#D3122A] text-sm font-bold uppercase tracking-widest font-sora block mb-4">
+            TugÁgil Experience • Outubro de 2026
           </span>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight font-sora mb-6">
-            Mais do que um evento, uma experiência de conexão real.
+          
+          {/* Título Editorial Gigante */}
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none font-sora mb-8">
+            A agilidade <br />
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">vive da ligação.</span>
           </h2>
           
-          <p className="text-zinc-300 text-lg font-jakarta leading-relaxed mb-6 font-medium">
-            A agilidade vive da proximidade. O TugÁgil Experience 2026 foi desenhado para ser o ponto de encontro da partilha de experiências, networking e dos debates que transformam as organizações no Norte de Portugal.
+          {/* Textos Corridos de Alto Impacto (Aumentados para melhor legibilidade) */}
+          <p className="text-zinc-200 text-lg md:text-xl font-jakarta leading-relaxed mb-6 font-medium">
+            A agilidade não se lê em manuais; vive-se no terreno. O TugÁgil Experience 2026 nasce para ser o espaço de ligação, networking e partilha que a comunidade da tecnologia e produto no Norte merece.
           </p>
           
-          <p className="text-zinc-400 text-base font-jakarta leading-relaxed">
-            Acolhido nas instalações do ISLA Gaia, vamos reunir profissionais e líderes das áreas de gestão, engenharia de software, design e produto para um dia inteiro de inspiração e aprendizagem aplicada.
+          <p className="text-zinc-400 text-base md:text-lg font-jakarta leading-relaxed">
+            Acolhido nas instalações do ISLA Gaia, vamos reunir profissionais de engenharia de software, design, liderança e gestão de produto para um dia focado em casos práticos e transformação de impacto nas organizações.
           </p>
-        </div>
 
-        {/* Imagem Panorâmica Limpa (Sem recortes de IA ou carnaval) */}
-        <div className="w-full h-96 rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl mt-12">
-          <img 
-            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
-            alt="Vila Nova de Gaia" 
-            className="w-full h-full object-cover"
-          />
         </div>
-
       </div>
     </section>
   );
