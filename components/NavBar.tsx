@@ -1,7 +1,14 @@
+// src/components/NavBar.tsx
 import React, { useState, useEffect } from 'react';
 import { ASSETS } from '../config';
 import { Menu, X, ArrowUp } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+
+interface NavLinkItem {
+  label: string;
+  href: string;
+  isRoute?: boolean;
+}
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,19 +35,15 @@ export const Navbar: React.FC = () => {
 
   const isHomePage = location.pathname === '/';
 
-  // --- REESTRUTURAÇÃO DO ESTILO DINÂMICO ---
+  // --- ESTILO DINÂMICO DO MENU ---
   const navBgClass = !isHomePage || isScrolled
-    ? 'bg-brand-darkBlue/95 backdrop-blur-md shadow-lg py-2' // Sólido ao rolar ou em subpáginas
-    : 'bg-gradient-to-b from-black/80 to-transparent py-4'; // Gradiente lindo no topo da Home
+    ? 'bg-zinc-950/95 backdrop-blur-md shadow-lg py-2 border-b border-zinc-800/50' // Sólido escuro elegante ao rolar
+    : 'bg-gradient-to-b from-black/80 to-transparent py-4'; // Gradiente no topo da Home
 
-  const navLinks = [
-    { label: 'O EVENTO', href: '/#about' },
-    { label: 'EXPERIÊNCIA', href: '/#features' },
-    { label: 'PROGRAMA', href: '/#program' },
-    { label: 'SPEAKERS', href: '/#speakers' },
-    { label: 'AGENDA', href: '/agenda', isRoute: true },
-    { label: 'RECAP 2025', href: '/#recap' },
-    { label: 'FAQ', href: '/#faq' },
+  // --- LINKS DO MENU (Com isRoute definido) ---
+  const navLinks: NavLinkItem[] = [
+    { label: 'O EVENTO', href: '/#about', isRoute: false },
+    { label: 'PROGRAMA', href: '/#program', isRoute: false },
   ];
 
   return (
@@ -49,13 +52,13 @@ export const Navbar: React.FC = () => {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* LOGO */}
+            {/* LOGO TUGÁGIL */}
             <div className="flex items-center">
               <Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:scale-105 transition-transform">
                  <img 
-                   src={ASSETS.RSG_LOGO_2026} 
-                   alt="RSG Lisbon 2026" 
-                   className="h-12 sm:h-16 w-auto object-contain"
+                   src={ASSETS.TUGAGIL_LOGO} 
+                   alt="TugÁgil Experience 2026" 
+                   className="h-10 sm:h-12 w-auto object-contain"
                  />
               </Link>
             </div>
@@ -68,7 +71,7 @@ export const Navbar: React.FC = () => {
                     <Link
                       key={link.label}
                       to={link.href}
-                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-brand-orange transition-colors"
+                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-[#D3122A] transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -76,7 +79,7 @@ export const Navbar: React.FC = () => {
                     <a
                       key={link.label}
                       href={link.href}
-                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-brand-orange transition-colors"
+                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-[#D3122A] transition-colors"
                     >
                       {link.label}
                     </a>
@@ -102,7 +105,7 @@ export const Navbar: React.FC = () => {
       {/* BOTÃO VOLTAR AO TOPO */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-3 rounded-full bg-brand-orange text-white shadow-lg transition-all duration-500 transform hover:bg-orange-600 hover:scale-110 ${
+        className={`fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#0A5C36] text-white shadow-lg transition-all duration-500 transform hover:bg-emerald-700 hover:scale-110 ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
         }`}
       >
@@ -111,13 +114,13 @@ export const Navbar: React.FC = () => {
 
       {/* MOBILE MENU */}
       <div 
-        className={`fixed inset-0 z-[110] bg-brand-darkBlue/98 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed inset-0 z-[110] bg-zinc-950/98 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex justify-between items-center p-6 border-b border-white/10">
              <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src={ASSETS.RSG_LOGO_2026} alt="RSG Lisbon" className="h-10 w-auto" />
+                <img src={ASSETS.TUGAGIL_LOGO} alt="TugÁgil Experience" className="h-10 w-auto" />
              </Link>
              <button 
                onClick={() => setIsMobileMenuOpen(false)}
@@ -134,7 +137,7 @@ export const Navbar: React.FC = () => {
                   key={link.label}
                   to={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-brand-orange transition-colors"
+                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-[#D3122A] transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -143,7 +146,7 @@ export const Navbar: React.FC = () => {
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-brand-orange transition-colors"
+                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-[#D3122A] transition-colors"
                 >
                   {link.label}
                 </a>
