@@ -3,44 +3,48 @@ import React from 'react';
 
 export const About: React.FC = () => {
   return (
-    <section id="about" className="relative min-h-[90vh] flex items-center bg-zinc-950 py-24 overflow-hidden border-t border-zinc-900">
+    <section id="about" className="relative bg-zinc-950 text-white pb-24 overflow-hidden">
       
-      {/* Imagem de Fundo (Vila Nova de Gaia) em Ecrã Inteiro */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
-          alt="Vila Nova de Gaia" 
-          className="w-full h-full object-cover opacity-30 grayscale"
-        />
-        {/* Gradiente escuro para garantir leitura perfeita do texto por cima */}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/95 to-zinc-950/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950" />
+      {/* 1. BANNER DE DESTAQUE DINÂMICO (Quebra o preto com preto) */}
+      <div className="relative w-full bg-[#0A5C36] py-4 overflow-hidden border-y border-emerald-500/20 mb-20 z-10">
+        <div className="flex whitespace-nowrap animate-[marquee_25s_linear_infinite] gap-10 text-sm font-black tracking-widest text-emerald-100 font-sora">
+          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
+          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
+          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
+        </div>
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 w-full text-left">
-        <div className="max-w-2xl">
+      {/* 2. CONTEÚDO CONTEXTUALIZADO DO EVENTO */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          {/* Tag Minimalista */}
-          <span className="text-[#D3122A] text-sm font-bold uppercase tracking-widest font-sora block mb-4">
-            TugÁgil Experience • Outubro de 2026
-          </span>
-          
-          {/* Título Editorial Gigante */}
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none font-sora mb-8">
-            A agilidade <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">vive da ligação.</span>
-          </h2>
-          
-          {/* Textos Corridos de Alto Impacto (Aumentados para melhor legibilidade) */}
-          <p className="text-zinc-200 text-lg md:text-xl font-jakarta leading-relaxed mb-6 font-medium">
-            A agilidade não se lê em manuais; vive-se no terreno. O TugÁgil Experience 2026 nasce para ser o espaço de ligação, networking e partilha que a comunidade da tecnologia e produto no Norte merece.
-          </p>
-          
-          <p className="text-zinc-400 text-base md:text-lg font-jakarta leading-relaxed">
-            Acolhido nas instalações do ISLA Gaia, vamos reunir profissionais de engenharia de software, design, liderança e gestão de produto para um dia focado em casos práticos e transformação de impacto nas organizações.
-          </p>
+          <div className="lg:col-span-8 text-left">
+            <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-3">
+              Porquê Vila Nova de Gaia?
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight font-sora mb-6">
+              O que é o TugÁgil Experience?
+            </h2>
+            
+            <p className="text-zinc-300 text-lg font-jakarta leading-relaxed mb-6">
+              A comunidade TugÁgil nasceu com o propósito de promover a agilidade e a inovação tecnológica em Portugal. E é com este intuito de descentralizar o conhecimento e a partilha entre profissionais que residem na região Norte do país, que criamos o **TugÁgil Experience**: um evento focado no ecossistema de liderança, transformação organizacional, gestão de produtos e engenharia de software, que terá lugar em **Vila Nova de Gaia**. O TugÁgil Experience é uma oportunidade para profissionais, líderes e entusiastas da tecnologia se reunirem, aprenderem e se inspirarem com especialistas de nacionais.
+            </p>
 
+            <p className="text-zinc-400 text-base font-jakarta leading-relaxed mb-6">
+              Escolhemos Vila Nova de Gaia como o nosso ponto de encontro e o moderno campus do **ISLA Gaia** como a nossa casa. Trata-se de uma localização estratégica de fácil acesso, com instalações preparadas para proporcionar debates e salas estruturadas para masterclasses e workshops de Engenharia, Liderança e Design de Produto.
+            </p>
+          </div>
         </div>
+
+        {/* Imagem de Fundo de Vila Nova de Gaia */}
+        <div className="w-full h-96 rounded-2xl overflow-hidden border border-zinc-900 shadow-2xl mt-12">
+          <img 
+            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
+            alt="Vila Nova de Gaia" 
+            className="w-full h-full object-cover grayscale"
+          />
+        </div>
+
       </div>
     </section>
   );

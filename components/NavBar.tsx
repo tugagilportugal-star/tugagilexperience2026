@@ -1,16 +1,20 @@
-// src/components/NavBar.tsx
+// components/NavBar.tsx
 import React, { useState, useEffect } from 'react';
 import { ASSETS } from '../config';
 import { Menu, X, ArrowUp } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-interface NavLinkItem {
+interface NavLink {
   label: string;
   href: string;
   isRoute?: boolean;
 }
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  onOpenTicketModal: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,15 +39,14 @@ export const Navbar: React.FC = () => {
 
   const isHomePage = location.pathname === '/';
 
-  // --- ESTILO DINÂMICO DO MENU ---
   const navBgClass = !isHomePage || isScrolled
-    ? 'bg-zinc-950/95 backdrop-blur-md shadow-lg py-2 border-b border-zinc-800/50' // Sólido escuro elegante ao rolar
-    : 'bg-gradient-to-b from-black/80 to-transparent py-4'; // Gradiente no topo da Home
+    ? 'bg-[#060a07]/95 backdrop-blur-md shadow-lg py-2'
+    : 'bg-gradient-to-b from-black/80 to-transparent py-4';
 
-  // --- LINKS DO MENU (Com isRoute definido) ---
-  const navLinks: NavLinkItem[] = [
+  const navLinks: NavLink[] = [
     { label: 'O EVENTO', href: '/#about', isRoute: false },
     { label: 'PROGRAMA', href: '/#program', isRoute: false },
+    { label: 'AGENDA', href: '/agenda', isRoute: true },
   ];
 
   return (
@@ -52,22 +55,21 @@ export const Navbar: React.FC = () => {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* LOGO PLACEHOLDER - SUBSTITUIR QUANDO TIVER LOGO OFICIAL DO EVENTO */}
-<div className="flex items-center">
-  <Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:scale-105 transition-all group">
-    <div className="flex items-center gap-2">
-      {/* Um pequeno ícone de conexão abstrato e elegante */}
-      <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md shadow-emerald-900/30">
-        T
-      </span>
-      <span className="text-lg font-black text-white tracking-wider font-sora group-hover:text-emerald-400 transition-colors">
-        TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
-      </span>
-    </div>
-  </Link>
-</div>
+            {/* LOGO */}
+            <div className="flex items-center">
+              <Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:scale-105 transition-all group">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md">
+                    T
+                  </span>
+                  <span className="text-lg font-black text-white tracking-wider font-sora">
+                    TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
+                  </span>
+                </div>
+              </Link>
+            </div>
 
-            {/* LINKS (DESKTOP) */}
+            {/* LINKS & CTA (DESKTOP) */}
             <div className="hidden xl:flex items-center gap-10">
               <div className="flex items-center gap-8">
                 {navLinks.map((link) => (
@@ -75,7 +77,7 @@ export const Navbar: React.FC = () => {
                     <Link
                       key={link.label}
                       to={link.href}
-                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-[#D3122A] transition-colors"
+                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-emerald-400 transition-colors font-sora"
                     >
                       {link.label}
                     </Link>
@@ -83,13 +85,21 @@ export const Navbar: React.FC = () => {
                     <a
                       key={link.label}
                       href={link.href}
-                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-[#D3122A] transition-colors"
+                      className="text-sm font-bold text-white uppercase tracking-widest hover:text-emerald-400 transition-colors font-sora"
                     >
                       {link.label}
                     </a>
                   )
                 ))}
               </div>
+
+              {/* Botão de Compra no Canto Direito */}
+              <button 
+                onClick={onOpenTicketModal}
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Comprar Bilhete
+              </button>
             </div>
 
             {/* MOBILE TRIGGER */}
@@ -109,27 +119,26 @@ export const Navbar: React.FC = () => {
       {/* BOTÃO VOLTAR AO TOPO */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#0A5C36] text-white shadow-lg transition-all duration-500 transform hover:bg-emerald-700 hover:scale-110 ${
+        className={`fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#0A5C36] text-white shadow-lg transition-all duration-500 transform hover:bg-[#08482b] hover:scale-110 ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
         }`}
       >
         <ArrowUp className="w-6 h-6" />
       </button>
 
-      {/* MOBILE MENU - MUDAR QUANDO TIVER LOGO OFICIAL */}
+      {/* MOBILE MENU */}
       <div 
-        className={`fixed inset-0 z-[110] bg-zinc-950/98 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed inset-0 z-[110] bg-[#060a07]/98 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex justify-between items-center p-6 border-b border-white/10">
-             {/* Substituímos a imagem antiga pelo logótipo em texto estilizado */}
              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="group">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md shadow-emerald-900/30">
+                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md">
                     T
                   </span>
-                  <span className="text-lg font-black text-white tracking-wider font-sora group-hover:text-emerald-400 transition-colors">
+                  <span className="text-lg font-black text-white tracking-wider font-sora">
                     TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
                   </span>
                 </div>
@@ -149,7 +158,7 @@ export const Navbar: React.FC = () => {
                   key={link.label}
                   to={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-[#D3122A] transition-colors"
+                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors font-sora"
                 >
                   {link.label}
                 </Link>
@@ -158,12 +167,18 @@ export const Navbar: React.FC = () => {
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-[#D3122A] transition-colors"
+                  className="text-2xl font-bold text-white uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors font-sora"
                 >
                   {link.label}
                 </a>
               )
             ))}
+            <button 
+              onClick={() => { setIsMobileMenuOpen(false); onOpenTicketModal(); }}
+              className="w-full max-w-xs py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-base uppercase tracking-wider transition-all text-center shadow-lg"
+            >
+              Comprar Bilhete
+            </button>
         </div>
       </div>
     </>
