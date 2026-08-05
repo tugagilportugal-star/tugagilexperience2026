@@ -3,48 +3,74 @@ import React from 'react';
 
 export const About: React.FC = () => {
   return (
-    <section id="about" className="relative bg-zinc-950 text-white pb-24 overflow-hidden">
+    <section id="about" className="relative min-h-[90vh] flex flex-col justify-center bg-zinc-950 text-white pb-24 overflow-hidden border-t border-zinc-900">
       
-      {/* 1. BANNER DE DESTAQUE DINÂMICO (Quebra o preto com preto) */}
+      {/* Estilo CSS embutido para garantir que a faixa se move sozinha sem tocar em ficheiros externos */}
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: flex;
+          width: max-content;
+          animation: marquee 25s linear infinite;
+        }
+      `}</style>
+
+      {/* 1. FAIXA VERDE EM MOVIMENTO (Ticker Dinâmico) */}
       <div className="relative w-full bg-[#0A5C36] py-4 overflow-hidden border-y border-emerald-500/20 mb-20 z-10">
-        <div className="flex whitespace-nowrap animate-[marquee_25s_linear_infinite] gap-10 text-sm font-black tracking-widest text-emerald-100 font-sora">
-          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
-          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
-          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •</span>
+        <div className="animate-marquee gap-10 text-xs md:text-sm font-black tracking-widest text-emerald-100 font-sora uppercase">
+          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
+          <span>INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
         </div>
       </div>
 
-      {/* 2. CONTEÚDO CONTEXTUALIZADO DO EVENTO */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* 2. IMAGEM DE FUNDO (Vila Nova de Gaia) [0.1] */}
+      <div className="absolute inset-0 z-0 mt-16">
+        <img 
+          src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
+          alt="Vila Nova de Gaia" 
+          className="w-full h-full object-cover opacity-25 grayscale"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/95 to-zinc-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950" />
+      </div>
+
+      {/* 3. CONTEÚDO EDITORIAL À ESQUERDA (Mensagens Curtas e Diretas) */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 w-full text-left">
+        <div className="max-w-2xl">
+          <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-4">
+            O Encontro
+          </span>
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none font-sora mb-12">
+            A ligação que <br />
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">transforma ideias.</span>
+          </h2>
           
-          <div className="lg:col-span-8 text-left">
-            <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-3">
-              Porquê Vila Nova de Gaia?
-            </span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight font-sora mb-6">
-              O que é o TugÁgil Experience?
-            </h2>
-            
-            <p className="text-zinc-300 text-lg font-jakarta leading-relaxed mb-6">
-              A comunidade TugÁgil nasceu com o propósito de promover a agilidade e a inovação tecnológica em Portugal. E é com este intuito de descentralizar o conhecimento e a partilha entre profissionais que residem na região Norte do país, que criamos o **TugÁgil Experience**: um evento focado no ecossistema de liderança, transformação organizacional, gestão de produtos e engenharia de software, que terá lugar em **Vila Nova de Gaia**. O TugÁgil Experience é uma oportunidade para profissionais, líderes e entusiastas da tecnologia se reunirem, aprenderem e se inspirarem com especialistas de nacionais.
-            </p>
-
-            <p className="text-zinc-400 text-base font-jakarta leading-relaxed mb-6">
-              Escolhemos Vila Nova de Gaia como o nosso ponto de encontro e o moderno campus do **ISLA Gaia** como a nossa casa. Trata-se de uma localização estratégica de fácil acesso, com instalações preparadas para proporcionar debates e salas estruturadas para masterclasses e workshops de Engenharia, Liderança e Design de Produto.
-            </p>
+          {/* Layout dinâmico de leitura rápida */}
+          <div className="space-y-8 font-jakarta">
+            <div>
+              <h3 className="text-emerald-400 font-bold text-lg font-sora">O Evento</h3>
+              <p className="text-zinc-300 text-base mt-1">
+                A primeira edição presencial do TugÁgil Experience na região Norte. Um dia inteiro focado em partilha e experiências reais.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-emerald-400 font-bold text-lg font-sora">A Comunidade</h3>
+              <p className="text-zinc-300 text-base mt-1">
+                Espaços seguros de cocriação, networking e ligação genuína entre profissionais e organizações.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-emerald-400 font-bold text-lg font-sora">O Local</h3>
+              <p className="text-zinc-300 text-base mt-1">
+                Acolhidos no campus do <strong className="text-white font-semibold">ISLA Gaia</strong>, em Vila Nova de Gaia. Um ecossistema perfeito para debater e aprender.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Imagem de Fundo de Vila Nova de Gaia */}
-        <div className="w-full h-96 rounded-2xl overflow-hidden border border-zinc-900 shadow-2xl mt-12">
-          <img 
-            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
-            alt="Vila Nova de Gaia" 
-            className="w-full h-full object-cover grayscale"
-          />
         </div>
-
       </div>
     </section>
   );
