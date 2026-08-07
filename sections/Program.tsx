@@ -38,7 +38,7 @@ export const Program: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {tracks.map((track, idx) => (
             <div key={idx} className="bg-zinc-900/40 border border-zinc-900 rounded-2xl p-8 backdrop-blur-sm">
-              <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider block mb-4">Trilha 1{idx+1}</span>
+              <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider block mb-4">Trilha {idx+1}</span>
               <h3 className="text-xl font-bold font-sora text-white mb-4">{track.title}</h3>
               <p className="text-sm text-zinc-400 font-jakarta leading-relaxed">{track.desc}</p>
             </div>
