@@ -22,8 +22,8 @@ export const About: React.FC = () => {
       {/* 1. FAIXA VERDE HORIZONTAL DINÂMICA */}
       <div className="relative w-full bg-[#0A5C36] py-5 overflow-hidden border-y border-emerald-500/20 z-20">
         <div className="animate-marquee gap-12 text-sm font-black tracking-[0.25em] text-white font-sora uppercase">
-          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • DECENTRALIZAR A COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
-          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • DECENTRALIZAR A COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
+          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • NOVEMBRO EM GAIA •&nbsp;</span>
+          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • NOVEMBRO EM GAIA •&nbsp;</span>
         </div>
       </div>
 

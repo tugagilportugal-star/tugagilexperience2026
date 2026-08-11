@@ -31,7 +31,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         
         {/* Badge Minimalista do Topo */}
         <div className="text-xs md:text-sm font-black text-emerald-400 uppercase tracking-[0.2em] mb-6 font-sora">
-          1ª Edição Presencial • DIA Outubro de 2026
+          1ª Edição Presencial • 21 Novembro de 2026
         </div>
 
         {/* Título Principal */}
