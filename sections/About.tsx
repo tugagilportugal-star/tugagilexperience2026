@@ -1,6 +1,6 @@
-// sections/About.tsx
 import React from 'react';
 import { ASSETS } from '../config';
+import { MapPin, Train, Car, ExternalLink, Globe, Zap, Users, Award } from 'lucide-react';
 
 export const About: React.FC = () => {
   return (
@@ -18,21 +18,21 @@ export const About: React.FC = () => {
         }
       `}} />
 
-      {/* 1. FAIXA VERDE HORIZONTAL DINÂMICA (Sem rotação, sem blocos brancos, efeito Outline) */}
+      {/* 1. FAIXA VERDE HORIZONTAL DINÂMICA */}
       <div className="relative w-full bg-[#0A5C36] py-5 overflow-hidden border-y border-emerald-500/20 z-20">
         <div className="animate-marquee gap-12 text-sm font-black tracking-[0.25em] text-white font-sora uppercase">
-          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
-          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
+          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • DECENTRALIZAR A COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
+          <span>PORTUGAL • INOVAÇÃO • TECNOLOGIA • PRODUTO • DECENTRALIZAR A COMUNIDADE • OUTUBRO EM GAIA •&nbsp;</span>
         </div>
       </div>
 
 
-      {/* 2. ABOUT COMUNIDADE: Equilíbrio de Contraste (Fundo Cinzento-Carvão Suave) */}
+      {/* 2. ABOUT COMUNIDADE: Origem e Propósito */}
       <section className="relative bg-zinc-900 text-white py-24 overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             
-            {/* Conteúdo da História (Títulos verdes, textos claros) */}
+            {/* Texto Editorial da Comunidade */}
             <div className="lg:col-span-7 text-left">
               <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-4">
                 A Nossa Jornada
@@ -58,7 +58,7 @@ export const About: React.FC = () => {
               </div>
             </div>
 
-            {/* Imagem Limpa da Comunidade (Sem tags verdes de IA) */}
+            {/* Imagem Limpa da Comunidade */}
             <div className="lg:col-span-5">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
                 <img 
@@ -74,49 +74,145 @@ export const About: React.FC = () => {
       </section>
 
 
-      {/* 3. ABOUT LOCALIZAÇÃO: O Layout "WOW" (Ficha Técnica / Spec Sheet) */}
-      <section className="relative min-h-[85vh] flex items-center bg-zinc-950 py-24 overflow-hidden border-t border-zinc-900">
+      {/* 3. NOVA SECÇÃO LOCALIZAÇÃO: Estilo RSG Destination Card */}
+      <section className="relative bg-[#050806] text-white py-24 overflow-hidden border-t border-zinc-900">
         
-        {/* Imagem de Fundo de Gaia (Suave e visível ao fundo) */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
-            alt="Vila Nova de Gaia" 
-            className="w-full h-full object-cover opacity-30 grayscale"
-          />
-          <div className="absolute inset-0 bg-zinc-950/85" />
-        </div>
+        {/* Luzes Ambientais do Palco da Localização */}
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#0A5C36]/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 w-full text-left">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full text-left">
           
-          <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-4">
-            Localização
-          </span>
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none font-sora mb-16">
-            Porquê Vila Nova de Gaia?
-          </h2>
+          {/* Cabeçalho de Localização */}
+          <div className="mb-16">
+            <span className="text-[#D3122A] text-xs font-bold uppercase tracking-widest font-sora block mb-4">
+              LOCALIZAÇÃO
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none font-sora mb-6">
+              Onde será o TugÁgil Experience 2026?
+            </h2>
+            <p className="text-zinc-400 text-base md:text-lg font-jakarta max-w-3xl leading-relaxed">
+              Unimos a energia de um dos ecossistemas de engenharia e produto que mais cresce no país à máxima conveniência de acessos e instalações para todos os participantes.
+            </p>
+          </div>
 
-          {/* Ficha Técnica Minimalista de Alto Impacto (Design de Engenharia/Arquitetura) */}
-          <div className="border-t border-zinc-800 divide-y divide-zinc-800 font-jakarta">
+          {/* Grid de Conteúdo Dinâmico */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Linha 1: A Cidade */}
-            <div className="py-8 grid grid-cols-1 md:grid-cols-12 gap-4 items-baseline">
-              <div className="md:col-span-4 text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">
-                A Cidade
+            {/* Coluna da Esquerda: Grande Cartão de Acessibilidade (ISLA Gaia) */}
+            <div className="lg:col-span-7 bg-zinc-900/50 border border-zinc-800/80 rounded-3xl p-6 md:p-10 backdrop-blur-sm flex flex-col justify-between h-full">
+              <div>
+                
+                {/* Nome do Local e Morada */}
+                <div className="flex gap-4 items-start mb-8">
+                  <span className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0A5C36] to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-lg">
+                    <MapPin size={24} />
+                  </span>
+                  <div>
+                    <h3 className="text-2xl md:text-3xl font-extrabold font-sora text-white leading-tight">
+                      ISLA Gaia
+                    </h3>
+                    <p className="text-sm text-zinc-400 mt-1 font-jakarta">
+                      Rua de Diogo Cão 394, 4400-111 Vila Nova de Gaia, Portugal
+                    </p>
+                  </div>
+                </div>
+
+                <hr className="border-zinc-800/80 mb-8" />
+
+                {/* Lista de Transportes/Como Chegar */}
+                <div className="space-y-8 font-jakarta">
+                  
+                  {/* Metro */}
+                  <div className="flex gap-4 items-start">
+                    <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Train size={20} />
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-white font-sora text-base">Metro à Porta (Linha Amarela)</h4>
+                      <p className="text-sm text-zinc-400 mt-1">
+                        Acessibilidade máxima. O campus fica a poucos minutos a pé da estação de Metro D. João II (Linha Amarela), permitindo uma ligação rápida diretamente a partir do centro do Porto.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Estacionamento */}
+                  <div className="flex gap-4 items-start">
+                    <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Car size={20} />
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-white font-sora text-base">Acessos e Estacionamento</h4>
+                      <p className="text-sm text-zinc-400 mt-1">
+                        Para quem prefere viajar de carro, o campus oferece ligação rápida e acessos diretos pelas autoestradas VCI e A1, contando com parques de estacionamento públicos nas imediações.
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
               </div>
-              <div className="md:col-span-8 text-zinc-200 text-base md:text-lg leading-relaxed">
-                O Norte de Portugal é um polo ativo de inovação. Escolhemos Vila Nova de Gaia para descentralizar o conhecimento e criar conexões fortes com os profissionais da região.
+
+              {/* Botão Google Maps */}
+              <div className="mt-12 pt-6 border-t border-zinc-800/80">
+                <a 
+                  href="https://maps.app.goo.gl/r5R8aWvDsz9G368b6" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-emerald-400 hover:text-emerald-300 transition-colors group font-sora"
+                >
+                  VER NO GOOGLE MAPS <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </a>
               </div>
             </div>
 
-            {/* Linha 2: O Campus */}
-            <div className="py-8 grid grid-cols-1 md:grid-cols-12 gap-4 items-baseline">
-              <div className="md:col-span-4 text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">
-                O Campus
+            {/* Coluna da Direita: Ecossistema e Tópicos de Inovação */}
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              
+              {/* Cartão Superior: Porquê o Norte? */}
+              <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
+                <h3 className="text-xl font-bold font-sora text-white mb-4">
+                  Porquê Vila Nova de Gaia?
+                </h3>
+                <p className="text-sm text-zinc-400 font-jakarta leading-relaxed mb-6">
+                  A área metropolitana do Porto e Gaia consolidou-se como um dos polos de inovação tecnológica e engenharia de software mais dinâmicos de Portugal. A região atrai anualmente hubs internacionais de desenvolvimento e equipas altamente qualificadas de gestão de produto e agilidade.
+                </p>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 font-sora uppercase tracking-wider">
+                  <Globe size={12} /> Tech Hub em Crescimento
+                </div>
               </div>
-              <div className="md:col-span-8 text-zinc-200 text-base md:text-lg leading-relaxed">
-                O ISLA Gaia abre-nos as portas com um campus moderno, auditórios e salas equipadas para as nossas sessões de tecnologia, gestão e produto.
+
+              {/* Grid de 4 Mini-Cartões de Tópicos Relevantes */}
+              <div className="grid grid-cols-2 gap-4">
+                
+                {/* Item 1 */}
+                <div className="bg-zinc-900/40 border border-[#0A5C36]/20 rounded-xl p-5">
+                  <Zap className="text-emerald-400 mb-3" size={20} />
+                  <h4 className="font-bold font-sora text-sm text-white">Hub de Inovação</h4>
+                  <p className="text-xs text-zinc-500 mt-1 font-jakarta">Forte presença de scaleups de engenharia.</p>
+                </div>
+
+                {/* Item 2 */}
+                <div className="bg-zinc-900/40 border border-[#0A5C36]/20 rounded-xl p-5">
+                  <Users className="text-emerald-400 mb-3" size={20} />
+                  <h4 className="font-bold font-sora text-sm text-white">Comunidade Ativa</h4>
+                  <p className="text-xs text-zinc-500 mt-1 font-jakarta">Partilha entre profissionais.</p>
+                </div>
+
+                {/* Item 3 */}
+                <div className="bg-zinc-900/40 border border-[#0A5C36]/20 rounded-xl p-5">
+                  <Award className="text-emerald-400 mb-3" size={20} />
+                  <h4 className="font-bold font-sora text-sm text-white">Talento Qualificado</h4>
+                  <p className="text-xs text-zinc-500 mt-1 font-jakarta">Proximidade com universidades de referência.</p>
+                </div>
+
+                {/* Item 4 */}
+                <div className="bg-zinc-900/40 border border-[#0A5C36]/20 rounded-xl p-5">
+                  <Globe className="text-emerald-400 mb-3" size={20} />
+                  <h4 className="font-bold font-sora text-sm text-white">Ligação Global</h4>
+                  <p className="text-xs text-zinc-500 mt-1 font-jakarta">Infraestruturas e acessos diretos.</p>
+                </div>
+
               </div>
+
             </div>
 
           </div>
