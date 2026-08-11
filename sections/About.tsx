@@ -1,3 +1,4 @@
+// src/sections/About.tsx
 import React from 'react';
 import { ASSETS } from '../config';
 import { MapPin, Train, Car, ExternalLink, Globe, Zap, Users, Award } from 'lucide-react';
@@ -50,7 +51,7 @@ export const About: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">O Nosso Propósito</h3>
+                  <h3 className="text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">O O Nosso Propósito</h3>
                   <p className="text-zinc-200 text-base md:text-lg mt-2 leading-relaxed">
                     Apoiamos pessoas e empresas a transformarem conhecimento em prática e cooperação em impacto real, impulsionando a evolução da agilidade no país.
                   </p>
@@ -77,6 +78,16 @@ export const About: React.FC = () => {
       {/* 3. NOVA SECÇÃO LOCALIZAÇÃO: Estilo RSG Destination Card */}
       <section className="relative bg-[#050806] text-white py-24 overflow-hidden border-t border-zinc-900">
         
+        {/* Imagem de Fundo de Gaia (Visível e integrada sem conflitar com o texto) */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
+            alt="Vila Nova de Gaia" 
+            className="w-full h-full object-cover opacity-25 grayscale"
+          />
+          <div className="absolute inset-0 bg-[#050806]/85" />
+        </div>
+
         {/* Luzes Ambientais do Palco da Localização */}
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#0A5C36]/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
@@ -98,63 +109,61 @@ export const About: React.FC = () => {
           {/* Grid de Conteúdo Dinâmico */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Coluna da Esquerda: Grande Cartão de Acessibilidade (ISLA Gaia) */}
-            <div className="lg:col-span-7 bg-zinc-900/50 border border-zinc-800/80 rounded-3xl p-6 md:p-10 backdrop-blur-sm flex flex-col justify-between h-full">
-              <div>
+            {/* Coluna da Esquerda: Grande Cartão de Acessibilidade (Espaçamento corrigido para evitar vácuo) [1.2.7] */}
+            <div className="lg:col-span-7 bg-zinc-900/50 border border-zinc-800/80 rounded-3xl p-6 md:p-10 backdrop-blur-sm">
+              
+              {/* Nome do Local e Morada Oficial */}
+              <div className="flex gap-4 items-start mb-8">
+                <span className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0A5C36] to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-lg">
+                  <MapPin size={24} />
+                </span>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-extrabold font-sora text-white leading-tight">
+                    ISLA Gaia
+                  </h3>
+                  <p className="text-sm text-zinc-400 mt-1 font-jakarta">
+                    R. Diogo Macedo 192, 4400-107 Vila Nova de Gaia, Portugal [1.2.7]
+                  </p>
+                </div>
+              </div>
+
+              <hr className="border-zinc-800/80 mb-8" />
+
+              {/* Lista de Transportes/Como Chegar */}
+              <div className="space-y-8 font-jakarta">
                 
-                {/* Nome do Local e Morada */}
-                <div className="flex gap-4 items-start mb-8">
-                  <span className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0A5C36] to-emerald-600 flex items-center justify-center text-white shrink-0 shadow-lg">
-                    <MapPin size={24} />
+                {/* Metro (Transparente quanto à caminhada de 15 minutos) [1.2.7] */}
+                <div className="flex gap-4 items-start">
+                  <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Train size={20} />
                   </span>
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-extrabold font-sora text-white leading-tight">
-                      ISLA Gaia
-                    </h3>
-                    <p className="text-sm text-zinc-400 mt-1 font-jakarta">
-                      Rua de Diogo Cão 394, 4400-111 Vila Nova de Gaia, Portugal
+                    <h4 className="font-bold text-white font-sora text-base">Metro (Linha Amarela)</h4>
+                    <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
+                      Acessibilidade garantida. O campus fica a cerca de 15 minutos a pé (1 km) da estação de Metro D. João II (Linha Amarela), permitindo uma ligação direta ao centro do Porto.
                     </p>
                   </div>
                 </div>
 
-                <hr className="border-zinc-800/80 mb-8" />
-
-                {/* Lista de Transportes/Como Chegar */}
-                <div className="space-y-8 font-jakarta">
-                  
-                  {/* Metro */}
-                  <div className="flex gap-4 items-start">
-                    <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
-                      <Train size={20} />
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-white font-sora text-base">Metro à Porta (Linha Amarela)</h4>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        Acessibilidade máxima. O campus fica a poucos minutos a pé da estação de Metro D. João II (Linha Amarela), permitindo uma ligação rápida diretamente a partir do centro do Porto.
-                      </p>
-                    </div>
+                {/* Estacionamento e Acessos */}
+                <div className="flex gap-4 items-start">
+                  <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Car size={20} />
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-white font-sora text-base">Acessos e Estacionamento</h4>
+                    <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
+                      Para quem viaja de carro, o acesso é facilitado através das autoestradas A1, A44 e VCI, com opções de estacionamento público nas imediações do campus.
+                    </p>
                   </div>
-
-                  {/* Estacionamento */}
-                  <div className="flex gap-4 items-start">
-                    <span className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
-                      <Car size={20} />
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-white font-sora text-base">Acessos e Estacionamento</h4>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        Para quem prefere viajar de carro, o campus oferece ligação rápida e acessos diretos pelas autoestradas VCI e A1, contando com parques de estacionamento públicos nas imediações.
-                      </p>
-                    </div>
-                  </div>
-
                 </div>
+
               </div>
 
-              {/* Botão Google Maps */}
-              <div className="mt-12 pt-6 border-t border-zinc-800/80">
+              {/* Botão Google Maps robusto e universal */}
+              <div className="mt-8 pt-6 border-t border-zinc-800/80">
                 <a 
-                  href="https://maps.app.goo.gl/r5R8aWvDsz9G368b6" 
+                  href="https://www.google.com/maps/search/?api=1&query=ISLA+Gaia+Rua+Diogo+Macedo+192" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm font-bold text-emerald-400 hover:text-emerald-300 transition-colors group font-sora"
@@ -167,17 +176,14 @@ export const About: React.FC = () => {
             {/* Coluna da Direita: Ecossistema e Tópicos de Inovação */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               
-              {/* Cartão Superior: Porquê o Norte? */}
+              {/* Cartão Superior: Porquê o Norte? (Sem o link opcional) [1.2.7] */}
               <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
                 <h3 className="text-xl font-bold font-sora text-white mb-4">
                   Porquê Vila Nova de Gaia?
                 </h3>
-                <p className="text-sm text-zinc-400 font-jakarta leading-relaxed mb-6">
+                <p className="text-sm text-zinc-400 font-jakarta leading-relaxed">
                   A área metropolitana do Porto e Gaia consolidou-se como um dos polos de inovação tecnológica e engenharia de software mais dinâmicos de Portugal. A região atrai anualmente hubs internacionais de desenvolvimento e equipas altamente qualificadas de gestão de produto e agilidade.
                 </p>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 font-sora uppercase tracking-wider">
-                  <Globe size={12} /> Tech Hub em Crescimento
-                </div>
               </div>
 
               {/* Grid de 4 Mini-Cartões de Tópicos Relevantes */}
