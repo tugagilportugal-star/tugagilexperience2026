@@ -10,10 +10,10 @@ export const ASSETS = {
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
   TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png",
   ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
+  TUGAGIL_EXP_2026: '/assets/AF.01_MARCA_EVENTO_TUGAGIL_VERDE.png',
 
   // Mantidos temporariamente para evitar erros de compilação no NavBar e Sponsors
-  RSG_LOGO_2026: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg", 
-  SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
+   SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   SCRUM_ALLIANCE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   ATELIE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   TABAQUEIRA_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",

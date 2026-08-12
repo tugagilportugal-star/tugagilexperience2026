@@ -34,9 +34,9 @@ const HomePage: React.FC<{
      
      {/* Secções antigas do RSG ocultadas por agora de forma segura. 
         Iremos reativá-las uma a uma conforme as formos desenhando! */}
-    {/* <WhyAttend />
+    {/* <WhyAttend />*/}
     <Speakers />
-    <Recap onOpenTicketModal={openTicket} />*/}
+    {/*<Recap onOpenTicketModal={openTicket} />*/}
     <Sponsors onOpenSponsorModal={() => setSponsorModalOpen(true)} />
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} /> 
