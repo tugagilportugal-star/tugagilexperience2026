@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/NavBar';
@@ -31,17 +32,13 @@ const HomePage: React.FC<{
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
-     
-     {/* Secções antigas do RSG ocultadas por agora de forma segura. 
-        Iremos reativá-las uma a uma conforme as formos desenhando! */}
-    {/* <WhyAttend />
+    
+    {/* Secções da Aline agora integradas e ativas */}
     <Speakers />
-    <Recap onOpenTicketModal={openTicket} />
     <Sponsors onOpenSponsorModal={() => setSponsorModalOpen(true)} />
     <GetInvolved />
-    <FAQ onOpenTicketModal={openTicket} /> */}
+    <FAQ onOpenTicketModal={openTicket} />
     <Team />
-    <Footer />
   </main>
 );
 
@@ -85,24 +82,23 @@ const App: React.FC = () => {
       <Router>
         <div className="relative min-h-screen bg-white">
           
-          
-          {/* Remove o Navbar daqui de cima */}
+          <Routes>
+            <Route path="/" element={
+              <>
+                {/* Navbar no topo com o link de abertura do modal de bilhetes */}
+                <Navbar onOpenTicketModal={openTicket} />
+                <HomePage 
+                  openTicket={openTicket} 
+                  setSponsorModalOpen={setSponsorModalOpen}
+                  setSupporterModalOpen={setSupporterModalOpen} 
+                />
+              </>
+            } />
 
-<Routes>
-  <Route path="/" element={
-    <>
-      <Navbar onOpenTicketModal={openTicket} />
-      <HomePage 
-        openTicket={openTicket} 
-        setSponsorModalOpen={setSponsorModalOpen}
-        setSupporterModalOpen={setSupporterModalOpen} 
-      />
-    </>
-  } />
-
-  <Route path="/agenda" element={<AgendaPage />} />
-  <Route path="/beneficios-exclusivos" element={<BenefitsPage />} />
-</Routes>
+            {/* Rota para a Página Dedicada de Agenda */}
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/beneficios-exclusivos" element={<BenefitsPage />} />
+          </Routes>
 
           {/* Botão Admin */}
           <div className="fixed bottom-6 right-6 z-40">
@@ -147,6 +143,10 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Footer da Aline Ativado */}
+          <Footer />
+
         </div>
       </Router>
     </TicketStatusProvider>
