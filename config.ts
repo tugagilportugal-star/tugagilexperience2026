@@ -2,16 +2,17 @@
 
 export const ASSETS = {
   // Imagens de fundo
-  HERO_BG: "https://i.postimg.cc/t4736DTm/Tugagil-864.jpg",
+  HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80",
   
-  // Novos logótipos
+  // Logótipos do TugÁgil Experience
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
   TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png",
   ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
+  TUGAGIL_EXP_2026: "/assets/TUGAGIL_LOGO.png",
 
-  // Mantidos temporariamente para evitar erros de compilação no NavBar e Sponsors
+  // Mantidos temporariamente como "pontes" para não quebrar outras secções antigas
   RSG_LOGO_2026: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg", 
   SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   SCRUM_ALLIANCE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
