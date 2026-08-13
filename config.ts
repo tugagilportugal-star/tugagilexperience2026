@@ -10,7 +10,7 @@ export const ASSETS = {
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
   TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png",
   ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
-  TUGAGIL_EXP_2026: "/assets/TUGAGIL_LOGO.png",
+  TUGAGIL_EXP_2026: "/assets/TUGAGIL_EXP_VERDE.png",
 
   // Mantidos temporariamente como "pontes" para não quebrar outras secções antigas
   RSG_LOGO_2026: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg", 

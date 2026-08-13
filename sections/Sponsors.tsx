@@ -67,7 +67,7 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
   const MEDIA_KIT_URL = "";
 
   const goldSponsors: Sponsor[] = [
-    { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia.png"},
+    { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia-Logo.png"},
     { name: "Google", initials: "GO", url: "https://google.com" },
     { name: "Amazon", initials: "AM", url: "https://amazon.com" },
   ];
