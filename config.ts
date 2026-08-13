@@ -7,7 +7,7 @@ export const ASSETS = {
   GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80",
   
   // Novos logótipos
-  TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
+  TUGAGIL_LOGO: "/assets/Group-23.png",
   TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXPERIENCE_LOGO.png",
   ISLA_GAIA_LOGO: "/assets/ISLA_GAIA_LOGO.png",
   TUGAGIL_EXP_2026: '/assets/AF.01_MARCA_EVENTO_TUGAGIL_VERDE.png',

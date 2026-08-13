@@ -29,9 +29,9 @@ export const Footer: React.FC = () => {
                     aria-label="Visitar site da TugÁgil"
                 >
                     <img 
-                        src={ASSETS.TUGAGIL_EXP_2026} 
+                        src={ASSETS.TUGAGIL_LOGO} 
                         alt="TugÁgil" 
-                        className="h-[150px] w-auto object-contain hover:opacity-80 transition-opacity drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
+                        className="h-[50px] w-auto object-contain hover:opacity-80 transition-opacity drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
                     />
                 </a>
                 <span className="text-sm text-zinc-400 font-light font-jakarta">Comunidade de Práticas</span>
@@ -88,7 +88,7 @@ export const Footer: React.FC = () => {
             </a>
             <div className="flex space-x-4 mt-6">
                 <a 
-                    href="https://www.linkedin.com/showcase/scrum-gathering-regional-lisboa-2026/" 
+                    href="https://www.linkedin.com//" //inserir endereço definitivo
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="p-2 bg-zinc-900 rounded-full hover:bg-emerald-500 transition-colors"
@@ -97,7 +97,7 @@ export const Footer: React.FC = () => {
                     <Linkedin className="w-5 h-5" />
                 </a>
                 <a 
-                    href="https://www.instagram.com/rsglisbon/" 
+                    href="https://www.instagram.com/" //inserir endereço definitivo
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="p-2 bg-zinc-900 rounded-full hover:bg-gradient-to-tr hover:from-[#f09433] hover:to-[#bc1888] transition-colors"
@@ -114,10 +114,10 @@ export const Footer: React.FC = () => {
              <div className="space-y-3">
                 <p>Copyright © 2026 TugÁgil</p>
                 <p>
-                    <a href="https://docs.google.com/document/d/1RQVsJYgjLgXwsFr1g-lpjxfkUTuPk0EaHCpoo9k-boo/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="hover:text-white underline decoration-zinc-700 underline-offset-4">Política de Privacidade</a>
+                    <a href="https://docs.google.com/document/d/1hK1v6HKuirGsKXzJoM2hv_WNQ_GC50ZAbd2KXyUlsjw/" target="_blank" rel="noopener noreferrer" className="hover:text-white underline decoration-zinc-700 underline-offset-4">Política de Privacidade</a>
                 </p>
                 <p className="text-xs text-zinc-600 mt-4">
-                    Regional Scrum Gathering® is a registered trademark of Scrum Alliance, Inc.
+                    TugÁgil Experience® is a registered trademark of TugÁgil Comunidade de Práticas.
                 </p>
              </div>
           </div>

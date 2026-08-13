@@ -193,7 +193,7 @@ export const Speakers: React.FC = () => {
           </Link>
         </div>
 
-        {/* Banner Call for Speakers 2027 — fundo verde */}
+        {/* Banner Call for Speakers 2026 — fundo verde */}
         <div className="mt-16 p-8 md:p-12 bg-gradient-to-br from-[#00331F] via-[#00693E] to-[#00875A] text-center w-full rounded-3xl shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
           {/* Detalhes decorativos vermelhos */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#E31E2D] opacity-10 rounded-full"></div>
@@ -201,26 +201,28 @@ export const Speakers: React.FC = () => {
           
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm mb-4 border border-white/20">
-              <span className="font-bold text-white text-sm font-sora">TugÁgil Experience 2027</span>
+              <span className="font-bold text-white text-sm font-sora">Call for Speakers</span>
             </div>
             
             <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight font-sora">
-              Inspirado por estes líderes? O próximo palco pode ser o seu.
+              Queres partilhar no TugÁgil Experience Gaia 2026?
             </h3>
             
             <p className="text-emerald-100 text-base mb-6 max-w-3xl mx-auto leading-relaxed font-jakarta">
-              Quer partilhar a sua experiência, casos de sucesso ou visão sobre agilidade no <strong className="text-white">TugÁgil Experience 2027</strong>? 
+              A 21 de novembro, no ISLA Gaia, temos três trilhas à tua espera: 
               <br />
-              Já estamos a construir a próxima edição e queremos ouvir a sua história.
+              <strong className="text-white">Gestão & Liderança · Engenharia de Software · Design & Produto</strong>. 
+              <br />
+              Candidata-te para uma talk da comunidade ou um workshop.
             </p>
               
             <a 
-              href="https://forms.gle/5VgcGULvP6296NA77"
+              href="https://forms.gle/xPBvjEndTL94mhJ26"
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-block bg-[#E31E2D] text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-lg hover:bg-white hover:text-[#00693E] transition-all duration-300 transform hover:-translate-y-1 font-sora"
             >
-              Candidatar-me para 2027
+              Candidatar-me
             </a>
           </div>
         </div>

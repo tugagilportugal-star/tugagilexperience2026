@@ -3,10 +3,6 @@ import { Section } from '../components/UIComponents';
 import { ASSETS } from '../config';
 import { Download } from 'lucide-react';
 
-interface SponsorsProps {
-    onOpenSponsorModal?: () => void;
-}
-
 interface Sponsor {
   name: string;
   initials: string;
@@ -63,8 +59,8 @@ const SponsorLogo: React.FC<{
   );
 };
 
-export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
-  const MEDIA_KIT_URL = "";
+export const Sponsors: React.FC = () => {
+  const MEDIA_KIT_URL = "https://drive.google.com/file/d/1Cai1MrG1hbuli8ud7Y7K_HAqPx4IcSYR/view?usp=drive_link";
 
   const goldSponsors: Sponsor[] = [
     { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia.png"},
@@ -243,11 +239,14 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
                   <Download className="w-5 h-5 group-hover:animate-bounce" />
                   <span className="font-medium">Consulte o nosso Media Kit e descubra as vantagens de ser parceiro</span>
               </a>
-              {onOpenSponsorModal && (
-                <button onClick={onOpenSponsorModal} className="px-10 py-4 bg-[#D3122A] hover:bg-white hover:text-[#D3122A] text-white text-lg md:text-xl font-bold rounded-lg shadow-lg transition-all duration-300 transform hover:-translate-y-1 font-sora">
-                    Torne-se um Patrocinador do TugÁgil Experience 2026
-                </button>
-              )}
+              <a 
+                href="https://forms.gle/BYNi9Gu7yHH2b4A16"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block bg-[#E31E2D] text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-lg hover:bg-white hover:text-[#00693E] transition-all duration-300 transform hover:-translate-y-1 font-sora"
+              >
+                  Torne-se um Patrocinador do TugÁgil Experience 2026
+              </a>
           </div>
         </div>
       </div>
