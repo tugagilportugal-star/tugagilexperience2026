@@ -46,7 +46,7 @@ export const Team: React.FC = () => {
       linkedin: "https://www.linkedin.com/in/natasha-doria-18070448/"
     },
     {
-      name: "Aline Alvim",
+      name: "Aline-Alvim",
       image: "/assets/Aline.png",
       linkedin: "https://www.linkedin.com/in/alvimaline"
     }, 

@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
                     <img 
                         src={ASSETS.TUGAGIL_LOGO} 
                         alt="TugÁgil" 
-                        className="h-[150px] w-auto object-contain hover:opacity-80 transition-opacity drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
+                        className="h-12 w-auto object-contain hover:opacity-80 transition-opacity drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
                     />
                 </a>
                 <span className="text-sm text-zinc-400 font-light font-jakarta">Comunidade de Práticas</span>

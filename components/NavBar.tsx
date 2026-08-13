@@ -56,19 +56,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* LOGO */}
-            <div className="flex items-center">
-              <Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:scale-105 transition-all group">
-                <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md">
-                    T
-                  </span>
-                  <span className="text-lg font-black text-white tracking-wider font-sora">
-                    TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
-                  </span>
-                </div>
-              </Link>
-            </div>
+            {/* LOGO OFICIAL */}
+<div className="flex items-center">
+  <Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:scale-105 transition-transform">
+     <img 
+       src={ASSETS.TUGAGIL_EXPERIENCE_LOGO} 
+       alt="TugÁgil Experience" 
+       className="h-10 sm:h-12 w-auto object-contain"
+     />
+  </Link>
+</div>
 
             {/* LINKS & CTA (DESKTOP) */}
             <div className="hidden xl:flex items-center gap-10">
@@ -134,16 +131,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
         }`}
       >
         <div className="flex justify-between items-center p-6 border-b border-white/10">
-             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="group">
-                <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0A5C36] to-[#D3122A] flex items-center justify-center text-white font-black text-sm shadow-md">
-                    T
-                  </span>
-                  <span className="text-lg font-black text-white tracking-wider font-sora">
-                    TUGÁGIL <span className="text-zinc-500 font-medium text-sm">EXPERIENCE</span>
-                  </span>
-                </div>
-             </Link>
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
+              <img 
+              src={ASSETS.TUGAGIL_EXPERIENCE_LOGO} 
+              alt="TugÁgil Experience" 
+              className="h-8 w-auto object-contain" 
+              />
+            </Link>
              <button 
                onClick={() => setIsMobileMenuOpen(false)}
                className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
