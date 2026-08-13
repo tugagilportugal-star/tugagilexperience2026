@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
      <img 
        src={ASSETS.TUGAGIL_EXPERIENCE_LOGO} 
        alt="TugÁgil Experience" 
-       className="h-10 sm:h-12 w-auto object-contain"
+       className="h-16 sm:h-20 w-auto object-contain"
      />
   </Link>
 </div>
@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
               <img 
               src={ASSETS.TUGAGIL_EXPERIENCE_LOGO} 
               alt="TugÁgil Experience" 
-              className="h-8 w-auto object-contain" 
+              className="h-12 sm:h-14 w-auto object-contain" 
               />
             </Link>
              <button 
