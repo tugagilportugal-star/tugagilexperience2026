@@ -24,9 +24,9 @@ import { BenefitsPage } from './sections/Benefits';
 /* ========================= COMPONENTE HOME ========================= */
 const HomePage: React.FC<{ 
   openTicket: () => void, 
-  setSponsorModalOpen: (v: boolean) => void,
+
   setSupporterModalOpen: (v: boolean) => void 
-}> = ({ openTicket, setSponsorModalOpen, setSupporterModalOpen }) => (
+}> = ({ openTicket, setSupporterModalOpen }) => (
   <main>
     <Hero onOpenTicketModal={openTicket} />
     <About />
@@ -37,7 +37,7 @@ const HomePage: React.FC<{
     {/* <WhyAttend />*/}
     <Speakers />
     {/*<Recap onOpenTicketModal={openTicket} />*/}
-    <Sponsors onOpenSponsorModal={() => setSponsorModalOpen(true)} />
+    
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} /> 
     <Team />
@@ -47,7 +47,7 @@ const HomePage: React.FC<{
 
 /* ========================= COMPONENTE APP ========================= */
 const App: React.FC = () => {
-  const [isSponsorModalOpen, setSponsorModalOpen] = useState(false);
+ 
   const [isSupporterModalOpen, setSupporterModalOpen] = useState(false);
   const [isTicketModalOpen, setTicketModalOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
@@ -94,7 +94,6 @@ const App: React.FC = () => {
       <Navbar /> {/* O Navbar agora só existe na Home */}
       <HomePage 
         openTicket={openTicket} 
-        setSponsorModalOpen={setSponsorModalOpen}
         setSupporterModalOpen={setSupporterModalOpen} 
       />
     </>
@@ -115,9 +114,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Modais */}
-          <Modal isOpen={isSponsorModalOpen} onClose={() => setSponsorModalOpen(false)} title="Patrocinador">
-            <SponsorForm />
-          </Modal>
+
 
           <Modal isOpen={isSupporterModalOpen} onClose={() => setSupporterModalOpen(false)} title="Apoiador">
             <SupporterForm />
