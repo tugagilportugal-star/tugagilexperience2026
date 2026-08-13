@@ -180,20 +180,7 @@ export const Speakers: React.FC = () => {
           </div>
         </div>
 
-        {/* CTA PARA A AGENDA */}
-        <div className="mt-20 mb-12 flex flex-col items-center">
-          <Link
-            to="/agenda"
-            className="group relative inline-flex items-center gap-6 px-12 py-6 bg-gradient-to-r from-[#0A5C36] to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-500 transition-all duration-300 rounded-2xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-1"
-          >
-            <span className="text-xl font-black tracking-tight font-sora">Explorar Agenda Completa</span>
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#D3122A] transition-colors">
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
-        </div>
-
-        {/* Banner Call for Speakers 2027 — fundo verde */}
+        {/* Banner Call for Speakers */}
         <div className="mt-16 p-8 md:p-12 bg-gradient-to-br from-[#00331F] via-[#00693E] to-[#00875A] text-center w-full rounded-3xl shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
           {/* Detalhes decorativos vermelhos */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#E31E2D] opacity-10 rounded-full"></div>
@@ -201,17 +188,17 @@ export const Speakers: React.FC = () => {
           
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm mb-4 border border-white/20">
-              <span className="font-bold text-white text-sm font-sora">TugÁgil Experience 2027</span>
+              <span className="font-bold text-white text-sm font-sora">TugÁgil Experience 2026</span>
             </div>
             
             <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight font-sora">
-              Inspirado por estes líderes? O próximo palco pode ser o seu.
+              O palco pode também ser seu!
             </h3>
             
             <p className="text-emerald-100 text-base mb-6 max-w-3xl mx-auto leading-relaxed font-jakarta">
-              Quer partilhar a sua experiência, casos de sucesso ou visão sobre agilidade no <strong className="text-white">TugÁgil Experience 2027</strong>? 
+              Partilhe a tua experiência, caso de sucesso ou visão sobre agilidade com a comunidade no <strong className="text-white">TugÁgil Experience 2026</strong>! 
               <br />
-              Já estamos a construir a próxima edição e queremos ouvir a sua história.
+              Queremos dar voz a comunidade e para isso contamos contigo! Se tens uma talk, ideia ou caso de sucesso que queiras partilhar, submete a tua candidatura e junta-te a nós no palco do TugÁgil Experience 2026.
             </p>
               
             <a 
@@ -220,7 +207,7 @@ export const Speakers: React.FC = () => {
               rel="noopener noreferrer"
               className="inline-block bg-[#E31E2D] text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-lg hover:bg-white hover:text-[#00693E] transition-all duration-300 transform hover:-translate-y-1 font-sora"
             >
-              Candidatar-me para 2027
+              Enviar Candidatura
             </a>
           </div>
         </div>

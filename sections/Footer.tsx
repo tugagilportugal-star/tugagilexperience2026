@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
                     aria-label="Visitar site da TugÁgil"
                 >
                     <img 
-                        src={ASSETS.TUGAGIL_EXP_2026} 
+                        src={ASSETS.TUGAGIL_LOGO} 
                         alt="TugÁgil" 
                         className="h-[150px] w-auto object-contain hover:opacity-80 transition-opacity drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
                     />
