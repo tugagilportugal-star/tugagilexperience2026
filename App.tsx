@@ -32,8 +32,6 @@ const HomePage: React.FC<{
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
-    <Speakers />
-    <Sponsors onOpenSponsorModal={() => setSponsorModalOpen(true)} />
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} />
     <Team />

@@ -47,7 +47,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
     { label: 'O EVENTO', href: '/#about', isRoute: false },
     { label: 'PROGRAMA', href: '/#program', isRoute: false },
     { label: 'AGENDA', href: '/agenda', isRoute: true },
-    { label: 'SPEAKERS', href: '/#speakers', isRoute: false },
   ];
 
   return (
