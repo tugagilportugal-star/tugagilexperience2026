@@ -51,7 +51,7 @@ export const About: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">O O Nosso Propósito</h3>
+                  <h3 className="text-emerald-400 font-bold text-lg font-sora uppercase tracking-wider">O Nosso Propósito</h3>
                   <p className="text-zinc-200 text-base md:text-lg mt-2 leading-relaxed">
                     Apoiamos pessoas e empresas a transformarem conhecimento em prática e cooperação em impacto real, impulsionando a evolução da agilidade no país.
                   </p>
