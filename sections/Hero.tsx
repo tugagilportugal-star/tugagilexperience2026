@@ -66,22 +66,25 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
             Adquirir Bilhete
           </button>
 
-          {/* Botão de Patrocinador Secundário */}
-          <button 
-            onClick={() => {}} 
+          {/* Botão de Patrocinador Secundário ligado ao Google Form */} [1.2.7]
+          <a 
+            href="https://forms.gle/hC6sU3WuBQYjjCyZ9" 
+            target="_blank" 
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800 text-white font-bold text-base tracking-wider uppercase transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center font-sora w-full sm:w-auto backdrop-blur-sm"
           >
             Quero Patrocinar o Evento
-          </button>
+          </a>
 
         </div>
 
         {/* 5. PROVA SOCIAL HUMANA (Inspirado no Retângulo Amarelo) [1.2.7] */}
         <div className="flex items-center gap-3 animate-fade-in bg-zinc-950/40 border border-zinc-900 rounded-2xl px-5 py-3 backdrop-blur-sm">
           <div className="flex -space-x-3 overflow-hidden">
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Marina" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Raquel" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Sylvia" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Matheus" alt="Membro TugÁgil" />
           </div>
           <p className="text-xs md:text-sm font-semibold text-zinc-400 font-jakarta text-left">
             Mais de <span className="text-white font-bold">+1000 profissionais</span> alcançados pela nossa comunidade, através dos nossos eventos.
