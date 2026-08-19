@@ -81,10 +81,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         {/* 5. PROVA SOCIAL HUMANA (Inspirado no Retângulo Amarelo) [1.2.7] */}
         <div className="flex items-center gap-3 animate-fade-in bg-zinc-950/40 border border-zinc-900 rounded-2xl px-5 py-3 backdrop-blur-sm">
           <div className="flex -space-x-3 overflow-hidden">
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Marina" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Raquel" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Sylvia" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Matheus" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Marina.png" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Raquel.png" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Sylvia.png" alt="Membro TugÁgil" />
+            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Matheus.png" alt="Membro TugÁgil" />
           </div>
           <p className="text-xs md:text-sm font-semibold text-zinc-400 font-jakarta text-left">
             Mais de <span className="text-white font-bold">+1000 profissionais</span> alcançados pela nossa comunidade, através dos nossos eventos.
