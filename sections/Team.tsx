@@ -42,12 +42,12 @@ export const Team: React.FC = () => {
     },
     {
       name: "Natasha Doria",
-      image: "/assets/Natasha.png",
+      image: "/assets/Natasha2.png",
       linkedin: "https://www.linkedin.com/in/natasha-doria-18070448/"
     },
     {
       name: "Aline Alvim",
-      image: "/assets/Aline-Alvim.png",
+      image: "/assets/Aline.png",
       linkedin: "https://www.linkedin.com/in/alvimaline"
     }, 
   ];

@@ -79,11 +79,11 @@ export const About: React.FC = () => {
       <section className="relative bg-[#050806] text-white py-24 overflow-hidden border-t border-zinc-900">
         
         {/* Imagem de Fundo de Gaia (Visível e integrada sem conflitar com o texto) */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-zinc-950/70">
           <img 
-            src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80" 
+            src="/assets/Vila-Nova-de-Gaia.jpeg" 
             alt="Vila Nova de Gaia" 
-            className="w-full h-full object-cover opacity-25 grayscale"
+            className="w-full h-full object-cover opacity-60 grayscale"
           />
           <div className="absolute inset-0 bg-[#050806]/85" />
         </div>

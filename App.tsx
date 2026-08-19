@@ -32,8 +32,6 @@ const HomePage: React.FC<{
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
-    
-    {/* Secções da Aline agora integradas e ativas */}
     <Speakers />
     <Sponsors onOpenSponsorModal={() => setSponsorModalOpen(true)} />
     <GetInvolved />

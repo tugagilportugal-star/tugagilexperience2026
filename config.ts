@@ -4,7 +4,7 @@ export const ASSETS = {
   // Imagens de fundo
   HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
-  GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80",
+  GAIA_BG: "/assets/Vila-Nova-de-Gaia.jpeg",
   
   // Logótipos do TugÁgil Experience
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",

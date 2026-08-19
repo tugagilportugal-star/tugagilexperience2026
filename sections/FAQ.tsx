@@ -12,7 +12,7 @@ export const FAQ: React.FC<{ onOpenTicketModal?: () => void }> = () => {
     const faqData: { question: string; answer: React.ReactNode }[] =[
         {
             question: "Onde será o evento?",
-            answer: "O evento terá lugar no ISLA GAIA, na vibrante cidade de Vila Nova de Gaia. Escolhemos este espaço para unir a energia de um dos maiores ecossistemas de ensino tecnológico do país à máxima conveniência para os nossos participantes: tem a Linha D do metro nas proximidades e facilidade de estacionamento nas imediações."
+            answer: "O evento terá lugar no ISLA Gaia, na vibrante cidade de Vila Nova de Gaia. Escolhemos este espaço para unir a energia de um dos maiores ecossistemas de ensino tecnológico do país à máxima conveniência para os nossos participantes: tem a Linha Amarela do metro nas proximidades e facilidade de estacionamento nas imediações."
         },
         {
             question: "Qual a data do evento?",
@@ -20,7 +20,7 @@ export const FAQ: React.FC<{ onOpenTicketModal?: () => void }> = () => {
         },
         {
             question: "O evento será em inglês ou português?",
-            answer: "Como um evento internacional, teremos sessões em ambos os idiomas. O TugÁgil Experience preza pela multiculturalidade, por isso espere keynotes globais em inglês, mas também trilhas e talks locais em português."
+            answer: "O TugÁgil Experience preza pela multiculturalidade, por isso espere keynotes, trilhas e talks locais em português e em inglês."
         },
         {
             question: "Para quem é este evento?",
