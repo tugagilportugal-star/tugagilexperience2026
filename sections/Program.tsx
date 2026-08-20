@@ -44,18 +44,6 @@ export const Program: React.FC = () => {
             </div>
           ))}
         </div>
-
-        {/* Link para a Agenda Completa */}
-        <div className="flex justify-center">
-          <Link 
-            to="/agenda" 
-            onClick={() => window.scrollTo(0,0)}
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-bold transition-all text-center"
-          >
-            Confera a Agenda Completa →
-          </Link>
-        </div>
-
       </div>
     </section>
   );
