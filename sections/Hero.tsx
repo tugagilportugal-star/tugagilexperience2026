@@ -1,5 +1,5 @@
 // sections/Hero.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ASSETS } from '../config';
 
 interface HeroProps {
@@ -7,6 +7,46 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
+  // Configuração do Alvo: 21 de Novembro de 2026 às 08:00
+  const targetDate = new Date('2026-11-21T08:00:00').getTime();
+
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  const countdownBlocks = [
+    { label: 'Dias', value: timeLeft.days },
+    { label: 'Horas', value: timeLeft.hours },
+    { label: 'Minutos', value: timeLeft.minutes },
+    { label: 'Segundos', value: timeLeft.seconds },
+  ];
+
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-[#050806] overflow-hidden">
       
@@ -45,7 +85,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         </p>
 
         {/* LOCALIZAÇÃO EM DESTAQUE */}
-        <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl mb-12 backdrop-blur-md text-xs md:text-sm font-bold text-emerald-400 font-sora">
+        <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl mb-8 backdrop-blur-md text-xs md:text-sm font-bold text-emerald-400 font-sora">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -55,8 +95,25 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
           <span className="text-zinc-300">Vila Nova de Gaia, Portugal</span>
         </div>
 
-        {/* 4. DOIS BOTÕES DE ALTA CONVERSÃO PARALELOS (Efeito Responsivo Lado-a-Lado) [1.2.7] */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-2xl mb-12">
+        {/* CRONÓMETRO (COUNTDOWN) */}
+        <div className="grid grid-cols-4 gap-3 md:gap-4 w-full max-w-sm md:max-w-md mb-12">
+          {countdownBlocks.map((block, idx) => (
+            <div 
+              key={idx} 
+              className="bg-zinc-900/55 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-3 md:p-4 text-center flex flex-col justify-center"
+            >
+              <span className="text-2xl md:text-4xl font-black text-emerald-400 font-mono leading-none block">
+                {String(block.value).padStart(2, '0')}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-1.5 font-sora">
+                {block.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* DOIS BOTÕES PARALELOS */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-2xl">
           
           {/* Botão de Compra de Bilhete Principal */}
           <button 
@@ -66,7 +123,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
             Adquirir Bilhete
           </button>
 
-          {/* Botão de Patrocinador Secundário ligado ao Google Form */} [1.2.7]
+          {/* Botão de Patrocinador Secundário */}
           <a 
             href="https://forms.gle/hC6sU3WuBQYjjCyZ9" 
             target="_blank" 
@@ -78,27 +135,6 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
 
         </div>
 
-        {/* 5. PROVA SOCIAL HUMANA (Inspirado no Retângulo Amarelo) [1.2.7] */}
-        <div className="flex items-center gap-3 animate-fade-in bg-zinc-950/40 border border-zinc-900 rounded-2xl px-5 py-3 backdrop-blur-sm">
-          <div className="flex -space-x-3 overflow-hidden">
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Marina.png" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Raquel.png" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Sylvia.png" alt="Membro TugÁgil" />
-            <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#050806] object-cover" src="/assets/Matheus.png" alt="Membro TugÁgil" />
-          </div>
-          <p className="text-xs md:text-sm font-semibold text-zinc-400 font-jakarta text-left">
-            Mais de <span className="text-white font-bold">+1000 profissionais</span> alcançados pela nossa comunidade, através dos nossos eventos.
-          </p>
-        </div>
-
-      </div>
-
-      {/* Indicador de Rolar a Página */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 opacity-50 z-10">
-        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-sora">Rolar para explorar</span>
-        <div className="w-1.5 h-6 bg-zinc-800 rounded-full relative overflow-hidden">
-          <div className="w-full h-2 bg-emerald-500 rounded-full absolute top-1 animate-[bounce_1.5s_infinite]" />
-        </div>
       </div>
 
     </section>
