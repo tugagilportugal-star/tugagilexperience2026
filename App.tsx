@@ -30,7 +30,7 @@ const HomePage: React.FC<{
   <main>
     <Hero onOpenTicketModal={openTicket} />
     <About />
-    <Program onOpenTicketModal={openTicket} />
+    <Program />
      
      {/* Secções antigas do RSG ocultadas por agora de forma segura. 
         Iremos reativá-las uma a uma conforme as formos desenhando! */}
@@ -91,7 +91,7 @@ const App: React.FC = () => {
 <Routes>
   <Route path="/" element={
     <>
-      <Navbar /> {/* O Navbar agora só existe na Home */}
+      <Navbar onOpenTicketModal={openTicket}/> {/* O Navbar agora só existe na Home */}
       <HomePage 
         openTicket={openTicket} 
         setSupporterModalOpen={setSupporterModalOpen} 
