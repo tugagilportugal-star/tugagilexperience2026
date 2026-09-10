@@ -155,8 +155,8 @@ export const Speakers: React.FC = () => {
             Grandes nomes da agilidade, inovação e inteligência artificial.
           </p>
         </div>
-
-        {/* SECÇÃO KEYNOTES */}
+{/* DESCOMENTAR QUANDO HOUVER SPEAKERS CONFIRMADOS
+        SECÇÃO KEYNOTES 
         <div className="mb-24 w-full">
           <h3 className="text-2xl font-black text-white mb-10 text-center md:text-left flex items-center justify-center md:justify-start gap-3 tracking-tighter font-sora">
             <Sparkles className="text-[#D3122A] w-6 h-6" /> Keynotes
@@ -168,7 +168,7 @@ export const Speakers: React.FC = () => {
           </div>
         </div>
 
-        {/* SECÇÃO SPEAKERS */}
+         SECÇÃO SPEAKERS 
         <div>
           <h3 className="text-2xl font-black text-white mb-10 text-center md:text-left tracking-tighter font-sora">
             Speakers
@@ -180,7 +180,7 @@ export const Speakers: React.FC = () => {
           </div>
         </div>
 
-        {/* CTA PARA A AGENDA */}
+         CTA PARA A AGENDA 
         <div className="mt-20 mb-12 flex flex-col items-center">
           <Link
             to="/agenda"
@@ -192,7 +192,7 @@ export const Speakers: React.FC = () => {
             </div>
           </Link>
         </div>
-
+/*}
         {/* Banner Call for Speakers 2026 — fundo verde */}
         <div className="mt-16 p-8 md:p-12 bg-gradient-to-br from-[#00331F] via-[#00693E] to-[#00875A] text-center w-full rounded-3xl shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
           {/* Detalhes decorativos vermelhos */}

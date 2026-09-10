@@ -37,7 +37,7 @@ const HomePage: React.FC<{
     {/* <WhyAttend />*/}
     <Speakers />
     {/*<Recap onOpenTicketModal={openTicket} />*/}
-    
+    <Sponsors />
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} /> 
     <Team />
