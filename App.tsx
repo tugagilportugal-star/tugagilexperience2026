@@ -15,12 +15,18 @@ import { FAQ } from './sections/FAQ';
 import { Footer } from './sections/Footer';
 import { Team } from './sections/Team';
 import { Modal, SuccessState } from './components/UIComponents';
-import { AdminView } from './components/AdminView';
 import { Settings, X } from 'lucide-react';
 import { TicketPurchaseModal } from './components/TicketPurchaseModal';
 import { TicketStatusProvider } from './hooks/useTicketStatus';
 import { AgendaPage } from './sections/Agenda';
 import { BenefitsPage } from './sections/Benefits';
+
+// Lazy: só carrega (e só inicializa o client Supabase) quando alguém navega
+// para /admin — assim as páginas públicas não dependem de VITE_SUPABASE_URL /
+// VITE_SUPABASE_ANON_KEY estarem configuradas para renderizar.
+const AdminView = React.lazy(() =>
+  import('./components/AdminView').then((m) => ({ default: m.AdminView }))
+);
 
 /* ========================= COMPONENTE HOME ========================= */
 const HomePage: React.FC<{ 
@@ -68,7 +74,11 @@ const App: React.FC = () => {
   }
 
   if (isAdminRoute) {
-    return <AdminView onClose={() => { window.location.href = '/'; }} />;
+    return (
+      <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">A carregar...</div>}>
+        <AdminView onClose={() => { window.location.href = '/'; }} />
+      </React.Suspense>
+    );
   }
 
   const openTicket = () => setTicketModalOpen(true);

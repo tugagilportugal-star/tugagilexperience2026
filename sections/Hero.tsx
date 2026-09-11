@@ -1,6 +1,6 @@
 // sections/Hero.tsx
 import React from 'react';
-import { ASSETS } from '../config';
+import { ASSETS, TICKETS_ON_SALE } from '../config';
 
 interface HeroProps {
   onOpenTicketModal: () => void;
@@ -58,13 +58,15 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         {/* 4. DOIS BOTÕES DE ALTA CONVERSÃO PARALELOS (Efeito Responsivo Lado-a-Lado) [1.2.7] */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-2xl mb-12">
           
-          {/* Botão de Compra de Bilhete Principal */}
-          <button 
-            onClick={onOpenTicketModal} 
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-base tracking-wider uppercase transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-500/20 font-sora w-full sm:w-auto"
-          >
-            Adquirir Bilhete
-          </button>
+          {/* Botão de Compra de Bilhete Principal — oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+          {TICKETS_ON_SALE && (
+            <button
+              onClick={onOpenTicketModal}
+              className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-base tracking-wider uppercase transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-500/20 font-sora w-full sm:w-auto"
+            >
+              Adquirir Bilhete
+            </button>
+          )}
 
           {/* Botão de Patrocinador Secundário ligado ao Google Form */} [1.2.7]
           <a 

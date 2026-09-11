@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { TicketPurchaseModal } from '../components/TicketPurchaseModal';
 import { X, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { TICKETS_ON_SALE } from '../config';
 
 interface AgendaItem {
   time: string;
@@ -81,12 +82,15 @@ export const AgendaPage: React.FC = () => {
         <Link to="/" className="inline-flex items-center gap-2 text-zinc-300 hover:text-white font-bold text-sm font-sora">
           <ArrowLeft size={18} /> Voltar ao Site
         </Link>
-        <button 
-          onClick={() => setTicketModalOpen(true)}
-          className="px-6 py-2.5 rounded-lg bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-xs uppercase tracking-wider transition-all font-sora"
-        >
-          Comprar Bilhete
-        </button>
+        {/* Oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+        {TICKETS_ON_SALE && (
+          <button
+            onClick={() => setTicketModalOpen(true)}
+            className="px-6 py-2.5 rounded-lg bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-xs uppercase tracking-wider transition-all font-sora"
+          >
+            Comprar Bilhete
+          </button>
+        )}
       </nav>
       
       <div className="max-w-5xl mx-auto px-6 py-12">
@@ -192,19 +196,21 @@ export const AgendaPage: React.FC = () => {
           </div>
         )}
 
-        {/* CTA Final */}
-        <div className="mt-16 p-6 bg-zinc-900/30 border border-zinc-900 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h4 className="font-bold text-white font-sora">Bilhetes Disponíveis</h4>
-            <p className="text-sm text-zinc-400 font-jakarta mt-1">Garanta já a sua presença na primeira edição do TugÁgil Experience.</p>
+        {/* CTA Final — bloco oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+        {TICKETS_ON_SALE && (
+          <div className="mt-16 p-6 bg-zinc-900/30 border border-zinc-900 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h4 className="font-bold text-white font-sora">Bilhetes Disponíveis</h4>
+              <p className="text-sm text-zinc-400 font-jakarta mt-1">Garanta já a sua presença na primeira edição do TugÁgil Experience.</p>
+            </div>
+            <button
+              onClick={() => setTicketModalOpen(true)}
+              className="bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/10 whitespace-nowrap"
+            >
+              Garantir Bilhete
+            </button>
           </div>
-          <button 
-            onClick={() => setTicketModalOpen(true)}
-            className="bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/10 whitespace-nowrap"
-          >
-            Garantir Bilhete
-          </button>
-        </div>
+        )}
       </div>
 
       {/* MODAL DE COMPRA */}

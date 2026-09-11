@@ -1,6 +1,6 @@
 // components/NavBar.tsx
 import React, { useState, useEffect } from 'react';
-import { ASSETS } from '../config';
+import { ASSETS, TICKETS_ON_SALE } from '../config';
 import { Menu, X, ArrowUp } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -89,13 +89,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
                 ))}
               </div>
 
-              {/* Botão de Compra no Canto Direito */}
-              <button 
-                onClick={onOpenTicketModal}
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-xs uppercase tracking-wider transition-all"
-              >
-                Comprar Bilhete
-              </button>
+              {/* Botão de Compra no Canto Direito — oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+              {TICKETS_ON_SALE && (
+                <button
+                  onClick={onOpenTicketModal}
+                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-xs uppercase tracking-wider transition-all"
+                >
+                  Comprar Bilhete
+                </button>
+              )}
             </div>
 
             {/* MOBILE TRIGGER */}
@@ -166,12 +168,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
                 </a>
               )
             ))}
-            <button 
-              onClick={() => { setIsMobileMenuOpen(false); onOpenTicketModal(); }}
-              className="w-full max-w-xs py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-base uppercase tracking-wider transition-all text-center shadow-lg"
-            >
-              Comprar Bilhete
-            </button>
+            {/* Oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+            {TICKETS_ON_SALE && (
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); onOpenTicketModal(); }}
+                className="w-full max-w-xs py-4 rounded-xl bg-[#0A5C36] hover:bg-[#08482b] text-white font-bold text-base uppercase tracking-wider transition-all text-center shadow-lg"
+              >
+                Comprar Bilhete
+              </button>
+            )}
         </div>
       </div>
     </>

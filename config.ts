@@ -1,5 +1,11 @@
 // src/config.ts
 
+// Master switch for showing the ticket-purchase CTAs (Hero, NavBar, Agenda).
+// Turned off on 2026-09-10 because confirmation emails/invoices still
+// reference the old event (RSG Lisbon 2026) instead of TugÁgil Experience —
+// see TICKET_SALES_TOGGLE.md for the full reasoning and how to re-enable.
+export const TICKETS_ON_SALE = false;
+
 export const ASSETS = {
   // Imagens de fundo
   HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
