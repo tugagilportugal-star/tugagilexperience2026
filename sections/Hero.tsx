@@ -1,6 +1,7 @@
 // sections/Hero.tsx
 import React from 'react';
 import { ASSETS, TICKETS_ON_SALE } from '../config';
+import { isEmbedded } from '../lib/isEmbedded';
 
 interface HeroProps {
   onOpenTicketModal: () => void;
@@ -8,7 +9,7 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-[#050806] overflow-hidden">
+    <section className={`relative flex items-center justify-center bg-[#050806] overflow-hidden ${isEmbedded ? 'py-24' : 'min-h-screen'}`}>
       
       {/* 1. Imagem de Fundo de Alta Resolução */}
       <div className="absolute inset-0 z-0">

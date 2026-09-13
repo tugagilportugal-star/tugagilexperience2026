@@ -20,6 +20,7 @@ import { TicketPurchaseModal } from './components/TicketPurchaseModal';
 import { TicketStatusProvider } from './hooks/useTicketStatus';
 import { AgendaPage } from './sections/Agenda';
 import { BenefitsPage } from './sections/Benefits';
+import { isEmbedded } from './lib/isEmbedded';
 
 // Lazy: só carrega (e só inicializa o client Supabase) quando alguém navega
 // para /admin — assim as páginas públicas não dependem de VITE_SUPABASE_URL /
@@ -86,7 +87,7 @@ const App: React.FC = () => {
   return (
     <TicketStatusProvider>
       <Router>
-        <div className="relative min-h-screen bg-white">
+        <div className={`relative bg-white ${isEmbedded ? '' : 'min-h-screen'}`}>
           
           <Routes>
             <Route path="/" element={
