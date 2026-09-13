@@ -1,4 +1,3 @@
-
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -12,6 +11,9 @@ export default {
           blue: '#009FDA',
           darkBlue: '#003F59',
           orange: '#F47A20',
+          green: '#00693E',
+          darkGreen: '#00452B',
+          red: '#E31E2D',
         }
       },
       fontFamily: {

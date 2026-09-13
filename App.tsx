@@ -4,13 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/NavBar';
 import { Hero } from './sections/Hero';
 import { About } from './sections/About';
-import { Features } from './sections/Features';
 import { Program } from './sections/Program';
-import { WhyAttend } from './sections/WhyAttend';
 import { Sponsors } from './sections/Sponsors';
 import { Speakers } from './sections/Speakers';
-import { GetInvolved, SponsorForm, SupporterForm } from './sections/GetInvolved';
-import { Recap } from './sections/Recap';
+import { GetInvolved, SupporterForm } from './sections/GetInvolved';
 import { FAQ } from './sections/FAQ';
 import { Footer } from './sections/Footer';
 import { Team } from './sections/Team';
@@ -30,15 +27,21 @@ const AdminView = React.lazy(() =>
 );
 
 /* ========================= COMPONENTE HOME ========================= */
-const HomePage: React.FC<{ 
-  openTicket: () => void, 
-  setSponsorModalOpen: (v: boolean) => void,
-  setSupporterModalOpen: (v: boolean) => void 
-}> = ({ openTicket, setSponsorModalOpen, setSupporterModalOpen }) => (
+const HomePage: React.FC<{
+  openTicket: () => void,
+  setSupporterModalOpen: (v: boolean) => void
+}> = ({ openTicket, setSupporterModalOpen }) => (
   <main>
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
+
+    {/* Secções antigas do RSG ocultadas por agora de forma segura.
+       Iremos reativá-las uma a uma conforme as formos desenhando! */}
+    {/* <WhyAttend />*/}
+    <Speakers />
+    {/*<Recap onOpenTicketModal={openTicket} />*/}
+    <Sponsors />
     <GetInvolved />
     <FAQ onOpenTicketModal={openTicket} />
     <Team />
@@ -47,7 +50,7 @@ const HomePage: React.FC<{
 
 /* ========================= COMPONENTE APP ========================= */
 const App: React.FC = () => {
-  const [isSponsorModalOpen, setSponsorModalOpen] = useState(false);
+
   const [isSupporterModalOpen, setSupporterModalOpen] = useState(false);
   const [isTicketModalOpen, setTicketModalOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
@@ -88,16 +91,15 @@ const App: React.FC = () => {
     <TicketStatusProvider>
       <Router>
         <div className={`relative bg-white ${isEmbedded ? '' : 'min-h-screen'}`}>
-          
+
           <Routes>
             <Route path="/" element={
               <>
                 {/* Navbar no topo com o link de abertura do modal de bilhetes */}
                 <Navbar onOpenTicketModal={openTicket} />
-                <HomePage 
-                  openTicket={openTicket} 
-                  setSponsorModalOpen={setSponsorModalOpen}
-                  setSupporterModalOpen={setSupporterModalOpen} 
+                <HomePage
+                  openTicket={openTicket}
+                  setSupporterModalOpen={setSupporterModalOpen}
                 />
               </>
             } />
@@ -118,9 +120,6 @@ const App: React.FC = () => {
           </div>
 
           {/* Modais */}
-          <Modal isOpen={isSponsorModalOpen} onClose={() => setSponsorModalOpen(false)} title="Patrocinador">
-            <SponsorForm />
-          </Modal>
 
           <Modal isOpen={isSupporterModalOpen} onClose={() => setSupporterModalOpen(false)} title="Apoiador">
             <SupporterForm />
@@ -133,13 +132,13 @@ const App: React.FC = () => {
           {/* Modal de Tickets (Compra) */}
           {isTicketModalOpen && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-              <div 
-                className="fixed inset-0 bg-brand-darkBlue/80 backdrop-blur-sm" 
+              <div
+                className="fixed inset-0 bg-brand-darkBlue/80 backdrop-blur-sm"
                 onClick={() => setTicketModalOpen(false)}
               ></div>
               <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <button 
-                  onClick={() => setTicketModalOpen(false)} 
+                <button
+                  onClick={() => setTicketModalOpen(false)}
                   className="absolute top-4 right-4 z-[120] flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-brand-darkBlue hover:text-white transition-colors"
                 >
                   <X size={20} />
@@ -151,7 +150,7 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* Footer da Aline Ativado */}
+          {/* Footer */}
           <Footer />
 
         </div>

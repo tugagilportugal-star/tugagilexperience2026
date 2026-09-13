@@ -3,10 +3,6 @@ import { Section } from '../components/UIComponents';
 import { ASSETS } from '../config';
 import { Download } from 'lucide-react';
 
-interface SponsorsProps {
-    onOpenSponsorModal?: () => void;
-}
-
 interface Sponsor {
   name: string;
   initials: string;
@@ -63,37 +59,37 @@ const SponsorLogo: React.FC<{
   );
 };
 
-export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
-  const MEDIA_KIT_URL = "";
+export const Sponsors: React.FC = () => {
+  const MEDIA_KIT_URL = "https://drive.google.com/file/d/1Cai1MrG1hbuli8ud7Y7K_HAqPx4IcSYR/view?usp=drive_link";
 
   const goldSponsors: Sponsor[] = [
     { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia-Logo.png"},
-    { name: "Google", initials: "GO", url: "https://google.com" },
-    { name: "Amazon", initials: "AM", url: "https://amazon.com" },
+    //{ name: "Google", initials: "GO", url: "https://google.com" },
+    //{ name: "Amazon", initials: "AM", url: "https://amazon.com" },
   ];
   
-  const silverSponsors: Sponsor[] = [
-    { name: "Spotify", initials: "SP", url: "https://spotify.com" },
-    { name: "Slack", initials: "SL", url: "https://slack.com" },
-    { name: "Notion", initials: "NO", url: "https://notion.so" },
-    { name: "Figma", initials: "FI", url: "https://figma.com" },
-  ];
+ // const silverSponsors: Sponsor[] = [
+   // { name: "Spotify", initials: "SP", url: "https://spotify.com" },
+    //{ name: "Slack", initials: "SL", url: "https://slack.com" },
+    //{ name: "Notion", initials: "NO", url: "https://notion.so" },
+    //{ name: "Figma", initials: "FI", url: "https://figma.com" },
+  //];
 
-  const bronzeSponsors: Sponsor[] = [
-    { name: "Atlassian", initials: "AT", url: "https://atlassian.com" },
-    { name: "GitHub", initials: "GH", url: "https://github.com" },
-    { name: "Vercel", initials: "VC", url: "https://vercel.com" },
-    { name: "Netlify", initials: "NL", url: "https://netlify.com" },
-    { name: "Stripe", initials: "ST", url: "https://stripe.com" },
-    { name: "Twilio", initials: "TW", url: "https://twilio.com" },
-  ];
+ // const bronzeSponsors: Sponsor[] = [
+  //  { name: "Atlassian", initials: "AT", url: "https://atlassian.com" },
+   // { name: "GitHub", initials: "GH", url: "https://github.com" },
+   // { name: "Vercel", initials: "VC", url: "https://vercel.com" },
+   // { name: "Netlify", initials: "NL", url: "https://netlify.com" },
+    //{ name: "Stripe", initials: "ST", url: "https://stripe.com" },
+   // { name: "Twilio", initials: "TW", url: "https://twilio.com" },
+  //];
 
-  const communitySupporters: Sponsor[] = [
-    { name: "Dev.to", initials: "DV", url: "https://dev.to" },
-    { name: "Stack Overflow", initials: "SO", url: "https://stackoverflow.com" },
-    { name: "Hashnode", initials: "HN", url: "https://hashnode.com" },
-    { name: "Product Hunt", initials: "PH", url: "https://producthunt.com" }
-  ];
+  //const communitySupporters: Sponsor[] = [
+   // { name: "Dev.to", initials: "DV", url: "https://dev.to" },
+   // { name: "Stack Overflow", initials: "SO", url: "https://stackoverflow.com" },
+   // { name: "Hashnode", initials: "HN", url: "https://hashnode.com" },
+    //{ name: "Product Hunt", initials: "PH", url: "https://producthunt.com" }
+  //];
 
   return (
     <Section id="sponsors" className="relative bg-[#050806] border-t border-zinc-900 overflow-hidden">
@@ -103,7 +99,7 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
       
       <div className="relative z-10 text-center max-w-6xl mx-auto px-6 py-24">
         
-        {/* PATROCINADOR OFICIAL */}
+        {/* PATROCINADOR OFICIAL 
         <div className="mb-24">
             <span className="text-sm font-bold tracking-[0.3em] text-zinc-400 uppercase mb-10 block font-sora">
               Patrocinador Oficial
@@ -122,7 +118,7 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
                     />
                 </a>
             </div>
-        </div>
+        </div>*/}
 
         {/* GOLD SPONSORS */}
         {goldSponsors.length > 0 && (
@@ -150,7 +146,7 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
           </div>
         )}
 
-        {/* SILVER SPONSORS */}
+        {/* SILVER SPONSORS 
         {silverSponsors.length > 0 && (
           <div className="mb-24">
             <span className="text-base font-bold tracking-[0.2em] text-zinc-400 uppercase mb-12 block font-sora">
@@ -174,9 +170,9 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
               ))}
             </div>
           </div>
-        )}
+        )}*/}
 
-        {/* BRONZE SPONSORS */}
+        {/* BRONZE SPONSORS 
         <div className="mb-24">
             <span className="text-sm font-bold tracking-[0.2em] text-orange-400 uppercase mb-12 block font-sora">
                 Patrocinadores Bronze
@@ -198,9 +194,9 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
                 </a>
               ))}
             </div>
-        </div>
+        </div>*/}
 
-        {/* COMUNIDADES APOIADORAS */}
+        {/* COMUNIDADES APOIADORAS 
         <div className="mb-24">
             <span className="text-sm font-bold tracking-[0.2em] text-emerald-400 uppercase mb-12 block font-sora">
                 Comunidades Apoiadoras
@@ -222,7 +218,7 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
                 </a>
               ))}
             </div>
-        </div>
+        </div>*/}
 
         {/* SEPARADOR */}
         <div className="mb-16 relative">
@@ -243,11 +239,14 @@ export const Sponsors: React.FC<SponsorsProps> = ({ onOpenSponsorModal }) => {
                   <Download className="w-5 h-5 group-hover:animate-bounce" />
                   <span className="font-medium">Consulte o nosso Media Kit e descubra as vantagens de ser parceiro</span>
               </a>
-              {onOpenSponsorModal && (
-                <button onClick={onOpenSponsorModal} className="px-10 py-4 bg-[#D3122A] hover:bg-white hover:text-[#D3122A] text-white text-lg md:text-xl font-bold rounded-lg shadow-lg transition-all duration-300 transform hover:-translate-y-1 font-sora">
-                    Torne-se um Patrocinador do TugÁgil Experience 2026
-                </button>
-              )}
+              <a 
+                href="https://forms.gle/BYNi9Gu7yHH2b4A16"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block bg-[#E31E2D] text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-lg hover:bg-white hover:text-[#00693E] transition-all duration-300 transform hover:-translate-y-1 font-sora"
+              >
+                  Torne-se um Patrocinador do TugÁgil Experience 2026
+              </a>
           </div>
         </div>
       </div>

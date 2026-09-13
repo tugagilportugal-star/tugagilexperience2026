@@ -11,14 +11,13 @@ export const ASSETS = {
   HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   GAIA_BG: "/assets/Vila-Nova-de-Gaia.jpeg",
-  
+
   // Logótipos do TugÁgil Experience
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
-  TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXP_VERDE.png",
+  TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXP_SEMFUNDO.png",
   ISLA_GAIA_LOGO: "/assets/Isla-Gaia-Logo.png",
-  
-  // Mantidos temporariamente como "pontes" para não quebrar outras secções antigas
-  RSG_LOGO_2026: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg", 
+
+  // Mantidos temporariamente para evitar erros de compilação no NavBar e Sponsors
   SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   SCRUM_ALLIANCE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
   ATELIE_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
