@@ -1,16 +1,21 @@
 // src/config.ts
 
+// Master switch for showing the ticket-purchase CTAs (Hero, NavBar, Agenda).
+// Turned off on 2026-09-10 because confirmation emails/invoices still
+// reference the old event (RSG Lisbon 2026) instead of TugÁgil Experience —
+// see TICKET_SALES_TOGGLE.md for the full reasoning and how to re-enable.
+export const TICKETS_ON_SALE = false;
+
 export const ASSETS = {
   // Imagens de fundo
-  HERO_BG: "https://i.postimg.cc/t4736DTm/Tugagil-864.jpg",
+  HERO_BG: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80",
   GROUP_PHOTO_BG: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",
-  GAIA_BG: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=80",
-  
-  // Novos logótipos
+  GAIA_BG: "/assets/Vila-Nova-de-Gaia.jpeg",
+
+  // Logótipos do TugÁgil Experience
   TUGAGIL_LOGO: "/assets/TUGAGIL_LOGO.png",
   TUGAGIL_EXPERIENCE_LOGO: "/assets/TUGAGIL_EXP_SEMFUNDO.png",
   ISLA_GAIA_LOGO: "/assets/Isla-Gaia-Logo.png",
-  
 
   // Mantidos temporariamente para evitar erros de compilação no NavBar e Sponsors
   SPONSOR_LOGO: "https://i.postimg.cc/xCHQMjQ4/Tugagil-608.jpg",

@@ -1,14 +1,54 @@
 // sections/Hero.tsx
-import React from 'react';
-import { ASSETS } from '../config';
+import React, { useState, useEffect } from 'react';
+import { ASSETS, TICKETS_ON_SALE } from '../config';
+import { isEmbedded } from '../lib/isEmbedded';
 
 interface HeroProps {
   onOpenTicketModal: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
+   // Configuração do Alvo: 21 de Novembro de 2026 às 08:00
+  const targetDate = new Date('2026-11-21T08:00:00').getTime();
+
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  const countdownBlocks = [
+    { label: 'Dias', value: timeLeft.days },
+    { label: 'Horas', value: timeLeft.hours },
+    { label: 'Minutos', value: timeLeft.minutes },
+    { label: 'Segundos', value: timeLeft.seconds },
+  ];
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-[#050806] overflow-hidden">
+    <section className={`relative flex items-center justify-center bg-[#050806] overflow-hidden ${isEmbedded ? 'py-24' : 'min-h-screen'}`}>
       
       {/* 1. Imagem de Fundo de Alta Resolução */}
       <div className="absolute inset-0 z-0">
@@ -55,16 +95,35 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
           <span className="text-zinc-300">Vila Nova de Gaia, Portugal</span>
         </div>
 
+        {/* CRONÓMETRO (COUNTDOWN) */}
+        <div className="grid grid-cols-4 gap-3 md:gap-4 w-full max-w-sm md:max-w-md mb-12">
+          {countdownBlocks.map((block, idx) => (
+            <div 
+              key={idx} 
+              className="bg-zinc-900/55 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-3 md:p-4 text-center flex flex-col justify-center"
+            >
+              <span className="text-2xl md:text-4xl font-black text-emerald-400 font-mono leading-none block">
+                {String(block.value).padStart(2, '0')}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-1.5 font-sora">
+                {block.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
         {/* 4. DOIS BOTÕES DE ALTA CONVERSÃO PARALELOS (Efeito Responsivo Lado-a-Lado) [1.2.7] */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-2xl mb-12">
           
-          {/* Botão de Compra de Bilhete Principal */}
-          <button 
-            onClick={onOpenTicketModal} 
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-base tracking-wider uppercase transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-500/20 font-sora w-full sm:w-auto"
-          >
-            Adquirir Bilhete
-          </button>
+          {/* Botão de Compra de Bilhete Principal — oculto enquanto TICKETS_ON_SALE=false (ver TICKET_SALES_TOGGLE.md) */}
+          {TICKETS_ON_SALE && (
+            <button
+              onClick={onOpenTicketModal}
+              className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A5C36] to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-base tracking-wider uppercase transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center shadow-lg shadow-emerald-500/20 font-sora w-full sm:w-auto"
+            >
+              Adquirir Bilhete
+            </button>
+          )}
 
           {/* Botão de Patrocinador Secundário ligado ao Google Form */} [1.2.7]
           <a 

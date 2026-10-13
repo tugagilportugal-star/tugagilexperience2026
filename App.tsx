@@ -1,53 +1,56 @@
+// src/App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/NavBar';
 import { Hero } from './sections/Hero';
 import { About } from './sections/About';
-import { Features } from './sections/Features';
 import { Program } from './sections/Program';
-import { WhyAttend } from './sections/WhyAttend';
 import { Sponsors } from './sections/Sponsors';
 import { Speakers } from './sections/Speakers';
-import { GetInvolved, SponsorForm, SupporterForm } from './sections/GetInvolved';
-import { Recap } from './sections/Recap';
+import { GetInvolved, SupporterForm } from './sections/GetInvolved';
 import { FAQ } from './sections/FAQ';
 import { Footer } from './sections/Footer';
 import { Team } from './sections/Team';
 import { Modal, SuccessState } from './components/UIComponents';
-import { AdminView } from './components/AdminView';
 import { Settings, X } from 'lucide-react';
 import { TicketPurchaseModal } from './components/TicketPurchaseModal';
 import { TicketStatusProvider } from './hooks/useTicketStatus';
 import { AgendaPage } from './sections/Agenda';
 import { BenefitsPage } from './sections/Benefits';
+import { isEmbedded } from './lib/isEmbedded';
+
+// Lazy: só carrega (e só inicializa o client Supabase) quando alguém navega
+// para /admin — assim as páginas públicas não dependem de VITE_SUPABASE_URL /
+// VITE_SUPABASE_ANON_KEY estarem configuradas para renderizar.
+const AdminView = React.lazy(() =>
+  import('./components/AdminView').then((m) => ({ default: m.AdminView }))
+);
 
 /* ========================= COMPONENTE HOME ========================= */
-const HomePage: React.FC<{ 
-  openTicket: () => void, 
-
-  setSupporterModalOpen: (v: boolean) => void 
+const HomePage: React.FC<{
+  openTicket: () => void,
+  setSupporterModalOpen: (v: boolean) => void
 }> = ({ openTicket, setSupporterModalOpen }) => (
   <main>
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
-     
-     {/* Secções antigas do RSG ocultadas por agora de forma segura. 
-        Iremos reativá-las uma a uma conforme as formos desenhando! */}
+
+    {/* Secções antigas do RSG ocultadas por agora de forma segura.
+       Iremos reativá-las uma a uma conforme as formos desenhando! */}
     {/* <WhyAttend />*/}
     <Speakers />
     {/*<Recap onOpenTicketModal={openTicket} />*/}
     <Sponsors />
     <GetInvolved />
-    <FAQ onOpenTicketModal={openTicket} /> 
+    <FAQ onOpenTicketModal={openTicket} />
     <Team />
-    <Footer />
   </main>
 );
 
 /* ========================= COMPONENTE APP ========================= */
 const App: React.FC = () => {
- 
+
   const [isSupporterModalOpen, setSupporterModalOpen] = useState(false);
   const [isTicketModalOpen, setTicketModalOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
@@ -75,7 +78,11 @@ const App: React.FC = () => {
   }
 
   if (isAdminRoute) {
-    return <AdminView onClose={() => { window.location.href = '/'; }} />;
+    return (
+      <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">A carregar...</div>}>
+        <AdminView onClose={() => { window.location.href = '/'; }} />
+      </React.Suspense>
+    );
   }
 
   const openTicket = () => setTicketModalOpen(true);
@@ -83,25 +90,24 @@ const App: React.FC = () => {
   return (
     <TicketStatusProvider>
       <Router>
-        <div className="relative min-h-screen bg-white">
-          
-          
-          {/* Remove o Navbar daqui de cima */}
+        <div className={`relative bg-white ${isEmbedded ? '' : 'min-h-screen'}`}>
 
-<Routes>
-  <Route path="/" element={
-    <>
-      <Navbar onOpenTicketModal={openTicket}/> {/* O Navbar agora só existe na Home */}
-      <HomePage 
-        openTicket={openTicket} 
-        setSupporterModalOpen={setSupporterModalOpen} 
-      />
-    </>
-  } />
+          <Routes>
+            <Route path="/" element={
+              <>
+                {/* Navbar no topo com o link de abertura do modal de bilhetes */}
+                <Navbar onOpenTicketModal={openTicket} />
+                <HomePage
+                  openTicket={openTicket}
+                  setSupporterModalOpen={setSupporterModalOpen}
+                />
+              </>
+            } />
 
-  <Route path="/agenda" element={<AgendaPage />} />
-  <Route path="/beneficios-exclusivos" element={<BenefitsPage />} />
-</Routes>
+            {/* Rota para a Página Dedicada de Agenda */}
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/beneficios-exclusivos" element={<BenefitsPage />} />
+          </Routes>
 
           {/* Botão Admin */}
           <div className="fixed bottom-6 right-6 z-40">
@@ -115,7 +121,6 @@ const App: React.FC = () => {
 
           {/* Modais */}
 
-
           <Modal isOpen={isSupporterModalOpen} onClose={() => setSupporterModalOpen(false)} title="Apoiador">
             <SupporterForm />
           </Modal>
@@ -127,13 +132,13 @@ const App: React.FC = () => {
           {/* Modal de Tickets (Compra) */}
           {isTicketModalOpen && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-              <div 
-                className="fixed inset-0 bg-brand-darkBlue/80 backdrop-blur-sm" 
+              <div
+                className="fixed inset-0 bg-brand-darkBlue/80 backdrop-blur-sm"
                 onClick={() => setTicketModalOpen(false)}
               ></div>
               <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <button 
-                  onClick={() => setTicketModalOpen(false)} 
+                <button
+                  onClick={() => setTicketModalOpen(false)}
                   className="absolute top-4 right-4 z-[120] flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-brand-darkBlue hover:text-white transition-colors"
                 >
                   <X size={20} />
@@ -144,6 +149,10 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Footer */}
+          <Footer />
+
         </div>
       </Router>
     </TicketStatusProvider>
