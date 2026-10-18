@@ -807,7 +807,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setResendingEmail(type);
     setResendMsg(null);
     try {
-      const res = await fetch('/api/admin/resend-email', {
+      const res = await fetch(withEventId('/api/admin/resend-email', eventIdRef.current || ''), {
         method: 'POST',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, type }),
@@ -854,7 +854,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setGeneratingInvoice(orderId);
     setInvoiceError(null);
     try {
-      const res = await fetch('/api/admin/invoice', {
+      const res = await fetch(withEventId('/api/admin/invoice', eventIdRef.current || ''), {
         method: 'POST',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, ...overrides }),
@@ -881,7 +881,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setSendingInvoiceEmail(orderId);
     setInvoiceEmailMsg(null);
     try {
-      const res = await fetch('/api/admin/resend-email', {
+      const res = await fetch(withEventId('/api/admin/resend-email', eventIdRef.current || ''), {
         method: 'POST',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, type: 'invoice' }),
@@ -904,7 +904,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setGeneratingCreditNote(true);
     setCreditNoteError(null);
     try {
-      const res = await fetch('/api/admin/credit-note', {
+      const res = await fetch(withEventId('/api/admin/credit-note', eventIdRef.current || ''), {
         method: 'POST',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, motivo }),
@@ -933,7 +933,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     try {
       const body: Record<string, unknown> = { order_id: orderId };
       if (motivo) body.motivo = motivo;
-      const res = await fetch('/api/admin/refund', {
+      const res = await fetch(withEventId('/api/admin/refund', eventIdRef.current || ''), {
         method: 'POST',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

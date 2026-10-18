@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { verifyAdminToken } from '../../lib/admin/auth.js';
+import { checkOrderInEvent } from '../../lib/admin/event.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -215,6 +216,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!order_id || !['ticket', 'invoice'].includes(type)) {
     return res.status(400).json({ message: 'order_id e type (ticket|invoice) são obrigatórios.' });
   }
+
+  // A encomenda tem de pertencer ao evento escolhido no admin (?event_id=)
+  const eventCheck = await checkOrderInEvent(req, supabase, String(order_id));
+  if (!eventCheck.ok) return res.status(eventCheck.status || 400).json({ message: eventCheck.message });
 
   const { data: order, error: orderErr } = await supabase
     .from('orders')
