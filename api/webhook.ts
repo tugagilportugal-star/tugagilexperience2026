@@ -6,20 +6,16 @@ import { issueInvoiceForOrder } from '../lib/invoicing/index.js';
 import type { InvoiceEmailData } from '../lib/invoicing/types.js';
 import { notifyAdmins, type StepResult } from '../lib/notify.js';
 import { getCurrentEvent } from '../lib/event.js';
+import { EMAIL_FROM, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../lib/email.js';
 
-// Escapar texto para inserir em HTML (ex: títulos de workshops vindos da BD)
-const escapeHtml = (s: string) =>
-  String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+// Todo o texto dinâmico (nomes, lotes, workshops, evento...) é escapado com escapeHtml
+// antes de entrar no HTML — vem do checkout ou da BD e pode conter HTML.
 
 // ==================================================================
 // 1) EMAIL - BILHETE (Com o novo layout e informações)
 // ==================================================================
 const generateTicketEmail = (
+  ev: EmailEvent,
   name: string,
   ticketName: string,
   qrUrl: string,
@@ -30,7 +26,7 @@ const generateTicketEmail = (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎉 Inscrição confirmada - RSG Lisbon 2026</title>
+    <title>🎉 Inscrição confirmada - ${escapeHtml(ev.name)}</title>
 </head>
 <body style="background-color: #f6f9fc; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Ubuntu,sans-serif; margin: 0; padding: 0;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f6f9fc; padding: 40px 0;">
@@ -41,19 +37,19 @@ const generateTicketEmail = (
                     <tr>
                         <td align="center" style="background-color: #003F59; padding: 32px 40px;">
                             <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">TugÁgil Experience</p>
-                            <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">RSG Lisbon 2026</h1>
+                            <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">${escapeHtml(ev.name)}</h1>
                         </td>
                     </tr>
-                    
+
                     <!-- Conteúdo Principal -->
                     <tr>
                         <td style="padding: 40px 32px;">
-                            <h2 style="font-size: 24px; font-weight: bold; color: #003F59; margin-top: 0;">Olá, ${name},</h2>
+                            <h2 style="font-size: 24px; font-weight: bold; color: #003F59; margin-top: 0;">Olá, ${escapeHtml(name)},</h2>
                             <p style="font-size: 16px; line-height: 26px; color: #3c4858;">
-                                O teu lugar no <a href="https://www.rsglisbon.com" style="color: #F47A20; font-weight: bold; text-decoration: none;">TugÁgil Experience</a> está oficialmente confirmado. 🥳
+                                O teu lugar no <a href="${escapeHtml(SITE_URL)}" style="color: #F47A20; font-weight: bold; text-decoration: none;">${escapeHtml(ev.name)}</a> está oficialmente confirmado. 🥳
                             </p>
                             <p style="font-size: 16px; line-height: 26px; color: #3c4858;">
-                                Estamos muito felizes por contar contigo neste grande encontro da comunidade ágil em Portugal. O teu bilhete (<strong>${ticketName}</strong>) garante-te acesso a uma experiência única focada em Agilidade, Inovação e Inteligência Artificial.
+                                Estamos muito felizes por contar contigo neste grande encontro da comunidade ágil em Portugal. O teu bilhete (<strong>${escapeHtml(ticketName)}</strong>) garante-te acesso a uma experiência única focada em Agilidade, Inovação e Inteligência Artificial.
                             </p>
 
                             <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 32px 0;" />
@@ -61,14 +57,14 @@ const generateTicketEmail = (
                             <!-- Secção do Bilhete -->
                             <div style="text-align: center; background:#f0f7fb; border:2px solid #003F59; border-radius:10px; padding: 24px; margin-bottom: 32px;">
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">🎟️ O Teu Bilhete</h2>
-                                <p style="margin:0 0 20px;color:#003F59;font-size:18px;font-weight:700;">${ticketName}</p>
+                                <p style="margin:0 0 20px;color:#003F59;font-size:18px;font-weight:700;">${escapeHtml(ticketName)}</p>
                                 ${workshopTitle ? `<p style="margin:-8px 0 20px;color:#3c4858;font-size:15px;">Workshop da tarde: <strong>${escapeHtml(workshopTitle)}</strong></p>` : ''}
 
                                 <!-- QR CODE REAL GERADO PELO SISTEMA -->
-                                <img src="${qrUrl}" alt="QR Code do Bilhete" width="180" height="180" style="display:block; margin:0 auto 16px; border-radius:8px;" />
-                                
+                                <img src="${escapeHtml(qrUrl)}" alt="QR Code do Bilhete" width="180" height="180" style="display:block; margin:0 auto 16px; border-radius:8px;" />
+
                                 <p style="margin:0 0 4px;color:#888;font-size:12px;">ID do Bilhete</p>
-                                <p style="margin:0;color:#003F59;font-size:13px;font-family:monospace;word-break:break-all;">${ticketId}</p>
+                                <p style="margin:0;color:#003F59;font-size:13px;font-family:monospace;word-break:break-all;">${escapeHtml(ticketId)}</p>
                             </div>
                             
                             <p style="font-size: 15px; line-height: 24px; color: #555; text-align: center;">
@@ -81,14 +77,10 @@ const generateTicketEmail = (
                             <div>
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">📍 Informações Práticas</h2>
                                 <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 16px; line-height: 26px; color: #3c4858;">
-                                    <tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Data:</td><td style="padding-bottom:8px;">21 de Maio de 2026</td></tr>
+                                    ${ev.dateLabel ? `<tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Data:</td><td style="padding-bottom:8px;">${escapeHtml(ev.dateLabel)}</td></tr>` : ''}
                                     <tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Horário:</td><td style="padding-bottom:8px;">9h00 às 20h00 <br><span style="font-size:13px; color:#888;">(Recomendamos chegada às 8h30 para credenciação)</span></td></tr>
-                                    <tr><td width="80" style="font-weight:bold; vertical-align:top;">Local:</td><td><strong>Auditório Alto dos Moinhos</strong><br>Rua João de Freitas Branco, 1500-359<br>Lisboa, Portugal</td></tr>
+                                    ${ev.venue ? `<tr><td width="80" style="font-weight:bold; vertical-align:top;">Local:</td><td><strong>${escapeHtml(ev.venue)}</strong></td></tr>` : ''}
                                 </table>
-                                
-                                <p style="font-size: 14px; line-height: 26px; color: #009FDA; font-weight: bold; text-align: center; margin-top: 24px; background: #e6f6fc; padding: 12px; border-radius: 8px;">
-                                    🚇 Metro Linha Azul à porta &nbsp;|&nbsp; 🅿️ Estacionamento facilitado
-                                </p>
                             </div>
 
                             <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 32px 0;" />
@@ -119,7 +111,7 @@ const generateTicketEmail = (
                         <td style="background:#f4f6f8; padding:24px 32px; border-top:1px solid #e6ebf1; text-align:center;">
                             <p style="margin:0; color:#8898aa; font-size:12px; line-height:20px;">
                                 <strong>TugÁgil • Comunidade de Práticas</strong><br>
-                                Organizadora Oficial do TugÁgil Experience 2026
+                                Organizadora Oficial do ${escapeHtml(ev.name)}
                             </p>
                         </td>
                     </tr>
@@ -133,9 +125,9 @@ const generateTicketEmail = (
 // ==================================================================
 // 2) EMAIL - FATURA (ANEXO PDF)
 // ==================================================================
-const generateInvoiceEmail = (d: InvoiceEmailData) => `<!DOCTYPE html>
+const generateInvoiceEmail = (d: InvoiceEmailData, ev: EmailEvent) => `<!DOCTYPE html>
 <html lang="pt">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A tua fatura – RSG Lisbon 2026</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A tua fatura – ${escapeHtml(ev.name)}</title></head>
 <body style="margin:0;padding:0;background:#f4f6f8;font-family:sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:40px 0;">
     <tr><td align="center">
@@ -143,12 +135,12 @@ const generateInvoiceEmail = (d: InvoiceEmailData) => `<!DOCTYPE html>
         <!-- Header -->
         <tr><td style="background:#003F59;padding:32px 40px;text-align:center;">
           <p style="margin:0;color:#ffffff;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:0.8;">TugÁgil Experience</p>
-          <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">TugÁgil Experience2026</h1>
+          <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:700;">${escapeHtml(ev.name)}</h1>
         </td></tr>
         <!-- Body -->
         <tr><td style="padding:40px;">
           <h2 style="margin:0 0 8px;color:#003F59;font-size:22px;">A tua fatura está pronta 🧾</h2>
-          <p style="margin:0 0 24px;color:#555;font-size:16px;">Olá, <strong>${d.name}</strong>! Segue em anexo o documento PDF com a fatura referente à compra do teu bilhete para o evento no dia 21 de Maio de 2026.</p>
+          <p style="margin:0 0 24px;color:#555;font-size:16px;">Olá, <strong>${escapeHtml(d.name)}</strong>! Segue em anexo o documento PDF com a fatura referente à compra do teu bilhete para o ${escapeHtml(ev.name)}${ev.dateLabel ? `, no dia ${escapeHtml(ev.dateLabel)}` : ''}.</p>
 
           <!-- Summary card -->
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7fb;border:1px solid #cde3ef;border-radius:10px;margin-bottom:24px;">
@@ -157,15 +149,15 @@ const generateInvoiceEmail = (d: InvoiceEmailData) => `<!DOCTYPE html>
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="color:#555;font-size:15px;padding-bottom:8px;">Bilhete</td>
-                  <td style="color:#003F59;font-size:15px;font-weight:600;text-align:right;padding-bottom:8px;">${d.ticketName}</td>
+                  <td style="color:#003F59;font-size:15px;font-weight:600;text-align:right;padding-bottom:8px;">${escapeHtml(d.ticketName)}</td>
                 </tr>
                 <tr>
                   <td style="color:#555;font-size:15px;padding-bottom:8px;">Nº do documento</td>
-                  <td style="color:#003F59;font-size:15px;font-weight:600;text-align:right;padding-bottom:8px;">#${d.invoiceId}</td>
+                  <td style="color:#003F59;font-size:15px;font-weight:600;text-align:right;padding-bottom:8px;">#${escapeHtml(d.invoiceId)}</td>
                 </tr>
                 <tr style="border-top:1px solid #cde3ef;">
                   <td style="color:#003F59;font-size:16px;font-weight:700;padding-top:12px;">Total Pago</td>
-                  <td style="color:#003F59;font-size:16px;font-weight:700;text-align:right;padding-top:12px;">${d.total} €</td>
+                  <td style="color:#003F59;font-size:16px;font-weight:700;text-align:right;padding-top:12px;">${escapeHtml(d.total)} €</td>
                 </tr>
               </table>
             </td></tr>
@@ -177,7 +169,7 @@ const generateInvoiceEmail = (d: InvoiceEmailData) => `<!DOCTYPE html>
         </td></tr>
         <!-- Footer -->
         <tr><td style="background:#f4f6f8;padding:20px 40px;text-align:center;border-top:1px solid #e0e0e0;">
-          <p style="margin:0;color:#aaa;font-size:12px;">TugÁgil • RSG Lisbon 2026</p>
+          <p style="margin:0;color:#aaa;font-size:12px;">TugÁgil • ${escapeHtml(ev.name)}</p>
         </td></tr>
       </table>
     </td></tr>
@@ -193,14 +185,15 @@ async function sendInvoicePdfByEmailResend(params: {
   ticketName: string;
   total: string;
   isTest: boolean;
+  ev: EmailEvent;
 }) {
-  const { to, pdfBytes, invoiceId, name, ticketName, total, isTest } = params;
+  const { to, pdfBytes, invoiceId, name, ticketName, total, isTest, ev } = params;
 
   return resend.emails.send({
-    from: 'RSG Lisbon 2026 <rsg@rsglisbon.com>',
+    from: EMAIL_FROM,
     to,
-    subject: 'A tua fatura – TugÁgil Experience Gaia 2026',
-    html: generateInvoiceEmail({ name, ticketName, invoiceId, total, isTest }),
+    subject: `A tua fatura – ${ev.name}`,
+    html: generateInvoiceEmail({ name, ticketName, invoiceId, total, isTest }, ev),
     attachments: [
       {
         filename: `invoice-${invoiceId}.pdf`,
@@ -323,6 +316,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     participants: [] as { name: string; email: string }[],
     isError: false,
     invoice: null as { number: string; email: string; name: string } | null,
+    eventName: null as string | null,
   };
 
   try {
@@ -489,6 +483,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       eventId = (await getCurrentEvent(supabase)).id;
     }
 
+    // Nome/data/local do evento para os emails (se falhar, segue com um genérico — não trava a compra)
+    let emailEvent: EmailEvent = { name: 'TugÁgil Experience', dateLabel: '', venue: '' };
+    try {
+      emailEvent = await getEmailEvent(supabase, eventId);
+    } catch (e: any) {
+      console.error('⚠️ Evento para o email não encontrado:', e?.message);
+    }
+    notifyCtx.eventName = emailEvent.name;
+
     // 1) Salvar Order
     const { data: order, error: orderErr } = await supabase
       .from('orders')
@@ -515,7 +518,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2) Salvar Tickets (um por participante)
     const tickets: any[] = [];
     for (const p of parsedParticipants) {
-      const fullName = p.fullName || p.email || 'Participante RSG';
+      const fullName = p.fullName || p.email || 'Participante';
       const { data: ticket, error: ticketErr } = await supabase
         .from('tickets')
         .insert({
@@ -653,7 +656,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 3) Buscar nome do Bilhete
-    let ticketName = 'Ingresso RSG 2026';
+    let ticketName = `Bilhete ${emailEvent.name}`;
 
     if (ticketTypeId) {
       const { data: type } = await supabase
@@ -672,13 +675,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isTest = stripeIsTestMode();
 
     const firstParticipantName = parsedParticipants[0]?.fullName || null;
-    const billingName = meta.billing_name || order.customer_name || attendeeName || firstParticipantName || 'Participante RSG';
+    const billingName = meta.billing_name || order.customer_name || attendeeName || firstParticipantName || 'Participante';
     const billingEmail = meta.billing_email || order.customer_email;
 
     let invoiceResult: Awaited<ReturnType<typeof issueInvoiceForOrder>>;
     try {
       invoiceResult = await issueInvoiceForOrder({
         isTest,
+        eventName: emailEvent.name,
         customerName: billingName,
         customerEmail: billingEmail,
         countryIso: customerCountryIso,
@@ -722,6 +726,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ticketName,
             total: invoiceResult.total,
             isTest,
+            ev: emailEvent,
           });
           if ((sendRes as any)?.error) {
             console.error('⚠️ Resend invoice PDF error:', (sendRes as any).error);
@@ -745,10 +750,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const recipientName = t.attendee_name || 'Participante';
       try {
         const emailRes = await resend.emails.send({
-          from: 'RSG Lisbon 2026 <rsg@rsglisbon.com>',
+          from: EMAIL_FROM,
           to: recipientEmail,
-          subject: 'O teu bilhete RSG Lisbon 2026 🎟️',
+          subject: `O teu bilhete — ${emailEvent.name} 🎟️`,
           html: generateTicketEmail(
+            emailEvent,
             recipientName,
             ticketName,
             qrUrl,
@@ -774,6 +780,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('❌ Critical Error:', err.message);
     notifyCtx.isError = true;
     steps.push({ step: 'Erro crítico', ok: false, detail: err.message });
+    if (!notifyCtx.eventName) {
+      try { notifyCtx.eventName = (await getEmailEvent(supabase)).name; } catch { /* nome genérico */ }
+    }
     await notifyAdmins(resend, steps, notifyCtx);
     return res.status(500).send('Internal Server Error');
   }
