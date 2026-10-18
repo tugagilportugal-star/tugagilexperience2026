@@ -550,28 +550,6 @@ export const TicketPurchaseModal: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Sem workshop */}
-              {(() => {
-                const noneSel = !p.workshopId;
-                return (
-                  <button type="button" aria-pressed={noneSel}
-                    onClick={() => updateParticipant(activeTab, { workshopId: null })}
-                    className={`text-left cursor-pointer rounded-xl border-2 p-4 flex flex-col gap-2 transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
-                      noneSel ? 'border-brand-darkBlue bg-[#f4f8fa]' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}>
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      noneSel ? 'border-brand-darkBlue bg-brand-darkBlue text-white' : 'border-gray-300 bg-white'
-                    }`}>
-                      {noneSel && <Check className="w-3 h-3" strokeWidth={3} />}
-                    </span>
-                    <span className="font-sora text-sm font-bold text-gray-800">Sem workshop</span>
-                    <span className="text-xs text-gray-600 leading-relaxed">
-                      Só o bilhete do evento. Podes participar nas sessões da tarde do programa principal.
-                    </span>
-                  </button>
-                );
-              })()}
-
               {workshops.map((ws, wi) => {
                 const selected = p.workshopId === ws.id;
                 const avail = workshopAvailableFor(ws, activeTab);
@@ -614,6 +592,28 @@ export const TicketPurchaseModal: React.FC = () => {
                   </button>
                 );
               })}
+
+              {/* Sem workshop — por último, depois dos workshops */}
+              {(() => {
+                const noneSel = !p.workshopId;
+                return (
+                  <button type="button" aria-pressed={noneSel}
+                    onClick={() => updateParticipant(activeTab, { workshopId: null })}
+                    className={`text-left cursor-pointer rounded-xl border-2 p-4 flex flex-col gap-2 transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                      noneSel ? 'border-brand-darkBlue bg-[#f4f8fa]' : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}>
+                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      noneSel ? 'border-brand-darkBlue bg-brand-darkBlue text-white' : 'border-gray-300 bg-white'
+                    }`}>
+                      {noneSel && <Check className="w-3 h-3" strokeWidth={3} />}
+                    </span>
+                    <span className="font-sora text-sm font-bold text-gray-800">Sem workshop</span>
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      Só o bilhete do evento. Podes participar nas sessões da tarde do programa principal.
+                    </span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}
