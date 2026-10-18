@@ -4,6 +4,12 @@
 
 export type BillingProvider = 'invoicexpress' | 'billpt';
 
+export type InvoiceWorkshopLine = {
+  title: string;
+  quantity: number;
+  unitPriceEuro: number;
+};
+
 // ==================================================================
 // Input genérico para criação de fatura (novo core)
 // ==================================================================
@@ -16,6 +22,8 @@ export type CreateInvoiceInput = {
   includeRecording?: boolean;
   amountEuro: number;
   quantity?: number;
+  // Workshops comprados nesta encomenda (um item por workshop, com nº de participantes)
+  workshops?: InvoiceWorkshopLine[];
   isTest: boolean;
   autoFinalize: boolean;
 };
@@ -47,6 +55,8 @@ export type IssueInvoiceInput = {
   includeRecording?: boolean;
   amountEuro: number;
   quantity?: number;
+  // Workshops comprados nesta encomenda (um item por workshop, com nº de participantes)
+  workshops?: InvoiceWorkshopLine[];
   isTest: boolean;
 
   // opcional para não quebrar chamadas antigas

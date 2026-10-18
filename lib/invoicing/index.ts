@@ -50,6 +50,7 @@ export async function issueInvoiceForOrder(
     includeRecording: input.includeRecording,
     amountEuro: input.amountEuro,
     quantity: input.quantity ?? 1,
+    workshops: input.workshops,
     isTest: input.isTest,
     autoFinalize: input.autoFinalize ?? envAutoFinalize,
   });

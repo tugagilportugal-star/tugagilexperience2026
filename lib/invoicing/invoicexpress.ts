@@ -226,9 +226,17 @@ async function downloadPdfFromUrl(url: string): Promise<Buffer | null> {
 // PUBLIC EXPORT (o teu index.ts chama isto)
 // ==================================================================
 export async function createInvoiceWithInvoiceXpress(input: CreateInvoiceInput): Promise<CreateInvoiceResult> {
-  const description = input.includeRecording
-    ? 'Bilhete de acesso ao Regional Scrum Gathering Lisbon 2026, incluindo acesso às gravações das sessões após o evento'
-    : 'Bilhete de acesso ao Regional Scrum Gathering Lisbon 2026';
+  const baseDescription = input.includeRecording
+    ? 'Bilhete de acesso ao TugÁgil Experience 2026, incluindo acesso às gravações das sessões após o evento'
+    : 'Bilhete de acesso ao TugÁgil Experience 2026';
+
+  // Workshops: acrescentados à descrição única (ex.: "… + Workshop: X (2)")
+  const workshopsText = (input.workshops || [])
+    .filter((w) => (Number(w.quantity) || 0) > 0)
+    .map((w) => ` + Workshop: ${String(w.title || '').trim() || 'Workshop'} (${w.quantity})`)
+    .join('');
+
+  const description = baseDescription + workshopsText;
 
   const internal = await createInvoiceXpressInvoiceInternal({
     customerName: input.customerName,
