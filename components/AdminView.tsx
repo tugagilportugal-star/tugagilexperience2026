@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Download, Pencil, Plus, Power, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -262,6 +262,83 @@ function attendeeDisplayName(t: TicketRow) {
 
 const MOTIVOS_ESTORNO = ['Estorno por desistência da compra', 'Erro no valor faturado'];
 
+// ── Eventos ──────────────────────────────────────────────────────────────
+// O admin trabalha sempre sobre UM evento escolhido explicitamente. Todos os
+// pedidos aos recursos do evento levam ?event_id= e o backend recusa sem ele.
+type EventRow = {
+  id: string;
+  slug: string;
+  name: string;
+  starts_on: string | null;
+  venue: string | null;
+};
+
+const SELECTED_EVENT_STORAGE_KEY = 'admin.selectedEventId';
+
+function readStoredEventId(): string | null {
+  try {
+    return window.localStorage.getItem(SELECTED_EVENT_STORAGE_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredEventId(id: string | null) {
+  try {
+    if (id) window.localStorage.setItem(SELECTED_EVENT_STORAGE_KEY, id);
+    else window.localStorage.removeItem(SELECTED_EVENT_STORAGE_KEY);
+  } catch {
+    // localStorage indisponível (modo privado, etc.): a escolha fica só em memória
+  }
+}
+
+type EventColor = { band: string; chip: string; dot: string };
+
+// Cores fixas para os eventos conhecidos; os restantes recebem uma cor estável derivada do slug.
+const EVENT_COLOR_PALETTE: EventColor[] = [
+  { band: 'bg-emerald-700 text-white', chip: 'bg-emerald-50 text-emerald-800 border-emerald-300', dot: 'bg-emerald-600' },
+  { band: 'bg-amber-500 text-gray-900', chip: 'bg-amber-50 text-amber-900 border-amber-300', dot: 'bg-amber-500' },
+  { band: 'bg-fuchsia-700 text-white', chip: 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-300', dot: 'bg-fuchsia-600' },
+  { band: 'bg-sky-700 text-white', chip: 'bg-sky-50 text-sky-800 border-sky-300', dot: 'bg-sky-600' },
+  { band: 'bg-rose-700 text-white', chip: 'bg-rose-50 text-rose-800 border-rose-300', dot: 'bg-rose-600' },
+  { band: 'bg-indigo-700 text-white', chip: 'bg-indigo-50 text-indigo-800 border-indigo-300', dot: 'bg-indigo-600' },
+];
+
+const KNOWN_EVENT_COLOR_INDEX: Record<string, number> = {
+  'tugagil-experience-2026': 0,
+  'rsg-lisbon-2026': 1,
+};
+
+function eventColor(ev: Pick<EventRow, 'slug'>): EventColor {
+  const known = KNOWN_EVENT_COLOR_INDEX[ev.slug];
+  if (known !== undefined) return EVENT_COLOR_PALETTE[known];
+  let hash = 0;
+  for (const ch of ev.slug) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return EVENT_COLOR_PALETTE[hash % EVENT_COLOR_PALETTE.length];
+}
+
+// starts_on vem como 'AAAA-MM-DD' (date): formata sem passar por fusos horários
+function formatEventDate(value?: string | null) {
+  if (!value) return 'sem data';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : value;
+}
+
+function withEventId(path: string, eventId: string) {
+  return `${path}${path.includes('?') ? '&' : '?'}event_id=${encodeURIComponent(eventId)}`;
+}
+
+const TAB_TITLES: Record<AdminTab, string> = {
+  leads: 'Leads',
+  ticketTypes: 'Lotes',
+  workshops: 'Workshops',
+  orders: 'Encomendas',
+  tickets: 'Bilhetes (Participantes)',
+  coupons: 'Cupões',
+  logs: 'Logs',
+  adminUsers: 'Utilizadores',
+};
+
 export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [tab, setTab] = useState<AdminTab>('tickets');
 
@@ -359,10 +436,109 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [savingWorkshop, setSavingWorkshop] = useState(false);
   const [selectedWorkshopId, setSelectedWorkshopId] = useState<string | null>(null);
 
+  // Evento a administrar. eventIdRef é atualizado de imediato ao trocar, para que
+  // respostas de pedidos feitos para o evento anterior sejam descartadas.
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(() => readStoredEventId());
+  const eventIdRef = useRef<string | null>(selectedEventId);
+  const currentEvent = events.find((ev) => ev.id === selectedEventId) || null;
+  const currentEventName = currentEvent?.name ?? '';
+
   const token = session?.access_token ?? null;
   const authHeader = token ? `Bearer ${token}` : null;
   const canEdit = adminUser?.role === 'edit' || adminUser?.role === 'superadmin';
   const isSuperAdmin = adminUser?.role === 'superadmin';
+
+  // Limpa TODOS os dados ligados ao evento (listas, seleções, modais e mensagens)
+  function clearEventData() {
+    setData([]);
+    setSelected(null);
+    setTicketTypes([]);
+    setOrders([]);
+    setSelectedOrder(null);
+    setTickets([]);
+    setSelectedTicket(null);
+    setCoupons([]);
+    setWorkshops([]);
+    setSelectedWorkshopId(null);
+    setLoading(false);
+    setLoadingTicketTypes(false);
+    setLoadingOrders(false);
+    setLoadingTickets(false);
+    setLoadingCoupons(false);
+    setLoadingWorkshops(false);
+    setInvoiceModal(null);
+    setInvoiceError(null);
+    setInvoiceEmailMsg(null);
+    setInvoiceModalError(null);
+    setResendMsg(null);
+    setCreditNoteModal(null);
+    setCreditNoteError(null);
+    setRefundModal(null);
+    setRefundError(null);
+    setDuplicateModal(null);
+    setDuplicateError(null);
+    setCouponModalOpen(false);
+    setEditingCoupon(null);
+    setIsTicketTypeModalOpen(false);
+    setEditingTicketType(null);
+    setTicketTypeForm(emptyTicketTypeForm());
+    setIsWorkshopModalOpen(false);
+    setEditingWorkshop(null);
+    setWorkshopForm(emptyWorkshopForm());
+    setUpdatingId(null);
+    setError(null);
+  }
+
+  function selectEvent(id: string | null) {
+    eventIdRef.current = id;
+    clearEventData();
+    setSelectedEventId(id);
+    writeStoredEventId(id);
+  }
+
+  async function fetchEvents() {
+    if (!authHeader) return;
+    setLoadingEvents(true);
+    setEventsError(null);
+    try {
+      const res = await fetch('/api/admin/events', { headers: { Authorization: authHeader } });
+      if (res.status === 401) {
+        await supabase.auth.signOut();
+        setAdminUser(null);
+        setError('Sessão expirada. Por favor volta a entrar.');
+        return;
+      }
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(json)) {
+        setEventsError(json?.message || 'Falha ao carregar eventos');
+        return;
+      }
+      const rows = json as EventRow[];
+      setEvents(rows);
+      // Repõe a escolha guardada; se o evento já não existir, obriga a escolher de novo
+      const wanted = eventIdRef.current ?? readStoredEventId();
+      if (wanted && rows.some((ev) => ev.id === wanted)) {
+        if (eventIdRef.current !== wanted) {
+          eventIdRef.current = wanted;
+          setSelectedEventId(wanted);
+        }
+      } else if (wanted) {
+        selectEvent(null);
+      }
+    } catch {
+      setEventsError('Erro inesperado ao carregar eventos');
+    } finally {
+      setLoadingEvents(false);
+    }
+  }
+
+  // true se a resposta ainda corresponde ao evento selecionado (senão é descartada)
+  function isCurrentEvent(eventId: string) {
+    return eventIdRef.current === eventId;
+  }
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -494,12 +670,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function fetchLeads() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/leads', {
+      const res = await fetch(withEventId('/api/admin/leads', eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -514,23 +692,26 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const rows = (await res.json()) as LeadRow[];
+      if (!isCurrentEvent(eventId)) return;
       setData(Array.isArray(rows) ? rows : []);
       setError(null);
     } catch {
-      setError('Erro inesperado ao carregar leads');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar leads');
     } finally {
-      setLoading(false);
+      if (isCurrentEvent(eventId)) setLoading(false);
     }
   }
 
   async function fetchCoupons() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoadingCoupons(true);
 
     try {
-      const res = await fetch('/api/admin/coupons', {
+      const res = await fetch(withEventId('/api/admin/coupons', eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -540,27 +721,30 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const data = await res.json();
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.ok) {
-        setCoupons(data || []);
+        setCoupons(Array.isArray(data) ? data : []);
         setError(null);
       } else {
-        setError(data?.error || 'Erro ao carregar coupons.');
+        setError(data?.error || data?.message || 'Erro ao carregar coupons.');
       }
     } catch {
-      setError('Erro inesperado ao carregar coupons.');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar coupons.');
     } finally {
-      setLoadingCoupons(false);
+      if (isCurrentEvent(eventId)) setLoadingCoupons(false);
     }
   }
 
   async function fetchTicketTypes() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoadingTicketTypes(true);
     try {
-      const res = await fetch('/api/admin/ticket-types', {
+      const res = await fetch(withEventId('/api/admin/ticket-types', eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -575,22 +759,25 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const rows = (await res.json()) as TicketTypeRow[];
+      if (!isCurrentEvent(eventId)) return;
       setTicketTypes(Array.isArray(rows) ? rows : []);
       setError(null);
     } catch {
-      setError('Erro inesperado ao carregar lotes');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar lotes');
     } finally {
-      setLoadingTicketTypes(false);
+      if (isCurrentEvent(eventId)) setLoadingTicketTypes(false);
     }
   }
 
   async function fetchOrders() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoadingOrders(true);
     try {
-      const res = await fetch(`/api/admin/orders?_=${Date.now()}`, {
+      const res = await fetch(withEventId(`/api/admin/orders?_=${Date.now()}`, eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -605,12 +792,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const rows = (await res.json()) as OrderRow[];
+      if (!isCurrentEvent(eventId)) return;
       setOrders(Array.isArray(rows) ? rows : []);
       setError(null);
     } catch {
-      setError('Erro inesperado ao carregar pagamentos');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar pagamentos');
     } finally {
-      setLoadingOrders(false);
+      if (isCurrentEvent(eventId)) setLoadingOrders(false);
     }
   }
 
@@ -768,7 +956,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function markOrderAsDuplicate(orderId: string, markType: 'duplicate' | 'test', active: boolean, creditNoteRef: string) {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setMarkingDuplicate(true);
     setDuplicateError(null);
     try {
@@ -781,7 +970,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         body.is_test = active;
         if (active) body.is_duplicate = false;
       }
-      const res = await fetch('/api/admin/orders', {
+      const res = await fetch(withEventId('/api/admin/orders', eventId), {
         method: 'PATCH',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -802,12 +991,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function fetchTickets() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoadingTickets(true);
     try {
-      const res = await fetch(`/api/admin/tickets?_=${Date.now()}`, {
+      const res = await fetch(withEventId(`/api/admin/tickets?_=${Date.now()}`, eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -822,21 +1013,23 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const rows = (await res.json()) as TicketRow[];
+      if (!isCurrentEvent(eventId)) return;
       setTickets(Array.isArray(rows) ? rows : []);
       setError(null);
     } catch {
-      setError('Erro inesperado ao carregar tickets');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar tickets');
     } finally {
-      setLoadingTickets(false);
+      if (isCurrentEvent(eventId)) setLoadingTickets(false);
     }
   }
 
   async function patchStatus(id: string, status: LeadStatus) {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setUpdatingId(id);
 
     try {
-      const res = await fetch(`/api/admin/leads/${encodeURIComponent(id)}`, {
+      const res = await fetch(withEventId(`/api/admin/leads/${encodeURIComponent(id)}`, eventId), {
         method: 'PATCH',
         headers: {
           Authorization: authHeader,
@@ -857,6 +1050,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         return;
       }
 
+      if (!isCurrentEvent(eventId)) return;
       setData((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
       setSelected((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
       setError(null);
@@ -868,12 +1062,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function softDeleteLead(id: string) {
-    if (!authHeader) return;
-    if (!confirm('Deseja marcar este lead como Deleted?')) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (!confirm(`Deseja marcar este lead do evento "${currentEventName}" como Deleted?`)) return;
 
     setUpdatingId(id);
     try {
-      const res = await fetch(`/api/admin/leads/${encodeURIComponent(id)}`, {
+      const res = await fetch(withEventId(`/api/admin/leads/${encodeURIComponent(id)}`, eventId), {
         method: 'DELETE',
         headers: { Authorization: authHeader },
       });
@@ -890,6 +1085,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         return;
       }
 
+      if (!isCurrentEvent(eventId)) return;
       setData((prev) => prev.filter((r) => r.id !== id));
       if (selected?.id === id) setSelected(null);
       setError(null);
@@ -963,7 +1159,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function saveCoupon() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
 
     try {
       setSavingCoupon(true);
@@ -980,7 +1177,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         expires_at: couponForm.expires_at || null,
       };
 
-      const res = await fetch('/api/admin/coupons', {
+      const res = await fetch(withEventId('/api/admin/coupons', eventId), {
         method: editingCoupon ? 'PATCH' : 'POST',
         headers: {
           Authorization: authHeader,
@@ -1014,14 +1211,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   }
 
-  async function deleteCoupon(id: string) {
-    if (!authHeader) return;
+  async function deleteCoupon(row: CouponRow) {
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    const id = row.id;
 
-    const confirmed = window.confirm('Tem a certeza que quer apagar este coupon?');
+    const confirmed = window.confirm(`Tem a certeza que quer apagar o coupon "${row.code}" do evento "${currentEventName}"?`);
     if (!confirmed) return;
 
     try {
-      const res = await fetch('/api/admin/coupons', {
+      const res = await fetch(withEventId('/api/admin/coupons', eventId), {
         method: 'DELETE',
         headers: {
           Authorization: authHeader,
@@ -1052,10 +1251,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function toggleCouponActive(row: CouponRow) {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (row.active && !confirm(`Desativar o coupon "${row.code}" do evento "${currentEventName}"?`)) return;
 
     try {
-      const res = await fetch('/api/admin/coupons', {
+      const res = await fetch(withEventId('/api/admin/coupons', eventId), {
         method: 'PATCH',
         headers: {
           Authorization: authHeader,
@@ -1090,7 +1291,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   async function saveTicketType(e: React.FormEvent) {
     e.preventDefault();
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
 
     const priceEuros = Number(ticketTypeForm.price.replace(',', '.'));
     const price = Math.round(priceEuros * 100);
@@ -1129,12 +1331,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const currentActive = ticketTypes.find(t => t.active && t.id !== editingTicketType?.id);
       if (currentActive) {
         const confirmed = confirm(
-          `O lote "${currentActive.name}" está ativo e será desativado para ativar "${ticketTypeForm.name.trim()}". Continuar?`
+          `Evento "${currentEventName}": o lote "${currentActive.name}" está ativo e será desativado para ativar "${ticketTypeForm.name.trim()}". Continuar?`
         );
         if (!confirmed) return;
 
         try {
-          const deactivateRes = await fetch(`/api/admin/ticket-types/${encodeURIComponent(currentActive.id)}`, {
+          const deactivateRes = await fetch(withEventId(`/api/admin/ticket-types/${encodeURIComponent(currentActive.id)}`, eventId), {
             method: 'PATCH',
             headers: { Authorization: authHeader!, 'Content-Type': 'application/json' },
             body: JSON.stringify({ active: false }),
@@ -1164,9 +1366,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         active: ticketTypeForm.active,
       };
 
-      const url = editingTicketType
-        ? `/api/admin/ticket-types/${encodeURIComponent(editingTicketType.id)}`
-        : '/api/admin/ticket-types';
+      const url = withEventId(
+        editingTicketType
+          ? `/api/admin/ticket-types/${encodeURIComponent(editingTicketType.id)}`
+          : '/api/admin/ticket-types',
+        eventId
+      );
 
       const method = editingTicketType ? 'PATCH' : 'POST';
 
@@ -1204,13 +1409,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function archiveTicketType(row: TicketTypeRow) {
-    if (!authHeader) return;
-    if (!confirm(`Deseja desativar o lote "${row.name}"?`)) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (!confirm(`Deseja desativar o lote "${row.name}" do evento "${currentEventName}"?`)) return;
 
     setUpdatingId(row.id);
 
     try {
-      const res = await fetch(`/api/admin/ticket-types/${encodeURIComponent(row.id)}`, {
+      const res = await fetch(withEventId(`/api/admin/ticket-types/${encodeURIComponent(row.id)}`, eventId), {
         method: 'DELETE',
         headers: { Authorization: authHeader },
       });
@@ -1239,21 +1445,24 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function toggleTicketTypeActive(row: TicketTypeRow) {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+
+    if (row.active && !confirm(`Desativar o lote "${row.name}" do evento "${currentEventName}"?`)) return;
 
     // Activating: check if another lote is already active
     if (!row.active) {
       const currentActive = ticketTypes.find(t => t.active && t.id !== row.id);
       if (currentActive) {
         const confirmed = confirm(
-          `O lote "${currentActive.name}" está ativo e será desativado para ativar "${row.name}". Continuar?`
+          `Evento "${currentEventName}": o lote "${currentActive.name}" está ativo e será desativado para ativar "${row.name}". Continuar?`
         );
         if (!confirmed) return;
 
         // Deactivate current active first
         setUpdatingId(row.id);
         try {
-          const deactivateRes = await fetch(`/api/admin/ticket-types/${encodeURIComponent(currentActive.id)}`, {
+          const deactivateRes = await fetch(withEventId(`/api/admin/ticket-types/${encodeURIComponent(currentActive.id)}`, eventId), {
             method: 'PATCH',
             headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
             body: JSON.stringify({ active: false }),
@@ -1275,7 +1484,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setUpdatingId(row.id);
 
     try {
-      const res = await fetch(`/api/admin/ticket-types/${encodeURIComponent(row.id)}`, {
+      const res = await fetch(withEventId(`/api/admin/ticket-types/${encodeURIComponent(row.id)}`, eventId), {
         method: 'PATCH',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: !row.active }),
@@ -1306,12 +1515,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   // ── Workshops ──────────────────────────────────────────────────────────
   async function fetchWorkshops() {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
     setLoadingWorkshops(true);
     try {
-      const res = await fetch(`/api/admin/workshops?_=${Date.now()}`, {
+      const res = await fetch(withEventId(`/api/admin/workshops?_=${Date.now()}`, eventId), {
         headers: { Authorization: authHeader },
       });
+      if (!isCurrentEvent(eventId)) return;
 
       if (res.status === 401) {
         await supabase.auth.signOut();
@@ -1326,12 +1537,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
 
       const rows = (await res.json()) as WorkshopRow[];
+      if (!isCurrentEvent(eventId)) return;
       setWorkshops(Array.isArray(rows) ? rows : []);
       setError(null);
     } catch {
-      setError('Erro inesperado ao carregar workshops');
+      if (isCurrentEvent(eventId)) setError('Erro inesperado ao carregar workshops');
     } finally {
-      setLoadingWorkshops(false);
+      if (isCurrentEvent(eventId)) setLoadingWorkshops(false);
     }
   }
 
@@ -1362,7 +1574,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   async function saveWorkshop(e: React.FormEvent) {
     e.preventDefault();
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
 
     const capacity = Number(workshopForm.capacity);
     const sortOrder = Number(workshopForm.sort_order);
@@ -1412,9 +1625,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         active: workshopForm.active,
       };
 
-      const url = editingWorkshop
-        ? `/api/admin/workshops/${encodeURIComponent(editingWorkshop.id)}`
-        : '/api/admin/workshops';
+      const url = withEventId(
+        editingWorkshop
+          ? `/api/admin/workshops/${encodeURIComponent(editingWorkshop.id)}`
+          : '/api/admin/workshops',
+        eventId
+      );
 
       const res = await fetch(url, {
         method: editingWorkshop ? 'PATCH' : 'POST',
@@ -1450,11 +1666,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   async function toggleWorkshopActive(row: WorkshopRow) {
-    if (!authHeader) return;
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (row.active && !confirm(`Desativar o workshop "${row.title}" do evento "${currentEventName}"?`)) return;
     setUpdatingId(row.id);
 
     try {
-      const res = await fetch(`/api/admin/workshops/${encodeURIComponent(row.id)}`, {
+      const res = await fetch(withEventId(`/api/admin/workshops/${encodeURIComponent(row.id)}`, eventId), {
         method: 'PATCH',
         headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: !row.active }),
@@ -1498,38 +1716,45 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // Invalida pedidos em curso e limpa todos os dados do evento
+    eventIdRef.current = null;
+    clearEventData();
     setAdminUser(null);
     setSession(null);
-    setSelected(null);
-    setData([]);
-    setTicketTypes([]);
-    setWorkshops([]);
-    setSelectedWorkshopId(null);
-    setOrders([]);
-    setTickets([]);
-    setCoupons([]);
+    setEvents([]);
     setLogs([]);
     setAdminUsers([]);
-    setCouponModalOpen(false);
-    setEditingCoupon(null);
     resetCouponForm();
-    setError(null);
     setTab('tickets');
+    // A escolha guardada (localStorage) é reposta por fetchEvents no próximo login
+    setSelectedEventId(null);
   };
 
+  // Lista de eventos (para a faixa e para o ecrã de escolha)
   useEffect(() => {
     if (!adminUser) return;
+    fetchEvents();
+  }, [adminUser?.email]);
+
+  // Dados do separador atual, sempre do evento selecionado (nada é pedido sem evento)
+  useEffect(() => {
+    if (!adminUser) return;
+    if (tab === 'logs') { fetchLogs(); return; }
+    if (tab === 'adminUsers') { fetchAdminUsers(); return; }
+    if (!currentEvent || eventIdRef.current !== currentEvent.id) return;
     if (tab === 'leads') fetchLeads();
     if (tab === 'ticketTypes') fetchTicketTypes();
     if (tab === 'workshops') { fetchWorkshops(); fetchTickets(); fetchOrders(); }
     if (tab === 'orders') { fetchOrders(); fetchTickets(); }
-    if (tab === 'tickets') { fetchTickets(); fetchOrders(); fetchWorkshops(); }
+    if (tab === 'tickets') { fetchTickets(); fetchOrders(); fetchWorkshops(); fetchTicketTypes(); }
     if (tab === 'coupons') fetchCoupons();
-    if (tab === 'logs') fetchLogs();
-    if (tab === 'adminUsers') fetchAdminUsers();
-  }, [adminUser?.email, tab]);
+  }, [adminUser?.email, tab, currentEvent?.id]);
 
   function downloadCsv() {
+    if (!currentEvent) return;
+    const evName = currentEvent.name;
+    const evSlug = currentEvent.slug;
+    const today = new Date().toISOString().slice(0, 10);
     const escape = (v: unknown) => {
       const s = safe(v).replace(/\r?\n/g, ' ').trim();
       if (s.includes('"') || s.includes(',') || s.includes(';')) {
@@ -1537,6 +1762,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
       return s;
     };
+    // Todas as exportações levam a coluna "evento" (primeira) e o slug do evento no nome do ficheiro
+    const csvLines = (headers: string[], rows: unknown[][]) => [
+      ['evento', ...headers].join(','),
+      ...rows.map((row) => [evName, ...row].map((v) => escape(v)).join(',')),
+    ];
+    const rowsFrom = (headers: string[], list: unknown[]) =>
+      list.map((row) => headers.map((h) => (row as any)[h]));
 
     if (tab === 'ticketTypes') {
       const headers = [
@@ -1552,16 +1784,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'created_at',
       ];
 
-      const lines = [
-        headers.join(','),
-        ...ticketTypes.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
-      ];
+      const lines = csvLines(headers, rowsFrom(headers, ticketTypes));
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ticket-types-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `ticket-types-${evSlug}-${today}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1590,10 +1819,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           ];
         });
 
-      const lines = [
-        headers.join(','),
-        ...rows.map((row) => row.map((v) => escape(v)).join(',')),
-      ];
+      const lines = csvLines(headers, rows);
 
       const selectedTitle = selectedWorkshopId ? workshopsById.get(selectedWorkshopId)?.title : null;
       const slug = selectedTitle
@@ -1604,7 +1830,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `workshop-inscritos-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `workshop-inscritos-${evSlug}-${slug}-${today}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1626,16 +1852,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ];
 
       const exportRows = showHidden ? orders : orders.filter(o => !o.is_duplicate && !o.is_test);
-      const lines = [
-        headers.join(','),
-        ...exportRows.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
-      ];
+      const lines = csvLines(headers, rowsFrom(headers, exportRows));
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `orders-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `orders-${evSlug}-${today}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1667,16 +1890,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ];
 
       const exportTickets = showHidden ? tickets : tickets.filter(t => { const o = orders.find(ord => ord.id === t.order_id); return !o?.is_duplicate && !o?.is_test; });
-      const lines = [
-        headers.join(','),
-        ...exportTickets.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
-      ];
+      const lines = csvLines(headers, rowsFrom(headers, exportTickets));
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tickets-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `tickets-${evSlug}-${today}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1695,16 +1915,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'used_by_order_id',
       ];
 
-      const lines = [
-        headers.join(','),
-        ...coupons.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
-      ];
+      const lines = csvLines(headers, rowsFrom(headers, coupons));
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `coupons-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `coupons-${evSlug}-${today}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1724,16 +1941,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       'message',
     ];
 
-    const lines = [
-      headers.join(','),
-      ...data.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
-    ];
+    const lines = csvLines(headers, rowsFrom(headers, data));
 
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `leads-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `leads-${evSlug}-${today}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1788,6 +2002,98 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     );
   }
 
+  // ── Escolha obrigatória do evento (antes de mostrar qualquer dado) ─────
+  if (!currentEvent) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl p-8">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-black text-gray-900">Escolhe o evento</h2>
+              <p className="text-sm text-gray-500">
+                Todos os dados do admin (lotes, workshops, encomendas, bilhetes, cupões e leads) são de um único evento.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {eventsError && (
+            <div className="mb-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              {eventsError}
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {loadingEvents && events.length === 0 ? (
+            <div className="py-8 flex justify-center">
+              <div className="w-8 h-8 border-4 border-brand-darkBlue border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : events.length === 0 ? (
+            <p className="text-sm text-gray-600 mb-4">Não há eventos disponíveis.</p>
+          ) : (
+            <div className="space-y-3">
+              {events.map((ev) => {
+                const color = eventColor(ev);
+                return (
+                  <button
+                    key={ev.id}
+                    onClick={() => selectEvent(ev.id)}
+                    className={`w-full text-left rounded-2xl border-2 px-5 py-4 hover:shadow-md transition ${color.chip}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3 h-3 rounded-full shrink-0 ${color.dot}`} />
+                      <span className="text-lg font-black">{ev.name}</span>
+                    </div>
+                    <div className="text-sm mt-1 ml-6 opacity-80">
+                      {formatEventDate(ev.starts_on)}{ev.venue ? ` · ${ev.venue}` : ''}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-6 flex gap-2">
+            <button
+              onClick={fetchEvents}
+              disabled={loadingEvents}
+              className="flex-1 rounded-2xl bg-gray-100 text-gray-700 font-semibold py-3 text-sm hover:bg-gray-200 disabled:opacity-50"
+            >
+              {loadingEvents ? 'A carregar…' : 'Recarregar eventos'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 rounded-2xl bg-gray-100 text-gray-700 font-semibold py-3 text-sm hover:bg-gray-200"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const ev: EventRow = currentEvent;
+  const evColor = eventColor(ev);
+  const evDateLabel = formatEventDate(ev.starts_on);
+  const isEventTab = tab !== 'logs' && tab !== 'adminUsers';
+  // Indicação do evento nos formulários e confirmações
+  const eventTag = (
+    <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold ${evColor.chip}`}>
+      <span className={`w-2 h-2 rounded-full ${evColor.dot}`} />
+      Evento: {ev.name}
+    </div>
+  );
+
   // ── Dashboard stats (tickets tab) ──────────────────────────────────────
   const validOrderIds = new Set(
     orders.filter(o => !o.is_duplicate && !o.is_test).map(o => o.id)
@@ -1816,9 +2122,23 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm">
       <div className="absolute inset-4 rounded-3xl bg-gray-50 shadow-2xl overflow-hidden flex flex-col">
+        {/* Faixa do evento: sempre visível, cor própria por evento */}
+        <div className={`shrink-0 px-6 py-2.5 flex items-center justify-between gap-4 flex-wrap ${evColor.band}`}>
+          <div className="text-sm">
+            A administrar: <strong className="text-base font-black">{ev.name}</strong>
+            <span className="opacity-80"> · {evDateLabel}{ev.venue ? ` · ${ev.venue}` : ''}</span>
+          </div>
+          <button
+            onClick={() => selectEvent(null)}
+            className="rounded-xl bg-white/90 hover:bg-white text-gray-900 px-4 py-1.5 text-sm font-bold"
+          >
+            Trocar evento
+          </button>
+        </div>
+
         <header className="bg-white border-b px-6 py-4 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-gray-900">RSG Lisbon 2026</h1>
+            <h1 className="text-2xl font-black text-gray-900">{ev.name}</h1>
             <p className="text-sm text-gray-500">Painel de administração</p>
           </div>
 
@@ -1862,22 +2182,26 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </button>
             )}
 
-            <button
-              onClick={downloadCsv}
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-2 text-sm font-bold"
-            >
-              <Download className="w-4 h-4" />
-              Exportar
-            </button>
+            {isEventTab && (
+              <button
+                onClick={downloadCsv}
+                className="inline-flex items-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-2 text-sm font-bold"
+              >
+                <Download className="w-4 h-4" />
+                Exportar
+              </button>
+            )}
 
             <button
               onClick={() => {
                 if (tab === 'leads') fetchLeads();
                 if (tab === 'ticketTypes') fetchTicketTypes();
                 if (tab === 'workshops') { fetchWorkshops(); fetchTickets(); fetchOrders(); }
-                if (tab === 'orders') fetchOrders();
-                if (tab === 'tickets') fetchTickets();
+                if (tab === 'orders') { fetchOrders(); fetchTickets(); }
+                if (tab === 'tickets') { fetchTickets(); fetchOrders(); fetchWorkshops(); fetchTicketTypes(); }
                 if (tab === 'coupons') fetchCoupons();
+                if (tab === 'logs') fetchLogs();
+                if (tab === 'adminUsers') fetchAdminUsers();
               }}
               className="rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-2 text-sm font-bold"
             >
@@ -1943,6 +2267,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
 
         <div className="flex-1 overflow-auto p-6">
+          <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2 flex-wrap">
+            {isEventTab && <span className={`w-3 h-3 rounded-full ${evColor.dot}`} />}
+            {TAB_TITLES[tab]}
+            <span className="text-gray-500 font-bold">
+              · {isEventTab ? ev.name : 'todos os eventos'}
+            </span>
+          </h2>
+
           {error && (
             <div className="mb-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
               {error}
@@ -2669,7 +3001,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               </button>
 
                               <button
-                                onClick={() => deleteCoupon(row.id)}
+                                onClick={() => deleteCoupon(row)}
                                 className="rounded-lg bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1 text-xs font-bold"
                               >
                                 Apagar
@@ -2846,6 +3178,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes da Order</h3>
                   <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
+                {eventTag}
                 {selectedOrder.is_duplicate && (
                   <div className="mb-3 bg-red-50 border border-red-200 rounded-lg p-2 text-xs">
                     <span className="font-bold text-red-700">Duplicado</span>
@@ -2917,6 +3250,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes do Ticket</h3>
                   <button onClick={() => setSelectedTicket(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
+                {eventTag}
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 mb-4">
@@ -3159,6 +3493,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <h3 className="text-lg font-bold text-[#003F59]">Dados da Fatura</h3>
                 <button onClick={() => setInvoiceModal(null)} disabled={savingInvoiceModal} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
+              {eventTag}
               <p className="text-xs text-gray-400 mb-4">Verifica os dados antes de gerar. Nome e email não são editáveis.</p>
               <div className="space-y-3 mb-5">
                 <div>
@@ -3218,6 +3553,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <h3 className="text-lg font-bold text-[#003F59]">Nota de Crédito</h3>
                 <button onClick={() => setCreditNoteModal(null)} disabled={generatingCreditNote} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
+              {eventTag}
               <p className="text-sm text-gray-500 mb-4">
                 Fatura: <span className="font-medium text-gray-700">{creditNoteModal.orderLabel}</span>
               </p>
@@ -3276,6 +3612,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <h3 className="text-lg font-bold text-[#003F59]">Emitir Estorno</h3>
                 <button onClick={() => { setRefundModal(null); setRefundError(null); }} disabled={markingRefund} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
+              {eventTag}
               <p className="text-sm text-gray-500 mb-3">
                 Fatura: <span className="font-medium text-gray-700">{refundModal.orderLabel}</span>
               </p>
@@ -3347,6 +3684,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </h3>
                 <button onClick={() => setDuplicateModal(null)} disabled={markingDuplicate} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
+              {eventTag}
               <p className="text-sm text-gray-500 mb-4">
                 Este registo será ocultado dos relatórios por defeito.
               </p>
@@ -3402,9 +3740,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingCoupon ? 'Editar coupon' : 'Novo coupon'}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mb-2">
                     Defina código, email opcional, desconto e estado.
                   </p>
+                  {eventTag}
                 </div>
 
                 <button
@@ -3595,9 +3934,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="flex items-start justify-between gap-4 mb-6">
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">Lead</h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mb-2">
                     {formatDatePt(selected.created_at)} • {safe(selected.type)}
                   </p>
+                  {eventTag}
                 </div>
 
                 <button
@@ -3643,9 +3983,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingTicketType ? 'Editar lote' : 'Novo lote'}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mb-2">
                     Gere os lotes de bilhetes disponíveis para venda
                   </p>
+                  {eventTag}
                 </div>
 
                 <button
@@ -3756,9 +4097,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingWorkshop ? 'Editar workshop' : 'Novo workshop'}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mb-2">
                     Workshops opcionais que decorrem em simultâneo (um por participante)
                   </p>
+                  {eventTag}
                 </div>
 
                 <button

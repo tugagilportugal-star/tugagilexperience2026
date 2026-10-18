@@ -16,14 +16,63 @@ function normalizeEmail(email?: string | null) {
   return value || null;
 }
 
+// =========================
+// EVENTO (obrigatório: ?event_id=<uuid>; nunca se usa event_id do body)
+// =========================
+type AdminEvent = { id: string; slug: string; name: string };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveEvent(req: VercelRequest): Promise<{ event: AdminEvent } | { error: string }> {
+  const raw = (req.query as any).event_id;
+  const eventId = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim();
+
+  if (!eventId) return { error: 'event_id obrigatório: escolhe o evento a administrar.' };
+  if (!UUID_RE.test(eventId)) return { error: 'event_id inválido (tem de ser um uuid).' };
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, slug, name')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (error) return { error: `Não foi possível validar o evento: ${error.message}` };
+  if (!data) return { error: 'Evento inexistente para o event_id indicado.' };
+  return { event: data as AdminEvent };
+}
+
+// Identificação do evento nos detalhes do registo de auditoria
+function eventLog(event: AdminEvent) {
+  return { event_id: event.id, event_slug: event.slug, event_name: event.name };
+}
+
+const NOT_IN_EVENT = 'Cupão não encontrado neste evento.';
+
+function parseBody(req: VercelRequest) {
+  if (!req.body) return {};
+  if (typeof req.body === 'string') {
+    try { return JSON.parse(req.body); } catch { return {}; }
+  }
+  return req.body;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const admin = await verifyAdminToken(req.headers.authorization || '');
   if (!admin) return res.status(401).json({ message: 'Unauthorized' });
+  res.setHeader('Cache-Control', 'no-store');
   try {
+    // Sem evento válido não se lê nem se escreve nada.
+    const resolved = await resolveEvent(req);
+    if ('error' in resolved) {
+      return res.status(400).json({ error: resolved.error, message: resolved.error });
+    }
+    const event = resolved.event;
+
     if (req.method === 'GET') {
       const { data, error } = await supabase
         .from('discount_coupons')
         .select('*')
+        .eq('event_id', event.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -44,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         single_use = true,
         active = true,
         expires_at,
-      } = req.body || {};
+      } = parseBody(req) || {};
 
       const normalizedCode = normalizeCode(code);
       const normalizedEmail = normalizeEmail(email);
@@ -87,6 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           single_use: Boolean(single_use),
           active: Boolean(active),
           expires_at: expires_at || null,
+          event_id: event.id,
         })
         .select()
         .single();
@@ -95,7 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: error.message });
       }
 
-      await logAction(admin.email, 'criar_cupao', 'coupon', data.id, { code: data.code });
+      await logAction(admin.email, 'criar_cupao', 'coupon', data.id, { ...eventLog(event), code: data.code });
       return res.status(201).json(data);
     }
 
@@ -111,7 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         single_use,
         active,
         expires_at,
-      } = req.body || {};
+      } = parseBody(req) || {};
 
       if (!id) {
         return res.status(400).json({ error: 'ID é obrigatório.' });
@@ -152,43 +202,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('discount_coupons')
         .select('*')
         .eq('id', id)
-        .single();
+        .eq('event_id', event.id)
+        .maybeSingle();
+
+      if (!before) {
+        return res.status(404).json({ error: NOT_IN_EVENT, message: NOT_IN_EVENT });
+      }
 
       const { data, error } = await supabase
         .from('discount_coupons')
         .update(payload)
         .eq('id', id)
+        .eq('event_id', event.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return res.status(500).json({ error: error.message });
       }
+      if (!data) {
+        return res.status(404).json({ error: NOT_IN_EVENT, message: NOT_IN_EVENT });
+      }
 
       const changedKeys = Object.keys(payload);
       const beforeSnapshot = Object.fromEntries(changedKeys.map(k => [k, (before as any)?.[k]]));
-      await logAction(admin.email, 'editar_cupao', 'coupon', data.id, { before: beforeSnapshot, after: payload });
+      await logAction(admin.email, 'editar_cupao', 'coupon', data.id, { ...eventLog(event), code: before?.code, before: beforeSnapshot, after: payload });
       return res.status(200).json(data);
     }
 
     if (req.method === 'DELETE') {
       if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
-      const { id } = req.body || {};
+      const { id } = parseBody(req) || {};
 
       if (!id) {
         return res.status(400).json({ error: 'ID é obrigatório.' });
       }
 
+      const { data: before } = await supabase
+        .from('discount_coupons')
+        .select('code')
+        .eq('id', id)
+        .eq('event_id', event.id)
+        .maybeSingle();
+
+      if (!before) {
+        return res.status(404).json({ error: NOT_IN_EVENT, message: NOT_IN_EVENT });
+      }
+
       const { error } = await supabase
         .from('discount_coupons')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('event_id', event.id);
 
       if (error) {
         return res.status(500).json({ error: error.message });
       }
 
-      await logAction(admin.email, 'eliminar_cupao', 'coupon', id, {});
+      await logAction(admin.email, 'eliminar_cupao', 'coupon', id, { ...eventLog(event), code: before.code });
       return res.status(200).json({ ok: true });
     }
 
