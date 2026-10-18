@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input } from './UIComponents';
-import { CheckCircle2, Lock, ShieldCheck, Ticket, Video } from 'lucide-react';
+import { Button } from './UIComponents';
+import { Check, CheckCircle2, Info, Lock, ShieldCheck, Ticket } from 'lucide-react';
+import { WorkshopDetailsModal, WorkshopData } from './WorkshopDetailsModal';
 
 type TicketTypeData = {
   id: string;
@@ -11,6 +12,8 @@ type TicketTypeData = {
   quantity_total: number | null;
   quantity_sold: number | null;
   sort_order: number | null;
+  workshop_price?: number | null;
+  workshops?: WorkshopData[];
 };
 
 type CouponState = {
@@ -18,7 +21,6 @@ type CouponState = {
   code?: string;
   discountPercent?: number | null;
   discountAmount?: number | null;
-  recordingOnly?: boolean;
   message?: string;
 };
 
@@ -33,9 +35,13 @@ type ParticipantForm = {
   industry: string;
   tshirt: string;
   saMarketingConsent: boolean;
+  workshopId: string | null;
 };
 
-const RECORDING_PRICE = 1000;
+// Workshops da tarde: letra pela ordem devolvida pela API e cor de topo do cartão
+const WORKSHOP_ACCENTS = ['#007BAA', '#B4520A', '#00693E'];
+const workshopTag = (i: number) => `Workshop ${String.fromCharCode(65 + i)}`;
+const workshopAccent = (i: number) => WORKSHOP_ACCENTS[i % WORKSHOP_ACCENTS.length];
 
 const JOB_FUNCTIONS = [
   'Atendimento ao Cliente', 'Engenharia', 'Executivo', 'Financeiro',
@@ -52,6 +58,7 @@ const emptyParticipant = (): ParticipantForm => ({
   firstName: '', lastName: '', email: '', country: 'Portugal',
   company: '', jobFunction: '', jobFunctionOther: '',
   industry: '', tshirt: '', saMarketingConsent: false,
+  workshopId: null,
 });
 
 const iMatch = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -118,7 +125,7 @@ export const TicketPurchaseModal: React.FC = () => {
   const [participants, setParticipants] = useState<ParticipantForm[]>([emptyParticipant()]);
   const [activeTab, setActiveTab] = useState(0);
 
-  const [includeRecording, setIncludeRecording] = useState(true);
+  const [openWorkshopId, setOpenWorkshopId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [billingNif, setBillingNif] = useState('');
   const [billingNameType, setBillingNameType] = useState<'participant' | 'company'>('participant');
@@ -158,12 +165,14 @@ export const TicketPurchaseModal: React.FC = () => {
     }
   }, [participants.map(pt => pt.company).join('\x00')]);
 
-  useEffect(() => {
+  const loadTicket = () =>
     fetch('/api/get-ticket')
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setTicketData(data); })
-      .catch(console.error)
-      .finally(() => setLoadingTicket(false));
+      .then((data: TicketTypeData | null) => { if (data) setTicketData(data); return data; })
+      .catch(err => { console.error(err); return null; });
+
+  useEffect(() => {
+    loadTicket().finally(() => setLoadingTicket(false));
   }, []);
 
   const handleQuantityChange = (q: number) => {
@@ -187,28 +196,31 @@ export const TicketPurchaseModal: React.FC = () => {
 
   const pricePerTicket = useMemo(() => {
     let p = originalPrice;
-    if (couponResult?.valid && !couponResult.recordingOnly) {
+    if (couponResult?.valid) {
       if (couponResult.discountAmount != null) p = Math.max(0, originalPrice - couponResult.discountAmount);
       else if (couponResult.discountPercent != null) p = Math.round(originalPrice * (100 - couponResult.discountPercent) / 100);
     }
     return p;
   }, [originalPrice, couponResult]);
 
-  const recordingPricePerPerson = useMemo(() => {
-    if (!includeRecording) return 0;
-    let p = RECORDING_PRICE;
-    if (couponResult?.valid && couponResult.recordingOnly) {
-      if (couponResult.discountAmount != null) p = Math.max(0, RECORDING_PRICE - couponResult.discountAmount);
-      else if (couponResult.discountPercent != null) {
-        const rawDiscount = Math.round((originalPrice + RECORDING_PRICE) * couponResult.discountPercent / 100);
-        p = Math.max(0, RECORDING_PRICE - Math.min(rawDiscount, RECORDING_PRICE));
-      }
-    }
-    return p;
-  }, [includeRecording, couponResult, originalPrice]);
+  // Workshops: preço único por lote; o cupão NÃO se aplica aos workshops
+  const workshopPrice = Number(ticketData?.workshop_price || 0);
+  const workshops = ticketData?.workshops || [];
+  const workshopsEnabled = workshopPrice > 0 && workshops.length > 0;
+  const workshopCount = (id: string, exceptIndex = -1) =>
+    participants.filter((pt, i) => i !== exceptIndex && pt.workshopId === id).length;
+  // Vagas disponíveis para o participante `index`, descontando as escolhas dos outros participantes desta compra
+  const workshopAvailableFor = (ws: WorkshopData, index: number): number | null =>
+    ws.remaining == null ? null : Math.max(0, ws.remaining - workshopCount(ws.id, index));
+  const workshopSoldOutFor = (ws: WorkshopData, index: number) => {
+    const avail = workshopAvailableFor(ws, index);
+    return ws.sold_out || (avail != null && avail <= 0);
+  };
 
-  const recordingPrice = recordingPricePerPerson * quantity;
-  const totalPrice = pricePerTicket * quantity + recordingPrice;
+  const workshopsTotal = workshopsEnabled
+    ? participants.filter(pt => pt.workshopId && workshops.some(w => w.id === pt.workshopId)).length * workshopPrice
+    : 0;
+  const totalPrice = pricePerTicket * quantity + workshopsTotal;
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -226,22 +238,16 @@ export const TicketPurchaseModal: React.FC = () => {
         setCouponResult({ valid: false, message: 'Cupão inválido.' });
         return;
       }
-      if (data.recordingOnly && !includeRecording) {
-        setCouponResult({ valid: false, message: 'Este cupão aplica-se apenas à gravação. Ativa a opção de gravação para usá-lo.' });
+      // A gravação deixou de ser vendida — cupões só de gravação já não servem
+      if (data.recordingOnly) {
+        setCouponResult({ valid: false, message: 'Este cupão já não é válido.' });
         return;
       }
-      let discountLabel: string;
-      if (data.recordingOnly) {
-        const rawDiscount = data.discountAmount != null ? data.discountAmount : Math.round((originalPrice + RECORDING_PRICE) * (data.discountPercent / 100));
-        discountLabel = `-${formatCurrency(Math.min(rawDiscount, RECORDING_PRICE), 'eur')}`;
-      } else {
-        discountLabel = data.discountAmount != null ? `-${formatCurrency(data.discountAmount, 'eur')}` : `-${data.discountPercent}%`;
-      }
+      const discountLabel = data.discountAmount != null ? `-${formatCurrency(data.discountAmount, 'eur')}` : `-${data.discountPercent}%`;
       setCouponResult({
         valid: true, code: data.code,
         discountPercent: data.discountPercent, discountAmount: data.discountAmount,
-        recordingOnly: data.recordingOnly,
-        message: `Cupão aplicado: ${discountLabel}${data.recordingOnly ? ' na gravação' : ''}`,
+        message: `Cupão aplicado: ${discountLabel}${workshopsEnabled ? ' no bilhete' : ''}`,
       });
     } catch {
       setCouponResult({ valid: false, message: 'Cupão inválido.' });
@@ -301,9 +307,10 @@ export const TicketPurchaseModal: React.FC = () => {
             industry: p.industry.trim(),
             tshirt: p.tshirt,
             sa_marketing_consent: p.saMarketingConsent,
+            workshop_id: workshopsEnabled && p.workshopId ? p.workshopId : null,
           })),
           shared: {
-            include_recording: includeRecording,
+            include_recording: false,
             coupon_code: couponResult?.valid ? couponCode.trim().toUpperCase() : '',
             billing_nif: billingNif.trim(),
             billing_name: resolvedBillingName,
@@ -317,6 +324,23 @@ export const TicketPurchaseModal: React.FC = () => {
       const data = await res.json();
       if (data?.url) {
         window.location.href = data.url;
+      } else if (res.status === 409) {
+        // Ex.: o workshop esgotou entretanto — mostra a mensagem, actualiza vagas e
+        // retira as escolhas que já não cabem nas vagas restantes
+        alert(data?.message || 'Um dos workshops escolhidos esgotou entretanto. Escolhe outro.');
+        const fresh = await loadTicket();
+        if (fresh?.workshops) {
+          const used: Record<string, number> = {};
+          setParticipants(prev => prev.map(pt => {
+            if (!pt.workshopId) return pt;
+            const ws = fresh.workshops!.find(w => w.id === pt.workshopId);
+            const n = (used[pt.workshopId] || 0) + 1;
+            if (!ws || ws.sold_out || (ws.remaining != null && n > ws.remaining)) return { ...pt, workshopId: null };
+            used[pt.workshopId] = n;
+            return pt;
+          }));
+        }
+        setBuyStatus('idle');
       } else {
         alert('Erro ao iniciar pagamento: ' + (data?.message || 'Tente novamente.'));
         setBuyStatus('idle');
@@ -408,10 +432,18 @@ export const TicketPurchaseModal: React.FC = () => {
                       : hasData
                         ? 'bg-amber-50 border-amber-200 text-amber-600'
                         : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100';
+                const wsIndex = pt.workshopId ? workshops.findIndex(w => w.id === pt.workshopId) : -1;
                 return (
                   <button key={i} type="button" onClick={() => setActiveTab(i)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-t-lg border-t border-l border-r -mb-px transition-colors whitespace-nowrap relative ${tabCls}`}>
-                    {prefix}{pt.firstName || `P${i + 1}`}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-t-lg border-t border-l border-r -mb-px transition-colors whitespace-nowrap relative flex items-center gap-1.5 ${tabCls}`}>
+                    <span>{prefix}{pt.firstName || `P${i + 1}`}</span>
+                    {workshopsEnabled && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                        wsIndex >= 0 ? 'bg-brand-darkBlue text-white' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {wsIndex >= 0 ? workshopTag(wsIndex) : 'Sem workshop'}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -542,38 +574,120 @@ export const TicketPurchaseModal: React.FC = () => {
               className="text-brand-blue font-bold hover:underline">Política de Privacidade da Scrum Alliance</a>.
           </label>
         </div>
+
+        {/* Workshop da tarde (opcional, por participante) — os 3 decorrem em simultâneo */}
+        {workshopsEnabled && (
+          <div className="pt-4 border-t border-gray-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+              <div>
+                <div className="font-sora text-base font-bold text-brand-darkBlue">
+                  Workshop da tarde <span className="font-medium text-gray-500 text-sm">(opcional)</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Os workshops decorrem ao mesmo tempo — escolhe no máximo um. Toca num workshop para ver os detalhes.
+                </p>
+              </div>
+              <span className="self-start sm:self-auto whitespace-nowrap text-xs font-bold text-[#b4520a] bg-[#fff3e8] px-3 py-1.5 rounded-full">
+                + {formatCurrency(workshopPrice, ticketData.currency)} / pessoa
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Sem workshop */}
+              {(() => {
+                const noneSel = !p.workshopId;
+                return (
+                  <button type="button" aria-pressed={noneSel}
+                    onClick={() => updateParticipant(activeTab, { workshopId: null })}
+                    className={`text-left cursor-pointer rounded-xl border-2 p-4 flex flex-col gap-2 transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                      noneSel ? 'border-brand-darkBlue bg-[#f4f8fa]' : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}>
+                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      noneSel ? 'border-brand-darkBlue bg-brand-darkBlue text-white' : 'border-gray-300 bg-white'
+                    }`}>
+                      {noneSel && <Check className="w-3 h-3" strokeWidth={3} />}
+                    </span>
+                    <span className="font-sora text-sm font-bold text-gray-800">Sem workshop</span>
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      Só o bilhete do evento. Podes participar nas sessões da tarde do programa principal.
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {workshops.map((ws, wi) => {
+                const selected = p.workshopId === ws.id;
+                const avail = workshopAvailableFor(ws, activeTab);
+                const soldOut = !selected && workshopSoldOutFor(ws, activeTab);
+                const accent = workshopAccent(wi);
+                const spots = soldOut
+                  ? { label: 'Esgotado', cls: 'text-gray-600 bg-gray-200' }
+                  : avail == null
+                    ? null
+                    : avail <= 5
+                      ? { label: avail === 1 ? 'Última vaga' : `Últimas ${avail} vagas`, cls: 'text-orange-800 bg-orange-100' }
+                      : { label: `${avail} vagas`, cls: 'text-brand-green bg-[#e3f3eb]' };
+                return (
+                  <button key={ws.id} type="button" aria-haspopup="dialog"
+                    aria-label={`${workshopTag(wi)}: ${ws.title}${selected ? ' (escolhido)' : ''}${soldOut ? ' (esgotado)' : ''} — ver detalhes`}
+                    onClick={() => setOpenWorkshopId(ws.id)}
+                    style={selected ? { borderColor: accent } : undefined}
+                    className={`text-left cursor-pointer rounded-xl border-2 overflow-hidden flex flex-col bg-white transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                      selected ? '' : 'border-gray-200 hover:border-gray-300'
+                    } ${soldOut ? 'opacity-70' : ''}`}>
+                    <span className="h-11 w-full flex items-center justify-between px-3.5 text-white" style={{ backgroundColor: accent }}>
+                      <span className="font-sora font-extrabold text-xs tracking-widest uppercase">{workshopTag(wi)}</span>
+                      {selected && (
+                        <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center" style={{ color: accent }}>
+                          <Check className="w-4 h-4" strokeWidth={3} />
+                        </span>
+                      )}
+                    </span>
+                    <span className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5 flex-grow">
+                      <span className="font-sora text-sm font-bold text-gray-800 leading-snug">{ws.title}</span>
+                      {ws.facilitator_name && <span className="text-xs text-gray-600">com {ws.facilitator_name}</span>}
+                      {spots && (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-md self-start ${spots.cls}`}>{spots.label}</span>
+                      )}
+                      <span className="flex-grow" />
+                      <span className="mt-1 flex items-center gap-1.5 text-xs font-bold text-brand-darkBlue underline underline-offset-2">
+                        <Info className="w-4 h-4" aria-hidden="true" /> Ver detalhes
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
       </div>
 
-      {/* Secção partilhada — gravação, valor, cupão, NIF */}
-      <div onClick={() => setIncludeRecording(v => !v)}
-        className={`cursor-pointer flex items-start gap-3 rounded-lg border p-3 transition-colors ${
-          includeRecording ? 'border-brand-orange bg-orange-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-        }`}>
-        <input id="includeRecording" type="checkbox" checked={includeRecording}
-          onChange={e => setIncludeRecording(e.target.checked)}
-          onClick={e => e.stopPropagation()}
-          className="mt-0.5 h-4 w-4 text-brand-orange border-gray-300 rounded focus:ring-brand-orange" />
-        <label htmlFor="includeRecording" className="cursor-pointer text-sm text-gray-700 leading-snug">
-          <span className="flex items-center gap-1 font-semibold text-gray-800">
-            <Video className="w-3.5 h-3.5 text-brand-orange" /> Acesso à Gravação do Evento
-          </span>
-          <span className="text-gray-500">
-            Vídeos de todas as sessões{' '}
-            <span className="font-bold text-brand-orange">+€10,00/pessoa</span>
-            {quantity > 1 && (
-              <span className="text-gray-400"> = {ticketData ? formatCurrency(recordingPricePerPerson * quantity, ticketData.currency) : ''}</span>
-            )}
-          </span>
-        </label>
-      </div>
+      {/* Pop-up de detalhes do workshop (por cima do modal de compra) */}
+      {workshopsEnabled && openWorkshopId && (() => {
+        const wi = workshops.findIndex(w => w.id === openWorkshopId);
+        if (wi === -1) return null;
+        const ws = workshops[wi];
+        const selected = p.workshopId === ws.id;
+        return (
+          <WorkshopDetailsModal
+            workshop={ws}
+            tag={workshopTag(wi)}
+            accent={workshopAccent(wi)}
+            priceLabel={formatCurrency(workshopPrice, ticketData.currency)}
+            participantLabel={p.firstName.trim() || `Participante ${activeTab + 1}`}
+            available={workshopAvailableFor(ws, activeTab)}
+            isSelected={selected}
+            soldOut={!selected && workshopSoldOutFor(ws, activeTab)}
+            onChoose={() => { updateParticipant(activeTab, { workshopId: ws.id }); setOpenWorkshopId(null); }}
+            onRemove={() => { updateParticipant(activeTab, { workshopId: null }); setOpenWorkshopId(null); }}
+            onClose={() => setOpenWorkshopId(null)}
+          />
+        );
+      })()}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Valor total"
-          value={ticketData ? formatCurrency(totalPrice, ticketData.currency) : '—'}
-          readOnly
-        />
+      {/* Secção partilhada — cupão, resumo, NIF */}
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Cupão de Desconto</label>
           <div className="flex gap-2">
@@ -593,6 +707,34 @@ export const TicketPurchaseModal: React.FC = () => {
               <span>{couponResult.message}</span>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Resumo de preços */}
+      <div className="border border-gray-200 rounded-xl px-4 py-3 bg-[#f8fafb] space-y-2" aria-live="polite">
+        <div className="flex justify-between gap-3 text-sm text-gray-700">
+          <span>Bilhete {ticketData.name} × {quantity}</span>
+          <span className="font-semibold whitespace-nowrap">
+            {pricePerTicket < originalPrice && (
+              <span className="line-through text-gray-400 font-normal mr-1.5">{formatCurrency(originalPrice * quantity, ticketData.currency)}</span>
+            )}
+            {formatCurrency(pricePerTicket * quantity, ticketData.currency)}
+          </span>
+        </div>
+        {workshopsEnabled && workshops.map((ws, wi) => {
+          const n = workshopCount(ws.id);
+          if (!n) return null;
+          return (
+            <div key={ws.id} className="flex justify-between gap-3 text-sm text-gray-700">
+              <span>{workshopTag(wi)} × {n}</span>
+              <span className="font-semibold whitespace-nowrap">{formatCurrency(workshopPrice * n, ticketData.currency)}</span>
+            </div>
+          );
+        })}
+        <div className="h-px bg-gray-200" />
+        <div className="flex justify-between items-baseline gap-3">
+          <span className="font-sora font-bold text-brand-darkBlue">Total</span>
+          <span className="font-sora text-xl font-extrabold text-brand-darkBlue">{formatCurrency(totalPrice, ticketData.currency)}</span>
         </div>
       </div>
 
