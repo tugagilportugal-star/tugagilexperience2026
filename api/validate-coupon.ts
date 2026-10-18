@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { getCurrentEvent } from '../lib/event.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -31,6 +32,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ valid: false, message: 'Código do cupão é obrigatório.' });
     }
 
+    // Só cupões do evento deste site
+    const currentEvent = await getCurrentEvent(supabase);
+
     let coupon: CouponRow | null = null;
 
     if (rawEmail) {
@@ -39,6 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('id, code, email, active, discount_percent, discount_amount, recording_only, single_use, expires_at')
         .eq('code', rawCode)
         .eq('email', rawEmail)
+        .eq('event_id', currentEvent.id)
         .eq('active', true)
         .maybeSingle();
 
@@ -57,6 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('id, code, email, active, discount_percent, discount_amount, recording_only, single_use, expires_at')
         .eq('code', rawCode)
         .is('email', null)
+        .eq('event_id', currentEvent.id)
         .eq('active', true)
         .maybeSingle();
 

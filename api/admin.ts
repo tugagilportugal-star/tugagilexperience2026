@@ -169,6 +169,53 @@ function withWorkshopRemaining(row: any) {
   return { ...row, remaining: Math.max(0, capacity - sold) };
 }
 
+// =========================
+// EVENTO (obrigatório nos recursos ligados a evento)
+// =========================
+type AdminEvent = {
+  id: string;
+  slug: string;
+  name: string;
+  starts_on: string | null;
+  venue: string | null;
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Recursos cujos dados pertencem a um evento: exigem ?event_id=<uuid>.
+const EVENT_SCOPED_RESOURCES = new Set(['leads', 'ticket-types', 'workshops', 'orders', 'tickets']);
+
+// Lê ?event_id= e confirma que o evento existe. Nunca usa event_id do body.
+async function resolveEvent(req: VercelRequest): Promise<{ event: AdminEvent } | { error: string }> {
+  const raw = (req.query as any).event_id;
+  const eventId = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim();
+
+  if (!eventId) {
+    return { error: 'event_id obrigatório: escolhe o evento a administrar.' };
+  }
+  if (!UUID_RE.test(eventId)) {
+    return { error: 'event_id inválido (tem de ser um uuid).' };
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, slug, name, starts_on, venue')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (error) return { error: `Não foi possível validar o evento: ${error.message}` };
+  if (!data) return { error: 'Evento inexistente para o event_id indicado.' };
+
+  return { event: data as AdminEvent };
+}
+
+// Identificação do evento nos detalhes do registo de auditoria
+function eventLog(event: AdminEvent) {
+  return { event_id: event.id, event_slug: event.slug, event_name: event.name };
+}
+
+const NOT_IN_EVENT = 'Registo não encontrado neste evento.';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -181,13 +228,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // =========================
+    // EVENTS (lista para o seletor do admin)
+    // =========================
+    if (resource === 'events') {
+      if (req.method !== 'GET' || id) return res.status(405).json({ message: 'Method not allowed' });
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, slug, name, starts_on, venue')
+        .order('starts_on', { ascending: false, nullsFirst: false });
+      if (error) return res.status(500).json({ message: error.message });
+      return res.status(200).json(data || []);
+    }
+
+    // Recursos ligados a evento: sem evento válido não se lê nem se escreve nada.
+    let event: AdminEvent | null = null;
+    if (EVENT_SCOPED_RESOURCES.has(resource)) {
+      const resolved = await resolveEvent(req);
+      if ('error' in resolved) return res.status(400).json({ message: resolved.error });
+      event = resolved.event;
+    }
+
+    // =========================
     // LEADS
     // =========================
-    if (resource === 'leads') {
+    if (resource === 'leads' && event) {
       if (req.method === 'GET' && !id) {
         const { data, error } = await supabase
           .from('leads')
           .select('*')
+          .eq('event_id', event.id)
           .neq('status', 'Deleted')
           .order('created_at', { ascending: false });
 
@@ -204,34 +273,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ message: 'status obrigatório' });
         }
 
-        const { data: before } = await supabase.from('leads').select('status').eq('id', id).single();
+        const { data: before } = await supabase
+          .from('leads').select('status').eq('id', id).eq('event_id', event.id).maybeSingle();
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const { data, error } = await supabase
           .from('leads')
           .update({ status })
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'atualizar_lead', 'lead', id, { before: { status: before?.status }, after: { status } });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
+        await logAction(admin.email, 'atualizar_lead', 'lead', id, { ...eventLog(event), before: { status: before?.status }, after: { status } });
         return res.status(200).json(data);
       }
 
       if (req.method === 'DELETE' && id) {
         if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
 
-        const { data: before } = await supabase.from('leads').select('status').eq('id', id).single();
+        const { data: before } = await supabase
+          .from('leads').select('status').eq('id', id).eq('event_id', event.id).maybeSingle();
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const { data, error } = await supabase
           .from('leads')
           .update({ status: 'Deleted' })
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'eliminar_lead', 'lead', id, { before: { status: before?.status }, after: { status: 'Deleted' } });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
+        await logAction(admin.email, 'eliminar_lead', 'lead', id, { ...eventLog(event), before: { status: before?.status }, after: { status: 'Deleted' } });
         return res.status(200).json(data);
       }
 
@@ -241,11 +318,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // =========================
     // TICKET TYPES (LOTES)
     // =========================
-    if (resource === 'ticket-types') {
+    if (resource === 'ticket-types' && event) {
       if (req.method === 'GET' && !id) {
         const { data, error } = await supabase
           .from('ticket_types')
           .select('*')
+          .eq('event_id', event.id)
           .order('sort_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: true });
 
@@ -262,9 +340,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ message: normalized.error });
         }
 
+        // event_id vem sempre do query param (nunca do body)
         const payload = {
           ...normalized.data,
           quantity_sold: 0,
+          event_id: event.id,
         };
 
         const { data, error } = await supabase
@@ -274,7 +354,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .single();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'criar_lote', 'ticket_type', data.id, { name: data.name });
+        await logAction(admin.email, 'criar_lote', 'ticket_type', data.id, { ...eventLog(event), name: data.name });
         return res.status(200).json(data);
       }
 
@@ -291,9 +371,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('ticket_types')
           .select('*')
           .eq('id', id)
-          .single();
+          .eq('event_id', event.id)
+          .maybeSingle();
 
         if (beforeError) return res.status(500).json({ message: beforeError.message });
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         if (normalized.data.quantity_total !== undefined) {
           const sold = Number(before?.quantity_sold ?? 0);
@@ -309,31 +391,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('ticket_types')
           .update(normalized.data)
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const changedKeys = Object.keys(normalized.data);
         const beforeSnapshot = Object.fromEntries(changedKeys.map(k => [k, (before as any)?.[k]]));
-        await logAction(admin.email, 'editar_lote', 'ticket_type', id, { before: beforeSnapshot, after: normalized.data });
+        await logAction(admin.email, 'editar_lote', 'ticket_type', id, { ...eventLog(event), name: before?.name, before: beforeSnapshot, after: normalized.data });
         return res.status(200).json(data);
       }
 
       if (req.method === 'DELETE' && id) {
         if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
 
-        const { data: before } = await supabase.from('ticket_types').select('name, active').eq('id', id).single();
+        const { data: before } = await supabase
+          .from('ticket_types').select('name, active').eq('id', id).eq('event_id', event.id).maybeSingle();
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const { data, error } = await supabase
           .from('ticket_types')
           .update({ active: false })
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'desativar_lote', 'ticket_type', id, { before: { active: before?.active }, after: { active: false } });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
+        await logAction(admin.email, 'desativar_lote', 'ticket_type', id, { ...eventLog(event), name: before?.name, before: { active: before?.active }, after: { active: false } });
         return res.status(200).json(data);
       }
 
@@ -343,11 +431,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // =========================
     // WORKSHOPS
     // =========================
-    if (resource === 'workshops') {
+    if (resource === 'workshops' && event) {
       if (req.method === 'GET' && !id) {
         const { data, error } = await supabase
           .from('workshops')
           .select('*')
+          .eq('event_id', event.id)
           .order('sort_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: true });
 
@@ -366,12 +455,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const { data, error } = await supabase
           .from('workshops')
-          .insert({ ...normalized.data, sold: 0 })
+          .insert({ ...normalized.data, sold: 0, event_id: event.id })
           .select()
           .single();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'criar_workshop', 'workshop', data.id, { title: data.title });
+        await logAction(admin.email, 'criar_workshop', 'workshop', data.id, { ...eventLog(event), title: data.title });
         return res.status(200).json(withWorkshopRemaining(data));
       }
 
@@ -392,9 +481,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('workshops')
           .select('*')
           .eq('id', id)
-          .single();
+          .eq('event_id', event.id)
+          .maybeSingle();
 
         if (beforeError) return res.status(500).json({ message: beforeError.message });
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         if (normalized.data.capacity !== undefined) {
           const sold = Number(before?.sold ?? 0);
@@ -410,31 +501,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('workshops')
           .update({ ...normalized.data, updated_at: new Date().toISOString() })
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const changedKeys = Object.keys(normalized.data);
         const beforeSnapshot = Object.fromEntries(changedKeys.map(k => [k, (before as any)?.[k]]));
-        await logAction(admin.email, 'editar_workshop', 'workshop', id, { before: beforeSnapshot, after: normalized.data });
+        await logAction(admin.email, 'editar_workshop', 'workshop', id, { ...eventLog(event), title: before?.title, before: beforeSnapshot, after: normalized.data });
         return res.status(200).json(withWorkshopRemaining(data));
       }
 
       if (req.method === 'DELETE' && id) {
         if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
 
-        const { data: before } = await supabase.from('workshops').select('title, active').eq('id', id).single();
+        const { data: before } = await supabase
+          .from('workshops').select('title, active').eq('id', id).eq('event_id', event.id).maybeSingle();
+        if (!before) return res.status(404).json({ message: NOT_IN_EVENT });
 
         const { data, error } = await supabase
           .from('workshops')
           .update({ active: false, updated_at: new Date().toISOString() })
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'desativar_workshop', 'workshop', id, { before: { active: before?.active }, after: { active: false } });
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
+        await logAction(admin.email, 'desativar_workshop', 'workshop', id, { ...eventLog(event), title: before?.title, before: { active: before?.active }, after: { active: false } });
         return res.status(200).json(withWorkshopRemaining(data));
       }
 
@@ -444,11 +541,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // =========================
     // ORDERS
     // =========================
-    if (resource === 'orders') {
+    if (resource === 'orders' && event) {
       if (req.method === 'GET') {
         const { data, error } = await supabase
           .from('orders')
           .select('*')
+          .eq('event_id', event.id)
           .order('created_at', { ascending: false })
           .limit(2000);
         if (error) return res.status(500).json({ message: error.message });
@@ -457,7 +555,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (req.method === 'PATCH') {
         if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
-        const { id, is_duplicate, is_test, credit_note_ref } = req.body || {};
+        const { id, is_duplicate, is_test, credit_note_ref } = parseBody(req) || {};
         if (!id) return res.status(400).json({ message: 'ID é obrigatório.' });
 
         const payload: Record<string, unknown> = {};
@@ -469,10 +567,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('orders')
           .update(payload)
           .eq('id', id)
+          .eq('event_id', event.id)
           .select()
-          .single();
+          .maybeSingle();
         if (error) return res.status(500).json({ message: error.message });
-        await logAction(admin.email, 'marcar_duplicado', 'order', id, payload);
+        if (!data) return res.status(404).json({ message: NOT_IN_EVENT });
+        await logAction(admin.email, 'marcar_duplicado', 'order', id, { ...eventLog(event), ...payload });
         return res.status(200).json(data);
       }
 
@@ -482,7 +582,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // =========================
     // TICKETS
     // =========================
-    if (resource === 'tickets') {
+    if (resource === 'tickets' && event) {
       if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed' });
       }
@@ -490,6 +590,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data, error } = await supabase
         .from('tickets')
         .select('*')
+        .eq('event_id', event.id)
         .order('created_at', { ascending: false })
         .limit(2000);
 
