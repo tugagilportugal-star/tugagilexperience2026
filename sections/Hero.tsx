@@ -1,5 +1,5 @@
 // sections/Hero.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ASSETS, TICKETS_ON_SALE } from '../config';
 import { isEmbedded } from '../lib/isEmbedded';
 
@@ -8,6 +8,45 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
+   // Configuração do Alvo: 21 de Novembro de 2026 às 08:00
+  const targetDate = new Date('2026-11-21T08:00:00').getTime();
+
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  const countdownBlocks = [
+    { label: 'Dias', value: timeLeft.days },
+    { label: 'Horas', value: timeLeft.hours },
+    { label: 'Minutos', value: timeLeft.minutes },
+    { label: 'Segundos', value: timeLeft.seconds },
+  ];
   return (
     <section className={`relative flex items-center justify-center bg-[#050806] overflow-hidden ${isEmbedded ? 'py-24' : 'min-h-screen'}`}>
       
@@ -54,6 +93,23 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
           <span>ISLA Gaia</span>
           <span className="text-zinc-700">•</span>
           <span className="text-zinc-300">Vila Nova de Gaia, Portugal</span>
+        </div>
+
+        {/* CRONÓMETRO (COUNTDOWN) */}
+        <div className="grid grid-cols-4 gap-3 md:gap-4 w-full max-w-sm md:max-w-md mb-12">
+          {countdownBlocks.map((block, idx) => (
+            <div 
+              key={idx} 
+              className="bg-zinc-900/55 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-3 md:p-4 text-center flex flex-col justify-center"
+            >
+              <span className="text-2xl md:text-4xl font-black text-emerald-400 font-mono leading-none block">
+                {String(block.value).padStart(2, '0')}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-1.5 font-sora">
+                {block.label}
+              </span>
+            </div>
+          ))}
         </div>
 
         {/* 4. DOIS BOTÕES DE ALTA CONVERSÃO PARALELOS (Efeito Responsivo Lado-a-Lado) [1.2.7] */}

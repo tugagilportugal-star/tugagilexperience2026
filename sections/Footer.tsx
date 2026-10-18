@@ -86,7 +86,7 @@ export const Footer: React.FC = () => {
                 <Mail className="w-5 h-5 mr-3 group-hover:text-emerald-400" />
                 tuga@tugagil.com
             </a>
-            <div className="flex space-x-4 mt-6">
+            {/* <div className="flex space-x-4 mt-6">
                 <a 
                     href="https://www.linkedin.com//" //inserir endereço definitivo
                     target="_blank" 
@@ -105,7 +105,7 @@ export const Footer: React.FC = () => {
                 >
                     <Instagram className="w-5 h-5" />
                 </a>
-             </div>
+             </div> */}
           </div>
 
           {/* Legal */}

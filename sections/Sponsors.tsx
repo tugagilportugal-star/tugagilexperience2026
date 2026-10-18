@@ -26,11 +26,11 @@ const SponsorLogo: React.FC<{
     }[tier];
 
   return (
-    <div className={`${className} ${plateRing} bg-white rounded-xl p-4 md:p-5 flex items-center justify-center shadow-lg`}>
-      <img 
-        src={sponsor.logo} 
-        alt={sponsor.name} 
-        className="w-full h-full object-contain" 
+    <div className={`${className} ${plateRing} bg-white rounded-xl p-2 md:p-3 flex items-center justify-center shadow-lg overflow-hidden`}>
+      <img
+        src={sponsor.logo}
+        alt={sponsor.name}
+        className={`w-full h-full object-contain ${sponsor.customClass ?? ''}`}
       />
     </div>
   );
@@ -64,8 +64,8 @@ export const Sponsors: React.FC = () => {
 
   const goldSponsors: Sponsor[] = [
     { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia-Logo.png"},
-    //{ name: "Google", initials: "GO", url: "https://google.com" },
-    //{ name: "Amazon", initials: "AM", url: "https://amazon.com" },
+    { name: "Growing Centuries", initials: "GC", url: "https://growingcenturies.pt/", logo: "/assets/NAMING_PRETO_N_P.png" },
+    
   ];
   
  // const silverSponsors: Sponsor[] = [
@@ -75,21 +75,15 @@ export const Sponsors: React.FC = () => {
     //{ name: "Figma", initials: "FI", url: "https://figma.com" },
   //];
 
- // const bronzeSponsors: Sponsor[] = [
-  //  { name: "Atlassian", initials: "AT", url: "https://atlassian.com" },
-   // { name: "GitHub", initials: "GH", url: "https://github.com" },
-   // { name: "Vercel", initials: "VC", url: "https://vercel.com" },
-   // { name: "Netlify", initials: "NL", url: "https://netlify.com" },
-    //{ name: "Stripe", initials: "ST", url: "https://stripe.com" },
-   // { name: "Twilio", initials: "TW", url: "https://twilio.com" },
-  //];
+  const bronzeSponsors: Sponsor[] = [
+    { name: "Ateliê do Software", initials: "AS", url: "https://atelie.software/", logo: "/assets/Logo_Atelie_Software_Transparente.png" },
+    
+  ];
 
-  //const communitySupporters: Sponsor[] = [
-   // { name: "Dev.to", initials: "DV", url: "https://dev.to" },
-   // { name: "Stack Overflow", initials: "SO", url: "https://stackoverflow.com" },
-   // { name: "Hashnode", initials: "HN", url: "https://hashnode.com" },
-    //{ name: "Product Hunt", initials: "PH", url: "https://producthunt.com" }
-  //];
+  const communitySupporters: Sponsor[] = [
+    { name: "Porto Tech Hub", initials: "PTH", url: "https://portotechhub.com/", logo: "/assets/Logo-principal.png", customClass: "scale-150" },
+    
+  ];
 
   return (
     <Section id="sponsors" className="relative bg-[#050806] border-t border-zinc-900 overflow-hidden">
@@ -146,7 +140,7 @@ export const Sponsors: React.FC = () => {
           </div>
         )}
 
-        {/* SILVER SPONSORS 
+        {/* SILVER SPONSORS /}
         {silverSponsors.length > 0 && (
           <div className="mb-24">
             <span className="text-base font-bold tracking-[0.2em] text-zinc-400 uppercase mb-12 block font-sora">
@@ -170,9 +164,9 @@ export const Sponsors: React.FC = () => {
               ))}
             </div>
           </div>
-        )}*/}
+        )}*
 
-        {/* BRONZE SPONSORS 
+        {/* BRONZE SPONSORS */}
         <div className="mb-24">
             <span className="text-sm font-bold tracking-[0.2em] text-orange-400 uppercase mb-12 block font-sora">
                 Patrocinadores Bronze
@@ -194,9 +188,9 @@ export const Sponsors: React.FC = () => {
                 </a>
               ))}
             </div>
-        </div>*/}
+        </div>
 
-        {/* COMUNIDADES APOIADORAS 
+        {/* COMUNIDADES APOIADORAS */}
         <div className="mb-24">
             <span className="text-sm font-bold tracking-[0.2em] text-emerald-400 uppercase mb-12 block font-sora">
                 Comunidades Apoiadoras
@@ -218,7 +212,7 @@ export const Sponsors: React.FC = () => {
                 </a>
               ))}
             </div>
-        </div>*/}
+        </div>
 
         {/* SEPARADOR */}
         <div className="mb-16 relative">

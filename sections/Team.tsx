@@ -21,11 +21,6 @@ export const Team: React.FC = () => {
       linkedin: "https://www.linkedin.com/in/sylvia-grec/"
     },
     {
-      name: "Marina Bittencourt",
-      image: "/assets/Marina.png",
-      linkedin: "https://www.linkedin.com/in/marinarosabittencourt/"
-    },
-    {
       name: "Fábio Castro",
       image: "/assets/Fabio.png",
       linkedin: "https://www.linkedin.com/in/frmcastro/"
