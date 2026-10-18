@@ -1,5 +1,7 @@
 # Venda de Bilhetes — Desativação Temporária (2026-09-10)
 
+> **Atualização 2026-10-18:** a flag deixou de estar fixa no código. `TICKETS_ON_SALE` em `config.ts` lê a variável da Vercel `VITE_TICKETS_ON_SALE` (`true` mostra os botões). Hoje: Preview = `true` (testes), Production = `false`. Para abrir as vendas: mudar Production para `true` na Vercel e fazer redeploy.
+
 ## Porque foi desligada
 
 Os botões de "Comprar Bilhete" ficaram **ocultos** no frontend porque, neste momento:
