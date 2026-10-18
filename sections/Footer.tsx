@@ -92,7 +92,7 @@ export const Footer: React.FC = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="p-2 bg-zinc-900 rounded-full hover:bg-emerald-500 transition-colors"
-                    aria-label="LinkedIn RSG Lisbon"
+                    aria-label="LinkedIn TugÁgil"
                 >
                     <Linkedin className="w-5 h-5" />
                 </a>
@@ -101,7 +101,7 @@ export const Footer: React.FC = () => {
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="p-2 bg-zinc-900 rounded-full hover:bg-gradient-to-tr hover:from-[#f09433] hover:to-[#bc1888] transition-colors"
-                    aria-label="Instagram RSG Lisbon"
+                    aria-label="Instagram TugÁgil"
                 >
                     <Instagram className="w-5 h-5" />
                 </a>

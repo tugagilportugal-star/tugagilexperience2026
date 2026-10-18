@@ -78,6 +78,7 @@ async function billCreateDocument(params: {
   amountEuro: number;
   quantity?: number;
   workshops?: InvoiceWorkshopLine[];
+  eventName?: string;
 }) {
   const ep = endpoints(params.baseUrl);
 
@@ -86,6 +87,7 @@ async function billCreateDocument(params: {
   const isencao = (process.env.BILL_ISENCAO || '').trim().toUpperCase();
 
   const qty = Math.max(1, params.quantity ?? 1);
+  const eventName = (params.eventName || '').trim() || 'TugÁgil Experience 2026';
   const RECORDING_UNIT = 10.00;
 
   // Workshops: um produto por workshop (ignora linhas vazias/inválidas)
@@ -122,7 +124,7 @@ async function billCreateDocument(params: {
 
   const produtos: Record<string, unknown>[] = [
     makeProduto(
-      'Bilhete de acesso ao TugÁgil Experience 2026',
+      `Bilhete de acesso ao ${eventName}`,
       qty,
       ticketUnitPrice,
     ),
@@ -130,7 +132,7 @@ async function billCreateDocument(params: {
 
   for (const w of workshops) {
     produtos.push(makeProduto(
-      `Workshop: ${w.title} – TugÁgil Experience 2026`,
+      `Workshop: ${w.title} – ${eventName}`,
       w.quantity,
       w.unitPriceEuro,
     ));
@@ -146,7 +148,7 @@ async function billCreateDocument(params: {
   }
 
   const contato: Record<string, unknown> = {
-    nome: params.customerName || 'Participante RSG',
+    nome: params.customerName || 'Participante',
     email: params.customerEmail,
     pais: params.countryIso,
   };
@@ -303,6 +305,7 @@ export async function createInvoiceWithBillpt(input: CreateInvoiceInput): Promis
     amountEuro: input.amountEuro,
     quantity: input.quantity ?? 1,
     workshops: input.workshops,
+    eventName: input.eventName,
   });
 
   if (!created.id) {

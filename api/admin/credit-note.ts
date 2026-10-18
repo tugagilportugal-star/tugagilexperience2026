@@ -81,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const produto: Record<string, unknown> = {
       lancamento_pai_id: l.id,
       item_id: l.item_id,
-      nome: l.nome || l.descricao || 'Bilhete RSG Lisbon 2026',
+      nome: l.nome || l.descricao || 'Bilhete',
       quantidade: Number(l.quantidade) || 1,
       preco_unitario: Number(l.preco_unitario) || 0,
       imposto: taxPercent,
@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // 3) Build contact from original doc
   const contato: Record<string, unknown> = {
-    nome: originalDoc?.contato?.nome || order.customer_name || 'Participante RSG',
+    nome: originalDoc?.contato?.nome || order.customer_name || 'Participante',
     email: order.customer_email,
     pais: order.customer_country || 'PT',
   };

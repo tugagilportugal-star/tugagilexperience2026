@@ -194,10 +194,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: `RSG Lisbon 2026 - ${ticketType.name}`,
+            name: `${currentEvent.name} - ${ticketType.name}`,
             description: appliedCoupon && !appliedCoupon.recording_only
-              ? `Acesso completo aos 2 dias de evento. Cupão ${appliedCoupon.code} aplicado.`
-              : 'Acesso completo aos 2 dias de evento.',
+              ? `Bilhete de acesso ao evento. Cupão ${appliedCoupon.code} aplicado.`
+              : 'Bilhete de acesso ao evento.',
           },
           unit_amount: finalTicketPrice,
         },

@@ -110,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const contato: Record<string, unknown> = {
-      nome: originalDoc?.contato?.nome || order.customer_name || 'Participante RSG',
+      nome: originalDoc?.contato?.nome || order.customer_name || 'Participante',
       email: order.customer_email,
       pais: order.customer_country || 'PT',
     };
