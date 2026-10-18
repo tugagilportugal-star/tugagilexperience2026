@@ -6,7 +6,7 @@ import { issueInvoiceForOrder } from '../lib/invoicing/index.js';
 import type { InvoiceEmailData } from '../lib/invoicing/types.js';
 import { notifyAdmins, type StepResult } from '../lib/notify.js';
 import { getCurrentEvent } from '../lib/event.js';
-import { EMAIL_FROM, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../lib/email.js';
+import { EMAIL_FROM, EMPTY_EMAIL_EVENT, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../lib/email.js';
 
 // Todo o texto dinâmico (nomes, lotes, workshops, evento...) é escapado com escapeHtml
 // antes de entrar no HTML — vem do checkout ou da BD e pode conter HTML.
@@ -78,7 +78,7 @@ const generateTicketEmail = (
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">📍 Informações Práticas</h2>
                                 <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 16px; line-height: 26px; color: #3c4858;">
                                     ${ev.dateLabel ? `<tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Data:</td><td style="padding-bottom:8px;">${escapeHtml(ev.dateLabel)}</td></tr>` : ''}
-                                    <tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Horário:</td><td style="padding-bottom:8px;">9h00 às 20h00 <br><span style="font-size:13px; color:#888;">(Recomendamos chegada às 8h30 para credenciação)</span></td></tr>
+                                    ${ev.timeLabel ? `<tr><td width="80" style="font-weight:bold; padding-bottom:8px;">Horário:</td><td style="padding-bottom:8px;">${escapeHtml(ev.timeLabel)}</td></tr>` : ''}
                                     ${ev.venue ? `<tr><td width="80" style="font-weight:bold; vertical-align:top;">Local:</td><td><strong>${escapeHtml(ev.venue)}</strong></td></tr>` : ''}
                                 </table>
                             </div>
@@ -89,9 +89,9 @@ const generateTicketEmail = (
                             <div style="text-align: center;">
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">Prepara a tua chegada</h2>
                                 
-                                <a href="https://evt.to/fcblxmtsb7bm" style="background-color: #003F59; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
+                                ${ev.calendarUrl ? `<a href="${escapeHtml(ev.calendarUrl)}" style="background-color: #003F59; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
                                     📅 Adicionar ao Calendário
-                                </a>
+                                </a>` : ''}
                                 
                                 <a href="https://www.canva.com/design/DAHDA-8uvms/wn8Qsg2n53rO1_MCgtZK7w/edit" style="background-color: #F47A20; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
                                     📣 Kit Redes Sociais (Canva)
@@ -484,7 +484,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Nome/data/local do evento para os emails (se falhar, segue com um genérico — não trava a compra)
-    let emailEvent: EmailEvent = { name: 'TugÁgil Experience', dateLabel: '', venue: '' };
+    let emailEvent: EmailEvent = EMPTY_EMAIL_EVENT;
     try {
       emailEvent = await getEmailEvent(supabase, eventId);
     } catch (e: any) {

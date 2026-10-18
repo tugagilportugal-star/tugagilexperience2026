@@ -28,6 +28,16 @@ insert into public.events (slug, name, starts_on, venue) values
   ('tugagil-experience-2026',  'TugÁgil Experience 2026',  '2026-11-21', 'ISLA Gaia, Vila Nova de Gaia')
 on conflict (slug) do nothing;
 
+-- 1b) Horário do evento (usado nos emails e no link "Adicionar ao calendário")
+alter table public.events add column if not exists start_time time;
+alter table public.events add column if not exists end_time   time;
+
+update public.events
+   set venue      = 'ISLA Gaia, R. Diogo Macedo 192, 4400-107 Vila Nova de Gaia',
+       start_time = '09:00',
+       end_time   = '17:00'
+ where slug = 'tugagil-experience-2026';
+
 -- 2) event_id nas tabelas do evento + preenchimento dos dados existentes ----
 do $$
 declare
