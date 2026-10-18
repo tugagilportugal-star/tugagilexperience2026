@@ -216,7 +216,7 @@ export const AgendaPage: React.FC = () => {
       {/* MODAL DE COMPRA */}
       {isTicketModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setTicketModalOpen(false)}></div>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
           <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <button onClick={() => setTicketModalOpen(false)} className="absolute top-4 right-4 z-[120] flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-[#060a07] hover:text-white transition-colors">
               <X size={20} />

@@ -134,7 +134,6 @@ const App: React.FC = () => {
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
               <div
                 className="fixed inset-0 bg-brand-darkBlue/80 backdrop-blur-sm"
-                onClick={() => setTicketModalOpen(false)}
               ></div>
               <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <button
