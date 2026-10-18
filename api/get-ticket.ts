@@ -1,6 +1,7 @@
 // api/get-ticket.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { getCurrentEvent } from '../lib/event.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -33,11 +34,12 @@ type WorkshopRow = {
   sort_order: number;
 };
 
-// Workshops ativos com vagas restantes. Nunca falha o pedido: sem workshops, devolve [].
-async function getWorkshops() {
+// Workshops ativos do evento, com vagas restantes. Nunca falha o pedido: sem workshops, devolve [].
+async function getWorkshops(eventId: string) {
   const { data, error } = await supabase
     .from('workshops')
     .select(WORKSHOP_FIELDS)
+    .eq('event_id', eventId)
     .eq('active', true)
     .order('sort_order', { ascending: true });
 
@@ -60,25 +62,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const id = String(req.query.id || '').trim();
 
-    // Se vier ID -> devolve aquele lote (mantém compatibilidade)
+    // Só lotes e workshops do evento deste site (EVENT_SLUG)
+    const currentEvent = await getCurrentEvent(supabase);
+    const event = { slug: currentEvent.slug, name: currentEvent.name };
+
+    // Se vier ID -> devolve aquele lote (mantém compatibilidade); lote de outro evento → 404
     if (id) {
       const { data, error } = await supabase
         .from('ticket_types')
         .select(TICKET_FIELDS)
         .eq('id', id)
-        .single();
+        .eq('event_id', currentEvent.id)
+        .maybeSingle();
 
       if (error || !data) {
         return res.status(404).json({ message: 'Ticket type não encontrado.' });
       }
 
-      return res.status(200).json({ ...data, workshops: await getWorkshops() });
+      return res.status(200).json({ ...data, event, workshops: await getWorkshops(currentEvent.id) });
     }
 
     // Se NÃO vier ID -> devolve o lote ativo com menor sort_order (lote atual)
     const { data: activeTicket, error: activeErr } = await supabase
       .from('ticket_types')
       .select(TICKET_FIELDS)
+      .eq('event_id', currentEvent.id)
       .eq('active', true)
       .order('sort_order', { ascending: true })
       .limit(1)
@@ -92,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ message: 'Nenhum lote ativo disponível.' });
     }
 
-    return res.status(200).json({ ...activeTicket, workshops: await getWorkshops() });
+    return res.status(200).json({ ...activeTicket, event, workshops: await getWorkshops(currentEvent.id) });
   } catch (err: any) {
     console.error(err);
     return res.status(500).json({ message: err.message || 'Internal Server Error' });

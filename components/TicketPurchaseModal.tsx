@@ -35,11 +35,8 @@ type ParticipantForm = {
   workshopId: string | null;
 };
 
-// O backend guarda primeiro nome e apelido em separado: 1.ª palavra / resto
-const splitFullName = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  return { first: parts[0] || '', last: parts.slice(1).join(' ') };
-};
+// Primeiro nome, só para rótulos curtos (separadores, pop-up)
+const firstWord = (fullName: string) => fullName.trim().split(/\s+/)[0] || '';
 
 // Workshops da tarde: letra pela ordem devolvida pela API e cor de topo do cartão
 const WORKSHOP_ACCENTS = ['#007BAA', '#B4520A', '#00693E'];
@@ -294,8 +291,8 @@ export const TicketPurchaseModal: React.FC = () => {
         body: JSON.stringify({
           ticketTypeId: ticketData.id,
           participants: participants.map(p => ({
-            first_name: splitFullName(p.fullName).first,
-            last_name: splitFullName(p.fullName).last,
+            // Nome completo num só campo (guardado em tickets.attendee_name)
+            name: p.fullName.trim(),
             email: p.email.trim(),
             country: p.country,
             company: p.company.trim(),
@@ -430,7 +427,7 @@ export const TicketPurchaseModal: React.FC = () => {
                 return (
                   <button key={i} type="button" onClick={() => setActiveTab(i)}
                     className={`px-3 py-1.5 text-sm font-medium rounded-t-lg border-t border-l border-r -mb-px transition-colors whitespace-nowrap relative flex items-center gap-1.5 ${tabCls}`}>
-                    <span>{prefix}{splitFullName(pt.fullName).first || `P${i + 1}`}</span>
+                    <span>{prefix}{firstWord(pt.fullName) || `P${i + 1}`}</span>
                     {workshopsEnabled && (
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
                         wsIndex >= 0 ? 'bg-brand-darkBlue text-white' : 'bg-gray-100 text-gray-500'
@@ -635,7 +632,7 @@ export const TicketPurchaseModal: React.FC = () => {
             tag={workshopTag(wi)}
             accent={workshopAccent(wi)}
             priceLabel={formatCurrency(workshopPrice, ticketData.currency)}
-            participantLabel={splitFullName(p.fullName).first || `Participante ${activeTab + 1}`}
+            participantLabel={firstWord(p.fullName) || `Participante ${activeTab + 1}`}
             available={workshopAvailableFor(ws, activeTab)}
             isSelected={selected}
             soldOut={!selected && workshopSoldOutFor(ws, activeTab)}

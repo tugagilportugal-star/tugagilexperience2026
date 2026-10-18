@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { getCurrentEvent } from '../lib/event.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -18,8 +19,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { type, name, email, phone, company, role, message, expectations } = body;
 
-    // 1. Salvar no Supabase
-    await supabase.from('leads').insert({ type, name, email, phone, company, role, message: message || expectations || null });
+    // 1. Salvar no Supabase (com o evento deste site; se não o encontrar, grava sem evento)
+    let eventId: string | null = null;
+    try {
+      eventId = (await getCurrentEvent(supabase)).id;
+    } catch (e: any) {
+      console.error('⚠️ Lead sem evento:', e?.message);
+    }
+    await supabase.from('leads').insert({
+      type, name, email, phone, company, role, message: message || expectations || null,
+      ...(eventId ? { event_id: eventId } : {}),
+    });
 
     // 2. Definir o E-mail
     let userSubject = '';

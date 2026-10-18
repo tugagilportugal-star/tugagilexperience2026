@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { getCurrentEvent } from '../lib/event.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2023-10-16',
@@ -33,7 +34,8 @@ type WorkshopRow = {
 // Stripe exige pelo menos 30 min; damos 31 para margem.
 const CHECKOUT_EXPIRES_SECONDS = 31 * 60;
 
-async function findValidCoupon(code: string, email: string): Promise<CouponRow | null> {
+// Cupão válido = ativo, do código/email indicados e do evento deste site
+async function findValidCoupon(code: string, email: string, eventId: string): Promise<CouponRow | null> {
   const normalizedCode = code.trim().toUpperCase();
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -45,6 +47,7 @@ async function findValidCoupon(code: string, email: string): Promise<CouponRow |
       .select('id, code, email, active, discount_percent, discount_amount, recording_only, single_use')
       .eq('code', normalizedCode)
       .eq('email', normalizedEmail)
+      .eq('event_id', eventId)
       .eq('active', true)
       .maybeSingle();
 
@@ -56,6 +59,7 @@ async function findValidCoupon(code: string, email: string): Promise<CouponRow |
     .select('id, code, email, active, discount_percent, discount_amount, recording_only, single_use')
     .eq('code', normalizedCode)
     .is('email', null)
+    .eq('event_id', eventId)
     .eq('active', true)
     .maybeSingle();
 
@@ -77,8 +81,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const quantity = participants.length;
     if (quantity > 5) return res.status(400).json({ message: 'Máximo de 5 bilhetes por compra.' });
 
+    // Só se vendem lotes do evento deste site; lote de outro evento = indisponível
+    const currentEvent = await getCurrentEvent(supabase);
+
     const { data: ticketType, error } = await supabase
-      .from('ticket_types').select('*').eq('id', ticketTypeId).single();
+      .from('ticket_types').select('*')
+      .eq('id', ticketTypeId)
+      .eq('event_id', currentEvent.id)
+      .maybeSingle();
 
     if (error || !ticketType || !ticketType.active) {
       return res.status(404).json({ message: 'Bilhete indisponível ou esgotado.' });
@@ -114,6 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data: workshops, error: wsErr } = await supabase
         .from('workshops')
         .select('id, title, capacity, sold, active')
+        .eq('event_id', currentEvent.id)
         .in('id', [...requestedPerWorkshop.keys()]);
 
       if (wsErr) return res.status(500).json({ message: 'Erro ao validar workshops.' });
@@ -166,7 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Cupões aplicam-se só ao bilhete (nunca ao workshop)
     if (couponCode) {
-      appliedCoupon = await findValidCoupon(couponCode, firstEmail);
+      appliedCoupon = await findValidCoupon(couponCode, firstEmail, currentEvent.id);
       if (!appliedCoupon) return res.status(400).json({ message: 'Cupão inválido para este email.' });
       // Cupões de gravação deixaram de ter efeito: a gravação já não é vendida
       if (appliedCoupon.recording_only) return res.status(400).json({ message: 'Este cupão já não é válido.' });
@@ -210,21 +221,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const workshopsCount = workshopIds.filter(Boolean).length;
 
     // Encode participants as p_0, p_1, ... in metadata (max 500 chars each)
+    // Nome completo num só campo (nm). Clientes antigos ainda mandam first_name/last_name.
+    // Sem T-shirt (deixou de ser pedida). Pior caso sem escapes: 485 caracteres.
+    const META_VALUE_MAX = 500;
     const participantsMeta: Record<string, string> = {};
     for (let i = 0; i < participants.length; i++) {
       const p = participants[i];
-      participantsMeta[`p_${i}`] = JSON.stringify({
-        fn: truncate(p.first_name, 50),
-        ln: truncate(p.last_name, 50),
+      const fields: Record<string, string | boolean> = {
+        nm: truncate(p.name, 100) || truncate(`${truncate(p.first_name)} ${truncate(p.last_name)}`, 100),
         em: truncate(p.email, 100),
         co: truncate(p.country, 30),
-        cp: truncate(p.company, 80),
-        jf: truncate(p.job_function, 60),
-        jo: truncate(p.job_function_other, 60),
-        iy: truncate(p.industry, 80),
-        ts: truncate(p.tshirt, 5),
+        cp: truncate(p.company, 60),
+        jf: truncate(p.job_function, 40),
+        jo: truncate(p.job_function_other, 40),
+        iy: truncate(p.industry, 50),
         mc: Boolean(p.sa_marketing_consent),
-      });
+      };
+      // Rede de segurança: aspas/barras/caracteres de controlo ocupam mais no JSON.
+      // Se passar do limite do Stripe, encurta primeiro os campos menos importantes.
+      let json = JSON.stringify(fields);
+      for (const key of ['jo', 'iy', 'jf', 'cp', 'co', 'nm']) {
+        if (json.length <= META_VALUE_MAX) break;
+        const val = String(fields[key]);
+        fields[key] = val.slice(0, Math.max(0, val.length - (json.length - META_VALUE_MAX)));
+        json = JSON.stringify(fields);
+      }
+      participantsMeta[`p_${i}`] = json;
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -239,6 +261,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       billing_address_collection: 'required',
       metadata: {
         billing_name_type: billingNameType,
+        event_id: String(currentEvent.id),
         ticket_type_id: String(ticketType.id),
         participants_count: String(quantity),
         ...participantsMeta,

@@ -5,6 +5,7 @@ import { Resend } from 'resend';
 import { issueInvoiceForOrder } from '../lib/invoicing/index.js';
 import type { InvoiceEmailData } from '../lib/invoicing/types.js';
 import { notifyAdmins, type StepResult } from '../lib/notify.js';
+import { getCurrentEvent } from '../lib/event.js';
 
 // Escapar texto para inserir em HTML (ex: títulos de workshops vindos da BD)
 const escapeHtml = (s: string) =>
@@ -421,6 +422,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isMulti = !!(meta.participants_count);
 
     type ParsedParticipant = {
+      fullName: string;
       firstName: string; lastName: string; email: string; country: string;
       company: string; jobFunction: string; jobFunctionOther: string;
       industry: string; tshirt: string; saMarketingConsent: boolean;
@@ -436,8 +438,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (let i = 0; i < participantsCount; i++) {
         try {
           const raw = JSON.parse(meta[`p_${i}`] || '{}');
+          // Checkout novo: nome completo em `nm` (sem primeiro/último nome). Antigo: fn + ln.
+          const fullName = String(raw.nm || `${raw.fn || ''} ${raw.ln || ''}`).trim();
           parsedParticipants.push({
-            firstName: raw.fn || '', lastName: raw.ln || '', email: raw.em || '',
+            fullName,
+            firstName: raw.nm ? '' : raw.fn || '', lastName: raw.nm ? '' : raw.ln || '', email: raw.em || '',
             country: raw.co || '', company: raw.cp || '', jobFunction: raw.jf || '',
             jobFunctionOther: raw.jo || '', industry: raw.iy || '',
             tshirt: raw.ts || '', saMarketingConsent: Boolean(raw.mc),
@@ -450,6 +455,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       // Legacy single-participant format
       parsedParticipants.push({
+        fullName: [attendeeFirstName, attendeeLastName].filter(Boolean).join(' ').trim(),
         firstName: attendeeFirstName || '', lastName: attendeeLastName || '',
         email: session.customer_details?.email || '', country: attendeeCountry || '',
         company: attendeeCompany || '', jobFunction: attendeeJobFunction || '',
@@ -461,7 +467,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Preencher participantes no contexto de notificação
     notifyCtx.participants = parsedParticipants.map(p => ({
-      name: `${p.firstName} ${p.lastName}`.trim() || p.email,
+      name: p.fullName || p.email,
       email: p.email,
     }));
 
@@ -469,10 +475,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const qty = parsedParticipants.length;
     notifyCtx.qty = qty;
 
+    // 0) Evento da compra: metadata (checkout novo) > evento do lote (sessões antigas) > evento atual
+    let eventId = String(meta.event_id || '').trim() || null;
+    if (!eventId && ticketTypeId) {
+      const { data: tt } = await supabase
+        .from('ticket_types')
+        .select('event_id')
+        .eq('id', ticketTypeId)
+        .maybeSingle();
+      eventId = tt?.event_id || null;
+    }
+    if (!eventId) {
+      eventId = (await getCurrentEvent(supabase)).id;
+    }
+
     // 1) Salvar Order
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({
+        event_id: eventId,
         stripe_session_id: session.id,
         customer_email: session.customer_details?.email,
         customer_name: session.customer_details?.name,
@@ -494,10 +515,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2) Salvar Tickets (um por participante)
     const tickets: any[] = [];
     for (const p of parsedParticipants) {
-      const fullName = `${p.firstName} ${p.lastName}`.trim() || p.email || 'Participante RSG';
+      const fullName = p.fullName || p.email || 'Participante RSG';
       const { data: ticket, error: ticketErr } = await supabase
         .from('tickets')
         .insert({
+          event_id: eventId,
           order_id: order.id,
           ticket_type_id: ticketTypeId,
           attendee_name: fullName,
@@ -649,7 +671,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const amountEuro = (order.total_amount || 0) / 100;
     const isTest = stripeIsTestMode();
 
-    const billingName = meta.billing_name || order.customer_name || attendeeName || 'Participante RSG';
+    const firstParticipantName = parsedParticipants[0]?.fullName || null;
+    const billingName = meta.billing_name || order.customer_name || attendeeName || firstParticipantName || 'Participante RSG';
     const billingEmail = meta.billing_email || order.customer_email;
 
     let invoiceResult: Awaited<ReturnType<typeof issueInvoiceForOrder>>;
@@ -695,7 +718,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             to: order.customer_email,
             pdfBytes: invoiceResult.pdfBytes,
             invoiceId: invoiceResult.invoiceNumber || invoiceResult.invoiceId,
-            name: order.customer_name || attendeeName || 'Participante',
+            name: order.customer_name || attendeeName || firstParticipantName || 'Participante',
             ticketName,
             total: invoiceResult.total,
             isTest,
