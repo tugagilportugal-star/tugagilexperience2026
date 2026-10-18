@@ -317,7 +317,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const meta = (session.metadata || {}) as Record<string, string | undefined>;
 
     const ticketTypeId = meta.ticket_type_id;
-    const qty = Number(meta.quantity || 1);
     const includeRecording = String(meta.include_recording || '').toLowerCase() === 'true';
 
     const couponId = String(meta.coupon_id || '').trim();
@@ -406,8 +405,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const billingNif = meta.billing_nif || null;
     const resolvedNif = stripeTaxId || billingNif || attendeeNif || null;
 
-    notifyCtx.qty = Number(meta.quantity || 1);
-
     // Parse multi-participant metadata (new format) or fall back to single-participant (legacy)
     const participantsCount = Number(meta.participants_count || 1);
     const isMulti = !!(meta.participants_count);
@@ -449,6 +446,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name: `${p.firstName} ${p.lastName}`.trim() || p.email,
       email: p.email,
     }));
+
+    // Quantidade = nº de participantes (o checkout envia participants_count, não quantity)
+    const qty = parsedParticipants.length;
+    notifyCtx.qty = qty;
 
     // 1) Salvar Order
     const { data: order, error: orderErr } = await supabase
