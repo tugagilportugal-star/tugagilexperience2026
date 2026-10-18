@@ -76,6 +76,12 @@ alter table public.orders           alter column event_id set not null;
 alter table public.tickets          alter column event_id set not null;
 alter table public.discount_coupons alter column event_id set not null;
 
+-- 3b) Um lote ativo por EVENTO (antes: um lote ativo na tabela inteira) ----
+drop index if exists public.ticket_types_single_active_true;
+create unique index if not exists ticket_types_single_active_per_event
+  on public.ticket_types (event_id)
+  where active is true;
+
 -- 4) consume_ticket_type: rotação de lotes só dentro do mesmo evento ------
 -- Antes: ao esgotar um lote, desativava TODOS os lotes ativos da base e podia
 -- ativar um lote de outro evento. Agora tudo fica restrito ao event_id do lote.
