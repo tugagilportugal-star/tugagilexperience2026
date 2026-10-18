@@ -2275,9 +2275,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </span>
           </h2>
 
+          {/* Erro fixo por cima de tudo (incluindo pop-ups abertos), até ser fechado */}
           {error && (
-            <div className="mb-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {error}
+            <div
+              role="alert"
+              className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] w-[min(640px,calc(100%-2rem))] flex items-start gap-3 rounded-2xl bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700 shadow-xl"
+            >
+              <span className="flex-1">{error}</span>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                aria-label="Fechar mensagem de erro"
+                className="text-red-500 hover:text-red-700 text-lg leading-none"
+              >
+                ×
+              </button>
             </div>
           )}
 
