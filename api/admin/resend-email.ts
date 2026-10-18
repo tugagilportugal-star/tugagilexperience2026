@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { verifyAdminToken } from '../../lib/admin/auth.js';
 import { checkOrderInEvent } from '../../lib/admin/event.js';
-import { EMAIL_FROM, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../../lib/email.js';
+import { EMAIL_FROM, EMPTY_EMAIL_EVENT, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../../lib/email.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -42,7 +42,7 @@ function generateTicketEmail(ev: EmailEvent, name: string, ticketName: string, q
             <h2 style="font-size:20px;font-weight:bold;color:#003F59;margin:0 0 16px;">📍 Informações Práticas</h2>
             <table width="100%" cellpadding="0" cellspacing="0" style="font-size:16px;line-height:26px;color:#3c4858;">
               ${ev.dateLabel ? `<tr><td width="80" style="font-weight:bold;padding-bottom:8px;">Data:</td><td style="padding-bottom:8px;">${escapeHtml(ev.dateLabel)}</td></tr>` : ''}
-              <tr><td width="80" style="font-weight:bold;padding-bottom:8px;">Horário:</td><td style="padding-bottom:8px;">9h00 às 20h00</td></tr>
+              ${ev.timeLabel ? `<tr><td width="80" style="font-weight:bold;padding-bottom:8px;">Horário:</td><td style="padding-bottom:8px;">${escapeHtml(ev.timeLabel)}</td></tr>` : ''}
               ${ev.venue ? `<tr><td width="80" style="font-weight:bold;vertical-align:top;">Local:</td><td><strong>${escapeHtml(ev.venue)}</strong></td></tr>` : ''}
             </table>
           </div>
@@ -231,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (orderErr || !order) return res.status(404).json({ message: 'Order não encontrada.' });
 
   // Nome/data/local do evento da encomenda para os templates
-  let emailEvent: EmailEvent = { name: 'TugÁgil Experience', dateLabel: '', venue: '' };
+  let emailEvent: EmailEvent = EMPTY_EMAIL_EVENT;
   try {
     emailEvent = await getEmailEvent(supabase, order.event_id);
   } catch (e: any) {
