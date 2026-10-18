@@ -3168,7 +3168,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           return (
             <div
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
-              onClick={() => setSelectedOrder(null)}
             >
               <div
                 className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
@@ -3240,7 +3239,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           return (
             <div
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
-              onClick={() => setSelectedTicket(null)}
             >
               <div
                 className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
@@ -3483,7 +3481,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {invoiceModal && (
           <div
             className="fixed inset-0 z-[215] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => { if (!savingInvoiceModal) setInvoiceModal(null); }}
           >
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
@@ -3543,7 +3540,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {creditNoteModal && (
           <div
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => { if (!generatingCreditNote) setCreditNoteModal(null); }}
           >
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
@@ -3602,7 +3598,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {refundModal && (
           <div
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => { if (!markingRefund) { setRefundModal(null); setRefundError(null); } }}
           >
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
@@ -3670,7 +3665,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {duplicateModal && (
           <div
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => { if (!markingDuplicate) { setDuplicateModal(null); setDuplicateError(null); } }}
           >
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
@@ -3726,10 +3720,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {couponModalOpen && (
           <div
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => {
-              setCouponModalOpen(false);
-              resetCouponForm();
-            }}
           >
             <div
               className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"
@@ -3925,7 +3915,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {selected && (
           <div
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
-            onClick={() => setSelected(null)}
           >
             <div
               className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
@@ -3972,7 +3961,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {isTicketTypeModalOpen && (
           <div
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
-            onClick={closeTicketTypeModal}
           >
             <div
               className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
@@ -4090,7 +4078,6 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {isWorkshopModalOpen && (
           <div
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
-            onClick={closeWorkshopModal}
           >
             <div
               className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
