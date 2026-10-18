@@ -4014,7 +4014,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
 
                   <Input
-                    label="Preço do workshop (€)"
+                    label="Preço do workshop por pessoa neste lote (€)"
                     value={ticketTypeForm.workshop_price}
                     onChange={(value) => updateTicketTypeForm('workshop_price', value.replace(/[^0-9.,]/g, ''))}
                     placeholder="0,00"
@@ -4028,7 +4028,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
 
                   <Input
-                    label="Quantidade total"
+                    label="Quantidade de bilhetes neste lote"
                     type="number"
                     value={ticketTypeForm.quantity_total}
                     onChange={(value) => updateTicketTypeForm('quantity_total', value)}
@@ -4054,6 +4054,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </label>
                   </div>
                 </div>
+
+                <p className="text-sm text-gray-500">
+                  A quantidade é só de bilhetes. As vagas de cada workshop definem-se no separador <strong>Workshops</strong> (campo Capacidade) e valem para o evento inteiro, em todos os lotes. Aqui define-se apenas o preço do workshop para quem compra neste lote.
+                </p>
 
                 {editingTicketType && (
                   <div className="rounded-2xl bg-gray-50 border px-4 py-3 text-sm text-gray-600">
