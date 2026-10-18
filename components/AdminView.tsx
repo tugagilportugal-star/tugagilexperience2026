@@ -3770,7 +3770,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })
                     }
                     className="w-full rounded-2xl border border-gray-300 px-4 py-3"
-                    placeholder="Ex: RSGTST20"
+                    placeholder="Ex: EXP20"
                   />
                 </div>
 

@@ -24,6 +24,8 @@ export type CreateInvoiceInput = {
   quantity?: number;
   // Workshops comprados nesta encomenda (um item por workshop, com nº de participantes)
   workshops?: InvoiceWorkshopLine[];
+  // Nome do evento para as descrições da fatura (ex.: "TugÁgil Experience 2026")
+  eventName?: string;
   isTest: boolean;
   autoFinalize: boolean;
 };
@@ -57,6 +59,8 @@ export type IssueInvoiceInput = {
   quantity?: number;
   // Workshops comprados nesta encomenda (um item por workshop, com nº de participantes)
   workshops?: InvoiceWorkshopLine[];
+  // Nome do evento para as descrições da fatura (ex.: "TugÁgil Experience 2026")
+  eventName?: string;
   isTest: boolean;
 
   // opcional para não quebrar chamadas antigas

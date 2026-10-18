@@ -51,6 +51,7 @@ export async function issueInvoiceForOrder(
     amountEuro: input.amountEuro,
     quantity: input.quantity ?? 1,
     workshops: input.workshops,
+    eventName: input.eventName,
     isTest: input.isTest,
     autoFinalize: input.autoFinalize ?? envAutoFinalize,
   });

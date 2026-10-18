@@ -70,7 +70,7 @@ async function createInvoiceXpressInvoiceInternal(params: {
       date: new Date().toLocaleDateString('pt-PT'),
       due_date: new Date().toLocaleDateString('pt-PT'),
       client: {
-        name: params.customerName || 'Participante RSG',
+        name: params.customerName || 'Participante',
         email: params.customerEmail,
         country: countryName,
         ...(params.customerNif ? { fiscal_id: params.customerNif } : {}),
@@ -226,9 +226,10 @@ async function downloadPdfFromUrl(url: string): Promise<Buffer | null> {
 // PUBLIC EXPORT (o teu index.ts chama isto)
 // ==================================================================
 export async function createInvoiceWithInvoiceXpress(input: CreateInvoiceInput): Promise<CreateInvoiceResult> {
+  const eventName = (input.eventName || '').trim() || 'TugÁgil Experience 2026';
   const baseDescription = input.includeRecording
-    ? 'Bilhete de acesso ao TugÁgil Experience 2026, incluindo acesso às gravações das sessões após o evento'
-    : 'Bilhete de acesso ao TugÁgil Experience 2026';
+    ? `Bilhete de acesso ao ${eventName}, incluindo acesso às gravações das sessões após o evento`
+    : `Bilhete de acesso ao ${eventName}`;
 
   // Workshops: acrescentados à descrição única (ex.: "… + Workshop: X (2)")
   const workshopsText = (input.workshops || [])

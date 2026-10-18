@@ -4,10 +4,12 @@
 
 ## Estado dos achados
 
-- [ ] Vuln 1 — Relay de email não autenticado (`api/submit.ts`)
-- [ ] Vuln 2 — Injeção de HTML em emails internos (`lib/notify.ts`, `api/webhook.ts`)
-- [ ] Vuln 3 — Endpoint proxy de email morto e não autenticado (`api/send-email.ts`)
-- [ ] Dependências — `npm audit fix`
+> Atualizado em 2026-10-19 (branch feature/lotes-workshops).
+
+- [~] Vuln 1 — Relay de email não autenticado (`api/submit.ts`): **mitigado**. Todo o texto é escapado (`escapeHtml` de `lib/email.ts`), só aceita os tipos de formulário conhecidos, valida o email e limita comprimentos; o email ao utilizador só leva o nome escapado. Falta: CAPTCHA ou limite de pedidos para impedir envio em massa para terceiros.
+- [x] Vuln 2 — Injeção de HTML em emails (`lib/notify.ts`, `api/webhook.ts`, `api/admin/resend-email.ts`): todo o texto dinâmico passa por `escapeHtml`.
+- [x] Vuln 3 — Endpoint proxy de email (`api/send-email.ts`): removido.
+- [~] Dependências: `npm audit fix` aplicado (32 → 15). As 15 restantes vêm de `@vercel/node` (só tipos, não corre em produção) e `tailwindcss` (só no build); corrigi-las exige versões MAJOR (`--force`).
 
 ---
 
