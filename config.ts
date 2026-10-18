@@ -4,7 +4,9 @@
 // Turned off on 2026-09-10 because confirmation emails/invoices still
 // reference the old event (RSG Lisbon 2026) instead of TugÁgil Experience —
 // see TICKET_SALES_TOGGLE.md for the full reasoning and how to re-enable.
-export const TICKETS_ON_SALE = false;
+// Turned on on 2026-10-18 in feature/lotes-workshops to test the purchase flow
+// in preview-test; only promote to main when sales are ready to open.
+export const TICKETS_ON_SALE = true;
 
 export const ASSETS = {
   // Imagens de fundo
