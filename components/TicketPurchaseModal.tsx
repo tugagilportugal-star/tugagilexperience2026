@@ -25,17 +25,20 @@ type CouponState = {
 };
 
 type ParticipantForm = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   country: string;
   company: string;
   jobFunction: string;
   jobFunctionOther: string;
   industry: string;
-  tshirt: string;
-  saMarketingConsent: boolean;
   workshopId: string | null;
+};
+
+// O backend guarda primeiro nome e apelido em separado: 1.ª palavra / resto
+const splitFullName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return { first: parts[0] || '', last: parts.slice(1).join(' ') };
 };
 
 // Workshops da tarde: letra pela ordem devolvida pela API e cor de topo do cartão
@@ -52,13 +55,11 @@ const JOB_FUNCTIONS = [
 ];
 
 const COUNTRIES = ['Portugal', 'Espanha', 'França', 'Alemanha', 'Reino Unido', 'Brasil', 'Estados Unidos', 'Outro'];
-const TSHIRTS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 const emptyParticipant = (): ParticipantForm => ({
-  firstName: '', lastName: '', email: '', country: 'Portugal',
+  fullName: '', email: '', country: 'Portugal',
   company: '', jobFunction: '', jobFunctionOther: '',
-  industry: '', tshirt: '', saMarketingConsent: false,
-  workshopId: null,
+  industry: '', workshopId: null,
 });
 
 const iMatch = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -132,7 +133,6 @@ export const TicketPurchaseModal: React.FC = () => {
   const [billingNameValue, setBillingNameValue] = useState('');
   const [billingEmailIndex, setBillingEmailIndex] = useState(0);
   const [billingEmailOther, setBillingEmailOther] = useState('');
-  const [saDataSharingConsent, setSaDataSharingConsent] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(false);
 
   const [buyStatus, setBuyStatus] = useState<'idle' | 'loading'>('idle');
@@ -260,17 +260,14 @@ export const TicketPurchaseModal: React.FC = () => {
   const getFirstInvalidField = (): { id: string; tab: number } | null => {
     for (let i = 0; i < participants.length; i++) {
       const pt = participants[i];
-      if (!pt.firstName.trim())                                          return { id: `p${i}-firstName`,        tab: i };
-      if (!pt.lastName.trim())                                           return { id: `p${i}-lastName`,         tab: i };
+      if (!pt.fullName.trim())                                           return { id: `p${i}-fullName`,         tab: i };
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pt.email.trim()))         return { id: `p${i}-email`,            tab: i };
-      if (!pt.tshirt)                                                    return { id: `p${i}-tshirt`,           tab: i };
       if (!pt.company.trim())                                            return { id: `p${i}-company`,          tab: i };
       if (!pt.jobFunction)                                               return { id: `p${i}-jobFunction`,      tab: i };
       if (pt.jobFunction === 'Outros' && !pt.jobFunctionOther.trim())   return { id: `p${i}-jobFunctionOther`, tab: i };
       if (!pt.industry.trim())                                           return { id: `p${i}-industry`,         tab: i };
       if (!pt.country)                                                   return { id: `p${i}-country`,          tab: i };
     }
-    if (!saDataSharingConsent) return { id: 'saConsent1', tab: -1 };
     if (!privacyConsent)       return { id: 'privacy',    tab: -1 };
     return null;
   };
@@ -297,16 +294,14 @@ export const TicketPurchaseModal: React.FC = () => {
         body: JSON.stringify({
           ticketTypeId: ticketData.id,
           participants: participants.map(p => ({
-            first_name: p.firstName.trim(),
-            last_name: p.lastName.trim(),
+            first_name: splitFullName(p.fullName).first,
+            last_name: splitFullName(p.fullName).last,
             email: p.email.trim(),
             country: p.country,
             company: p.company.trim(),
             job_function: p.jobFunction,
             job_function_other: p.jobFunction === 'Outros' ? p.jobFunctionOther.trim() : '',
             industry: p.industry.trim(),
-            tshirt: p.tshirt,
-            sa_marketing_consent: p.saMarketingConsent,
             workshop_id: workshopsEnabled && p.workshopId ? p.workshopId : null,
           })),
           shared: {
@@ -316,7 +311,6 @@ export const TicketPurchaseModal: React.FC = () => {
             billing_name: resolvedBillingName,
             billing_name_type: billingNameType,
             billing_email: resolvedBillingEmail,
-            sa_data_sharing_consent: saDataSharingConsent,
             privacy_consent: privacyConsent,
           },
         }),
@@ -362,10 +356,10 @@ export const TicketPurchaseModal: React.FC = () => {
 
   // Valores resolvidos para faturação
   const billingNameSuggestion = billingNameType === 'participant'
-    ? `${participants[0]?.firstName || ''} ${participants[0]?.lastName || ''}`.trim()
+    ? (participants[0]?.fullName || '').trim()
     : participants.map(pt => pt.company.trim()).filter(Boolean)[0] || '';
   const billingNameOptions = billingNameType === 'participant'
-    ? participants.map(pt => `${pt.firstName} ${pt.lastName}`.trim()).filter(Boolean)
+    ? participants.map(pt => pt.fullName.trim()).filter(Boolean)
     : [...new Set(participants.map(pt => pt.company).filter(Boolean))];
   const resolvedBillingName = billingNameValue || billingNameSuggestion;
   const resolvedBillingEmail = billingEmailIndex < participants.length
@@ -374,13 +368,13 @@ export const TicketPurchaseModal: React.FC = () => {
 
   const isParticipantComplete = (pt: ParticipantForm) => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pt.email.trim());
-    return pt.firstName.trim() && pt.lastName.trim() && emailOk && pt.tshirt &&
+    return pt.fullName.trim() && emailOk &&
       pt.company.trim() && pt.jobFunction && pt.industry.trim() && pt.country &&
       (pt.jobFunction !== 'Outros' || pt.jobFunctionOther.trim());
   };
 
   const participantHasData = (pt: ParticipantForm) =>
-    !!(pt.firstName.trim() || pt.lastName.trim() || pt.email.trim() || pt.tshirt || pt.company.trim());
+    !!(pt.fullName.trim() || pt.email.trim() || pt.company.trim());
 
   const errClass = (invalid: boolean) => invalid
     ? 'mt-1 block w-full border border-red-500 rounded-md shadow-sm p-2 text-sm focus:ring-red-500 focus:border-red-500'
@@ -436,7 +430,7 @@ export const TicketPurchaseModal: React.FC = () => {
                 return (
                   <button key={i} type="button" onClick={() => setActiveTab(i)}
                     className={`px-3 py-1.5 text-sm font-medium rounded-t-lg border-t border-l border-r -mb-px transition-colors whitespace-nowrap relative flex items-center gap-1.5 ${tabCls}`}>
-                    <span>{prefix}{pt.firstName || `P${i + 1}`}</span>
+                    <span>{prefix}{splitFullName(pt.fullName).first || `P${i + 1}`}</span>
                     {workshopsEnabled && (
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
                         wsIndex >= 0 ? 'bg-brand-darkBlue text-white' : 'bg-gray-100 text-gray-500'
@@ -456,41 +450,21 @@ export const TicketPurchaseModal: React.FC = () => {
           ? 'space-y-4 border border-orange-200 rounded-b-xl rounded-tr-xl p-4 bg-white'
           : 'space-y-4'}>
 
-        {/* Nome + Apelido */}
+        {/* Nome completo + Email */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome <span className="text-red-500">*</span></label>
-            <input id={`p${activeTab}-firstName`} value={p.firstName} onChange={e => updateParticipant(activeTab, { firstName: e.target.value })}
-              className={errClass(showErrors && !p.firstName.trim())} />
-            {showErrors && !p.firstName.trim() && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome completo <span className="text-red-500">*</span></label>
+            <input id={`p${activeTab}-fullName`} value={p.fullName} autoComplete="name"
+              onChange={e => updateParticipant(activeTab, { fullName: e.target.value })}
+              className={errClass(showErrors && !p.fullName.trim())} />
+            {showErrors && !p.fullName.trim() && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Apelido <span className="text-red-500">*</span></label>
-            <input id={`p${activeTab}-lastName`} value={p.lastName} onChange={e => updateParticipant(activeTab, { lastName: e.target.value })}
-              className={errClass(showErrors && !p.lastName.trim())} />
-            {showErrors && !p.lastName.trim() && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
-          </div>
-        </div>
-
-        {/* Email + T-Shirt */}
-        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">E-mail <span className="text-red-500">*</span></label>
             <input id={`p${activeTab}-email`} type="email" value={p.email}
               onChange={e => { updateParticipant(activeTab, { email: e.target.value }); if (activeTab === 0) setCouponResult(null); }}
               className={errClass(showErrors && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email.trim()))} />
             {showErrors && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email.trim()) && <p className="text-xs text-red-500 mt-1">Email inválido</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              T-Shirt <span className="text-red-500">*</span>
-            </label>
-            <select id={`p${activeTab}-tshirt`} value={p.tshirt} onChange={e => updateParticipant(activeTab, { tshirt: e.target.value })}
-              className={showErrors && !p.tshirt ? `${selectClass} border-red-500 focus:ring-red-500 focus:border-red-500` : selectClass}>
-              <option value="" disabled>Tamanho...</option>
-              {TSHIRTS.map(s => <option key={s}>{s}</option>)}
-            </select>
-            {showErrors && !p.tshirt && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
           </div>
         </div>
 
@@ -559,20 +533,6 @@ export const TicketPurchaseModal: React.FC = () => {
               {COUNTRIES.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
-        </div>
-
-        {/* Marketing consent (opcional, por participante) */}
-        <div className="flex items-start bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <input id={`mc-${activeTab}`} type="checkbox" checked={p.saMarketingConsent}
-            onChange={e => updateParticipant(activeTab, { saMarketingConsent: e.target.checked })}
-            className="mt-1 h-4 w-4 text-brand-blue border-gray-300 rounded focus:ring-brand-blue flex-shrink-0" />
-          <label htmlFor={`mc-${activeTab}`} className="ml-3 text-xs text-gray-600 leading-relaxed">
-            Gostava de uma assinatura gratuita de 2 anos da Scrum Alliance*! Para permitir que a
-            Scrum Alliance me envie um convite por e-mail para ativar minha assinatura, concordo
-            com a transferência das minhas informações pessoais de acordo com a{' '}
-            <a href="https://www.scrumalliance.org/privacy-policy" target="_blank" rel="noopener noreferrer"
-              className="text-brand-blue font-bold hover:underline">Política de Privacidade da Scrum Alliance</a>.
-          </label>
         </div>
 
         {/* Workshop da tarde (opcional, por participante) — os 3 decorrem em simultâneo */}
@@ -675,7 +635,7 @@ export const TicketPurchaseModal: React.FC = () => {
             tag={workshopTag(wi)}
             accent={workshopAccent(wi)}
             priceLabel={formatCurrency(workshopPrice, ticketData.currency)}
-            participantLabel={p.firstName.trim() || `Participante ${activeTab + 1}`}
+            participantLabel={splitFullName(p.fullName).first || `Participante ${activeTab + 1}`}
             available={workshopAvailableFor(ws, activeTab)}
             isSelected={selected}
             soldOut={!selected && workshopSoldOutFor(ws, activeTab)}
@@ -758,7 +718,7 @@ export const TicketPurchaseModal: React.FC = () => {
             <button type="button" onClick={() => {
               setBillingNameType('company');
               // Limpa só se o valor era claramente um nome de pessoa dos participantes
-              const names = participants.map(pt => `${pt.firstName} ${pt.lastName}`.trim()).filter(Boolean);
+              const names = participants.map(pt => pt.fullName.trim()).filter(Boolean);
               if (names.some(n => iMatch(n, billingNameValue))) setBillingNameValue('');
             }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${billingNameType === 'company' ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -818,24 +778,6 @@ export const TicketPurchaseModal: React.FC = () => {
           Termos & Privacidade
         </div>
         <div className="space-y-3">
-          <div className={`flex items-start p-3 rounded-lg border transition-colors ${showErrors && !saDataSharingConsent ? 'bg-red-50 border-red-400 border-red-500' : 'bg-gray-50 border-gray-200'}`}>
-            <input id="saConsent1" type="checkbox" checked={saDataSharingConsent}
-              onChange={e => setSaDataSharingConsent(e.target.checked)}
-              className="mt-1 h-4 w-4 text-brand-orange border-gray-300 rounded focus:ring-brand-orange flex-shrink-0" />
-            <div className="ml-3">
-              <label htmlFor="saConsent1" className="text-xs text-gray-600 leading-relaxed">
-                <span className="font-bold text-red-500">*</span> Concordo que o Organizador (TugÁgil)
-                pode partilhar as informações pessoais dos participantes com a Scrum Alliance exclusivamente
-                para fins de análise de dados internos e emissão de SEUs. Consulte a{' '}
-                <a href="https://www.scrumalliance.org/privacy-policy" target="_blank" rel="noopener noreferrer"
-                  className="text-brand-blue font-bold hover:underline">Política de Privacidade da Scrum Alliance</a>.
-              </label>
-              {showErrors && !saDataSharingConsent && (
-                <p className="text-xs text-red-600 font-medium mt-1">Consentimento obrigatório para continuar.</p>
-              )}
-            </div>
-          </div>
-
           <div className={`flex items-start p-3 rounded-lg border transition-colors ${showErrors && !privacyConsent ? 'bg-red-50 border-red-500' : 'border-transparent'}`}>
             <input id="privacy" type="checkbox" checked={privacyConsent}
               onChange={e => setPrivacyConsent(e.target.checked)}
