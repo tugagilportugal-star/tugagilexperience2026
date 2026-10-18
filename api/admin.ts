@@ -46,6 +46,15 @@ function normalizeTicketTypeInput(body: any, partial = false) {
     next.price = price;
   }
 
+  // Preço do workshop neste lote (cêntimos). Opcional: se não vier no POST fica o default 0 da BD.
+  if (body?.workshop_price !== undefined) {
+    const workshopPrice = Number(body?.workshop_price ?? 0);
+    if (!Number.isInteger(workshopPrice) || workshopPrice < 0) {
+      return { error: 'workshop_price inválido' };
+    }
+    next.workshop_price = workshopPrice;
+  }
+
   if (!partial || body?.currency !== undefined) {
     const currency = String(body?.currency ?? 'eur').trim().toLowerCase();
     if (!currency) {
@@ -75,6 +84,89 @@ function normalizeTicketTypeInput(body: any, partial = false) {
   }
 
   return { data: next };
+}
+
+const WORKSHOP_TEXT_FIELDS = [
+  'short_description',
+  'description',
+  'facilitator_name',
+  'facilitator_role',
+  'facilitator_bio',
+  'facilitator_photo_url',
+  'image_url',
+  'starts_at',
+  'ends_at',
+  'room',
+  'level',
+] as const;
+
+function normalizeTakeaways(value: unknown): string[] | null {
+  if (value === null || value === undefined) return [];
+  // Aceita array de strings ou texto com um item por linha
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\r?\n/)
+      : null;
+  if (!raw) return null;
+  if (raw.some((item) => typeof item !== 'string')) return null;
+  return raw.map((item) => String(item).trim()).filter(Boolean);
+}
+
+// Nunca aceita `sold` do cliente: é gerido pelo sistema (consume_workshop).
+function normalizeWorkshopInput(body: any, partial = false) {
+  const next: Record<string, unknown> = {};
+
+  if (!partial || body?.title !== undefined) {
+    const title = String(body?.title ?? '').trim();
+    if (!title) {
+      return { error: 'title obrigatório' };
+    }
+    next.title = title;
+  }
+
+  for (const field of WORKSHOP_TEXT_FIELDS) {
+    if (body?.[field] !== undefined) {
+      const value = body[field] === null ? '' : String(body[field]).trim();
+      next[field] = value || null;
+    }
+  }
+
+  if (!partial || body?.takeaways !== undefined) {
+    const takeaways = normalizeTakeaways(body?.takeaways);
+    if (!takeaways) {
+      return { error: 'takeaways inválido' };
+    }
+    next.takeaways = takeaways;
+  }
+
+  if (!partial || body?.capacity !== undefined) {
+    const capacity = Number(body?.capacity);
+    if (body?.capacity === null || body?.capacity === '' || !Number.isInteger(capacity) || capacity < 0) {
+      return { error: 'capacity inválida' };
+    }
+    next.capacity = capacity;
+  }
+
+  if (!partial || body?.active !== undefined) {
+    next.active = body?.active === undefined ? true : Boolean(body?.active);
+  }
+
+  if (!partial || body?.sort_order !== undefined) {
+    const sortOrder = Number(body?.sort_order ?? 0);
+    if (!Number.isInteger(sortOrder) || sortOrder < 0) {
+      return { error: 'sort_order inválido' };
+    }
+    next.sort_order = sortOrder;
+  }
+
+  return { data: next };
+}
+
+function withWorkshopRemaining(row: any) {
+  const capacity = Number(row?.capacity ?? 0);
+  const sold = Number(row?.sold ?? 0);
+  return { ...row, remaining: Math.max(0, capacity - sold) };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -249,6 +341,107 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // =========================
+    // WORKSHOPS
+    // =========================
+    if (resource === 'workshops') {
+      if (req.method === 'GET' && !id) {
+        const { data, error } = await supabase
+          .from('workshops')
+          .select('*')
+          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: true });
+
+        if (error) return res.status(500).json({ message: error.message });
+        return res.status(200).json((data || []).map(withWorkshopRemaining));
+      }
+
+      if (req.method === 'POST' && !id) {
+        if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
+        const body = parseBody(req);
+        const normalized = normalizeWorkshopInput(body, false);
+
+        if ('error' in normalized) {
+          return res.status(400).json({ message: normalized.error });
+        }
+
+        const { data, error } = await supabase
+          .from('workshops')
+          .insert({ ...normalized.data, sold: 0 })
+          .select()
+          .single();
+
+        if (error) return res.status(500).json({ message: error.message });
+        await logAction(admin.email, 'criar_workshop', 'workshop', data.id, { title: data.title });
+        return res.status(200).json(withWorkshopRemaining(data));
+      }
+
+      if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
+        if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
+        const body = parseBody(req);
+        const normalized = normalizeWorkshopInput(body, true);
+
+        if ('error' in normalized) {
+          return res.status(400).json({ message: normalized.error });
+        }
+
+        if (Object.keys(normalized.data).length === 0) {
+          return res.status(400).json({ message: 'Nada para atualizar' });
+        }
+
+        const { data: before, error: beforeError } = await supabase
+          .from('workshops')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (beforeError) return res.status(500).json({ message: beforeError.message });
+
+        if (normalized.data.capacity !== undefined) {
+          const sold = Number(before?.sold ?? 0);
+          const capacity = Number(normalized.data.capacity);
+          if (capacity < sold) {
+            return res.status(400).json({
+              message: 'capacity não pode ser inferior às vagas já vendidas',
+            });
+          }
+        }
+
+        const { data, error } = await supabase
+          .from('workshops')
+          .update({ ...normalized.data, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) return res.status(500).json({ message: error.message });
+
+        const changedKeys = Object.keys(normalized.data);
+        const beforeSnapshot = Object.fromEntries(changedKeys.map(k => [k, (before as any)?.[k]]));
+        await logAction(admin.email, 'editar_workshop', 'workshop', id, { before: beforeSnapshot, after: normalized.data });
+        return res.status(200).json(withWorkshopRemaining(data));
+      }
+
+      if (req.method === 'DELETE' && id) {
+        if (!canEdit(admin.role)) return res.status(403).json({ message: 'Sem permissão de edição.' });
+
+        const { data: before } = await supabase.from('workshops').select('title, active').eq('id', id).single();
+
+        const { data, error } = await supabase
+          .from('workshops')
+          .update({ active: false, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) return res.status(500).json({ message: error.message });
+        await logAction(admin.email, 'desativar_workshop', 'workshop', id, { before: { active: before?.active }, after: { active: false } });
+        return res.status(200).json(withWorkshopRemaining(data));
+      }
+
+      return res.status(405).json({ message: 'Method not allowed' });
+    }
+
+    // =========================
     // ORDERS
     // =========================
     if (resource === 'orders') {
@@ -298,7 +491,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('tickets')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(2000);
 
       if (error) return res.status(500).json({ message: error.message });
       return res.status(200).json(data || []);

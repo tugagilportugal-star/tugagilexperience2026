@@ -22,6 +22,7 @@ type TicketTypeRow = {
   id: string;
   name: string;
   price: number;
+  workshop_price?: number | null;
   currency: string;
   quantity_total: number | null;
   quantity_sold: number | null;
@@ -75,6 +76,30 @@ type TicketRow = {
   privacy_consent?: boolean | null;
   checked_in?: boolean | null;
   check_in_at?: string | null;
+  workshop_id?: string | null;
+};
+
+type WorkshopRow = {
+  id: string;
+  title: string;
+  short_description?: string | null;
+  description?: string | null;
+  takeaways?: string[] | null;
+  facilitator_name?: string | null;
+  facilitator_role?: string | null;
+  facilitator_bio?: string | null;
+  facilitator_photo_url?: string | null;
+  image_url?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  room?: string | null;
+  level?: string | null;
+  capacity: number;
+  sold: number;
+  remaining?: number;
+  active: boolean | null;
+  sort_order: number | null;
+  created_at?: string | null;
 };
 
 type CouponRow = {
@@ -106,13 +131,33 @@ type AdminRole = 'superadmin' | 'edit' | 'view';
 type AdminUserInfo = { email: string; name: string | null; role: AdminRole };
 type AdminUserRow = { email: string; name: string | null; role: AdminRole; active: boolean; created_at?: string | null };
 
-type AdminTab = 'leads' | 'ticketTypes' | 'orders' | 'tickets' | 'coupons' | 'logs' | 'adminUsers';
+type AdminTab = 'leads' | 'ticketTypes' | 'workshops' | 'orders' | 'tickets' | 'coupons' | 'logs' | 'adminUsers';
 
 type TicketTypeForm = {
   name: string;
   price: string;
+  workshop_price: string;
   currency: string;
   quantity_total: string;
+  sort_order: string;
+  active: boolean;
+};
+
+type WorkshopForm = {
+  title: string;
+  short_description: string;
+  description: string;
+  takeaways: string;
+  facilitator_name: string;
+  facilitator_role: string;
+  facilitator_bio: string;
+  facilitator_photo_url: string;
+  image_url: string;
+  starts_at: string;
+  ends_at: string;
+  room: string;
+  level: string;
+  capacity: string;
   sort_order: string;
   active: boolean;
 };
@@ -143,6 +188,7 @@ function emptyTicketTypeForm(): TicketTypeForm {
   return {
     name: '',
     price: '',
+    workshop_price: '0',
     currency: 'eur',
     quantity_total: '',
     sort_order: '0',
@@ -154,11 +200,64 @@ function toTicketTypeForm(row: TicketTypeRow): TicketTypeForm {
   return {
     name: row.name ?? '',
     price: String(row.price != null ? (row.price / 100).toFixed(2) : ''),
+    workshop_price: String(((row.workshop_price ?? 0) / 100).toFixed(2)),
     currency: row.currency ?? 'eur',
     quantity_total: String(row.quantity_total ?? 0),
     sort_order: String(row.sort_order ?? 0),
     active: Boolean(row.active),
   };
+}
+
+function emptyWorkshopForm(): WorkshopForm {
+  return {
+    title: '',
+    short_description: '',
+    description: '',
+    takeaways: '',
+    facilitator_name: '',
+    facilitator_role: '',
+    facilitator_bio: '',
+    facilitator_photo_url: '',
+    image_url: '',
+    starts_at: '',
+    ends_at: '',
+    room: '',
+    level: '',
+    capacity: '',
+    sort_order: '0',
+    active: true,
+  };
+}
+
+function toWorkshopForm(row: WorkshopRow): WorkshopForm {
+  return {
+    title: row.title ?? '',
+    short_description: row.short_description ?? '',
+    description: row.description ?? '',
+    takeaways: (row.takeaways ?? []).join('\n'),
+    facilitator_name: row.facilitator_name ?? '',
+    facilitator_role: row.facilitator_role ?? '',
+    facilitator_bio: row.facilitator_bio ?? '',
+    facilitator_photo_url: row.facilitator_photo_url ?? '',
+    image_url: row.image_url ?? '',
+    starts_at: row.starts_at ?? '',
+    ends_at: row.ends_at ?? '',
+    room: row.room ?? '',
+    level: row.level ?? '',
+    capacity: String(row.capacity ?? 0),
+    sort_order: String(row.sort_order ?? 0),
+    active: Boolean(row.active),
+  };
+}
+
+function formatWorkshopSchedule(row?: Pick<WorkshopRow, 'starts_at' | 'ends_at'> | null) {
+  if (!row) return '';
+  if (row.starts_at && row.ends_at) return `${row.starts_at}–${row.ends_at}`;
+  return row.starts_at || row.ends_at || '';
+}
+
+function attendeeDisplayName(t: TicketRow) {
+  return safe(t.attendee_name) || `${safe(t.attendee_first_name)} ${safe(t.attendee_last_name)}`.trim();
 }
 
 const MOTIVOS_ESTORNO = ['Estorno por desistência da compra', 'Erro no valor faturado'];
@@ -251,6 +350,14 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [editingTicketType, setEditingTicketType] = useState<TicketTypeRow | null>(null);
   const [ticketTypeForm, setTicketTypeForm] = useState<TicketTypeForm>(emptyTicketTypeForm());
   const [savingTicketType, setSavingTicketType] = useState(false);
+
+  const [workshops, setWorkshops] = useState<WorkshopRow[]>([]);
+  const [loadingWorkshops, setLoadingWorkshops] = useState(false);
+  const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false);
+  const [editingWorkshop, setEditingWorkshop] = useState<WorkshopRow | null>(null);
+  const [workshopForm, setWorkshopForm] = useState<WorkshopForm>(emptyWorkshopForm());
+  const [savingWorkshop, setSavingWorkshop] = useState(false);
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState<string | null>(null);
 
   const token = session?.access_token ?? null;
   const authHeader = token ? `Bearer ${token}` : null;
@@ -987,6 +1094,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     const priceEuros = Number(ticketTypeForm.price.replace(',', '.'));
     const price = Math.round(priceEuros * 100);
+    const workshopPriceEuros = Number((ticketTypeForm.workshop_price || '0').replace(',', '.'));
+    const workshopPrice = Math.round(workshopPriceEuros * 100);
     const quantityTotal = Number(ticketTypeForm.quantity_total);
     const sortOrder = Number(ticketTypeForm.sort_order);
 
@@ -997,6 +1106,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     if (!Number.isFinite(priceEuros) || priceEuros < 0) {
       setError('Preço inválido');
+      return;
+    }
+
+    if (!Number.isFinite(workshopPriceEuros) || workshopPriceEuros < 0) {
+      setError('Preço do workshop inválido');
       return;
     }
 
@@ -1043,6 +1157,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const payload = {
         name: ticketTypeForm.name.trim(),
         price,
+        workshop_price: workshopPrice,
         currency: ticketTypeForm.currency.trim().toLowerCase() || 'eur',
         quantity_total: quantityTotal,
         sort_order: sortOrder,
@@ -1189,6 +1304,198 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   }
 
+  // ── Workshops ──────────────────────────────────────────────────────────
+  async function fetchWorkshops() {
+    if (!authHeader) return;
+    setLoadingWorkshops(true);
+    try {
+      const res = await fetch(`/api/admin/workshops?_=${Date.now()}`, {
+        headers: { Authorization: authHeader },
+      });
+
+      if (res.status === 401) {
+        await supabase.auth.signOut();
+        setAdminUser(null);
+        setError('Sessão expirada. Por favor volta a entrar.');
+        return;
+      }
+
+      if (!res.ok) {
+        setError('Falha ao carregar workshops');
+        return;
+      }
+
+      const rows = (await res.json()) as WorkshopRow[];
+      setWorkshops(Array.isArray(rows) ? rows : []);
+      setError(null);
+    } catch {
+      setError('Erro inesperado ao carregar workshops');
+    } finally {
+      setLoadingWorkshops(false);
+    }
+  }
+
+  function openCreateWorkshopModal() {
+    setEditingWorkshop(null);
+    setWorkshopForm(emptyWorkshopForm());
+    setIsWorkshopModalOpen(true);
+    setError(null);
+  }
+
+  function openEditWorkshopModal(row: WorkshopRow) {
+    setEditingWorkshop(row);
+    setWorkshopForm(toWorkshopForm(row));
+    setIsWorkshopModalOpen(true);
+    setError(null);
+  }
+
+  function closeWorkshopModal() {
+    if (savingWorkshop) return;
+    setIsWorkshopModalOpen(false);
+    setEditingWorkshop(null);
+    setWorkshopForm(emptyWorkshopForm());
+  }
+
+  function updateWorkshopForm<K extends keyof WorkshopForm>(key: K, value: WorkshopForm[K]) {
+    setWorkshopForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function saveWorkshop(e: React.FormEvent) {
+    e.preventDefault();
+    if (!authHeader) return;
+
+    const capacity = Number(workshopForm.capacity);
+    const sortOrder = Number(workshopForm.sort_order);
+
+    if (!workshopForm.title.trim()) {
+      setError('Título do workshop é obrigatório');
+      return;
+    }
+
+    if (workshopForm.capacity.trim() === '' || !Number.isInteger(capacity) || capacity < 0) {
+      setError('Capacidade inválida');
+      return;
+    }
+
+    if (editingWorkshop && capacity < Number(editingWorkshop.sold ?? 0)) {
+      setError(`A capacidade não pode ser inferior às vagas já vendidas (${editingWorkshop.sold})`);
+      return;
+    }
+
+    if (!Number.isInteger(sortOrder) || sortOrder < 0) {
+      setError('Ordem inválida');
+      return;
+    }
+
+    setSavingWorkshop(true);
+
+    try {
+      const payload = {
+        title: workshopForm.title.trim(),
+        short_description: workshopForm.short_description,
+        description: workshopForm.description,
+        takeaways: workshopForm.takeaways
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean),
+        facilitator_name: workshopForm.facilitator_name,
+        facilitator_role: workshopForm.facilitator_role,
+        facilitator_bio: workshopForm.facilitator_bio,
+        facilitator_photo_url: workshopForm.facilitator_photo_url,
+        image_url: workshopForm.image_url,
+        starts_at: workshopForm.starts_at,
+        ends_at: workshopForm.ends_at,
+        room: workshopForm.room,
+        level: workshopForm.level,
+        capacity,
+        sort_order: sortOrder,
+        active: workshopForm.active,
+      };
+
+      const url = editingWorkshop
+        ? `/api/admin/workshops/${encodeURIComponent(editingWorkshop.id)}`
+        : '/api/admin/workshops';
+
+      const res = await fetch(url, {
+        method: editingWorkshop ? 'PATCH' : 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        await supabase.auth.signOut();
+        setAdminUser(null);
+        setError('Sessão expirada. Por favor volta a entrar.');
+        return;
+      }
+
+      if (!res.ok) {
+        setError(json?.message || 'Falha ao guardar workshop');
+        return;
+      }
+
+      await fetchWorkshops();
+      closeWorkshopModal();
+      setError(null);
+    } catch {
+      setError('Erro inesperado ao guardar workshop');
+    } finally {
+      setSavingWorkshop(false);
+    }
+  }
+
+  async function toggleWorkshopActive(row: WorkshopRow) {
+    if (!authHeader) return;
+    setUpdatingId(row.id);
+
+    try {
+      const res = await fetch(`/api/admin/workshops/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !row.active }),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        await supabase.auth.signOut();
+        setAdminUser(null);
+        setError('Sessão expirada. Por favor volta a entrar.');
+        return;
+      }
+
+      if (!res.ok) {
+        setError(json?.message || 'Falha ao alterar estado do workshop');
+        return;
+      }
+
+      await fetchWorkshops();
+      setError(null);
+    } catch {
+      setError('Erro inesperado ao alterar estado do workshop');
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  // Inscritos por workshop: tickets válidos (sem testes/duplicados e sem order estornada) com workshop_id
+  function getWorkshopAttendees(workshopId?: string | null) {
+    const ordersById = new Map(orders.map((o) => [o.id, o]));
+    return tickets
+      .filter((t) => {
+        if (!t.workshop_id) return false;
+        if (workshopId && t.workshop_id !== workshopId) return false;
+        const o = t.order_id ? ordersById.get(t.order_id) : undefined;
+        return Boolean(o) && !o!.is_duplicate && !o!.is_test && !o!.refunded_at;
+      })
+      .sort((a, b) => attendeeDisplayName(a).localeCompare(attendeeDisplayName(b), 'pt-PT'));
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setAdminUser(null);
@@ -1196,6 +1503,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setSelected(null);
     setData([]);
     setTicketTypes([]);
+    setWorkshops([]);
+    setSelectedWorkshopId(null);
     setOrders([]);
     setTickets([]);
     setCoupons([]);
@@ -1212,8 +1521,9 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     if (!adminUser) return;
     if (tab === 'leads') fetchLeads();
     if (tab === 'ticketTypes') fetchTicketTypes();
+    if (tab === 'workshops') { fetchWorkshops(); fetchTickets(); fetchOrders(); }
     if (tab === 'orders') { fetchOrders(); fetchTickets(); }
-    if (tab === 'tickets') { fetchTickets(); fetchOrders(); }
+    if (tab === 'tickets') { fetchTickets(); fetchOrders(); fetchWorkshops(); }
     if (tab === 'coupons') fetchCoupons();
     if (tab === 'logs') fetchLogs();
     if (tab === 'adminUsers') fetchAdminUsers();
@@ -1234,6 +1544,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'sort_order',
         'name',
         'price',
+        'workshop_price',
         'currency',
         'quantity_total',
         'quantity_sold',
@@ -1251,6 +1562,49 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const a = document.createElement('a');
       a.href = url;
       a.download = `ticket-types-rsg-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (tab === 'workshops') {
+      // Exporta os inscritos (do workshop selecionado ou de todos), útil para check-in nas salas
+      const workshopsById = new Map(workshops.map((w) => [w.id, w]));
+      const headers = ['workshop', 'horario', 'sala', 'nome', 'email', 'empresa', 'checked_in', 'ticket_id'];
+      const rows = getWorkshopAttendees(selectedWorkshopId)
+        .slice()
+        .sort((a, b) =>
+          (workshopsById.get(a.workshop_id!)?.sort_order ?? 0) - (workshopsById.get(b.workshop_id!)?.sort_order ?? 0)
+        )
+        .map((t) => {
+          const w = workshopsById.get(t.workshop_id!);
+          return [
+            w?.title ?? t.workshop_id,
+            formatWorkshopSchedule(w),
+            w?.room,
+            attendeeDisplayName(t),
+            t.attendee_email,
+            t.attendee_company,
+            t.checked_in ? 'sim' : 'não',
+            t.id,
+          ];
+        });
+
+      const lines = [
+        headers.join(','),
+        ...rows.map((row) => row.map((v) => escape(v)).join(',')),
+      ];
+
+      const selectedTitle = selectedWorkshopId ? workshopsById.get(selectedWorkshopId)?.title : null;
+      const slug = selectedTitle
+        ? selectedTitle.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        : 'todos';
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workshop-inscritos-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -1309,6 +1663,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'privacy_consent',
         'checked_in',
         'check_in_at',
+        'workshop_id',
       ];
 
       const exportTickets = showHidden ? tickets : tickets.filter(t => { const o = orders.find(ord => ord.id === t.order_id); return !o?.is_duplicate && !o?.is_test; });
@@ -1478,6 +1833,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </button>
             )}
 
+            {canEdit && tab === 'workshops' && (
+              <button
+                onClick={openCreateWorkshopModal}
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-darkBlue text-white px-4 py-2 text-sm font-bold"
+              >
+                <Plus className="w-4 h-4" />
+                Novo workshop
+              </button>
+            )}
+
             {canEdit && tab === 'coupons' && (
               <button
                 onClick={openCreateCoupon}
@@ -1509,6 +1874,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               onClick={() => {
                 if (tab === 'leads') fetchLeads();
                 if (tab === 'ticketTypes') fetchTicketTypes();
+                if (tab === 'workshops') { fetchWorkshops(); fetchTickets(); fetchOrders(); }
                 if (tab === 'orders') fetchOrders();
                 if (tab === 'tickets') fetchTickets();
                 if (tab === 'coupons') fetchCoupons();
@@ -1557,6 +1923,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             {[
               { key: 'leads', label: 'Leads' },
               { key: 'ticketTypes', label: 'Lotes (Tickets)' },
+              { key: 'workshops', label: 'Workshops' },
               { key: 'orders', label: 'Orders (Pagamentos)' },
               { key: 'tickets', label: 'Tickets (Participantes)' },
               { key: 'coupons', label: 'Coupons' },
@@ -1616,6 +1983,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <Th>Ordem</Th>
                       <Th>Lote</Th>
                       <Th>Preço</Th>
+                      <Th>Workshop</Th>
                       <Th>Total</Th>
                       <Th>Vendidos</Th>
                       <Th>Disponíveis</Th>
@@ -1626,11 +1994,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <tbody>
                     {loadingTicketTypes ? (
                       <tr>
-                        <Td colSpan={8}>A carregar lotes…</Td>
+                        <Td colSpan={9}>A carregar lotes…</Td>
                       </tr>
                     ) : ticketTypes.length === 0 ? (
                       <tr>
-                        <Td colSpan={8}>Sem lotes cadastrados.</Td>
+                        <Td colSpan={9}>Sem lotes cadastrados.</Td>
                       </tr>
                     ) : (
                       ticketTypes.map((row) => {
@@ -1646,6 +2014,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               <div className="text-xs text-gray-500">{row.currency?.toUpperCase()}</div>
                             </Td>
                             <Td>{formatMoneyEURFromCents(row.price)}</Td>
+                            <Td>{formatMoneyEURFromCents(row.workshop_price ?? 0)}</Td>
                             <Td>{total}</Td>
                             <Td>{sold}</Td>
                             <Td>
@@ -1708,6 +2077,221 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </div>
             </div>
           )}
+
+          {tab === 'workshops' && (() => {
+            const allAttendees = getWorkshopAttendees(null);
+            const attendeesCount = allAttendees.reduce((acc, t) => {
+              acc[t.workshop_id!] = (acc[t.workshop_id!] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+            const selectedWorkshop = workshops.find((w) => w.id === selectedWorkshopId) || null;
+            const selectedAttendees = selectedWorkshop
+              ? allAttendees.filter((t) => t.workshop_id === selectedWorkshop.id)
+              : [];
+            const loadingAttendees = loadingTickets || loadingOrders;
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <StatCard label="Total de workshops" value={String(workshops.length)} />
+                  <StatCard label="Workshops ativos" value={String(workshops.filter((w) => w.active).length)} />
+                  <StatCard
+                    label="Vagas vendidas"
+                    value={String(workshops.reduce((sum, w) => sum + Number(w.sold ?? 0), 0))}
+                  />
+                  <StatCard
+                    label="Vagas disponíveis"
+                    value={String(
+                      workshops.reduce(
+                        (sum, w) => sum + Math.max(0, Number(w.capacity ?? 0) - Number(w.sold ?? 0)),
+                        0
+                      )
+                    )}
+                  />
+                </div>
+
+                <div className="overflow-x-auto rounded-3xl bg-white border">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50 text-left">
+                      <tr>
+                        <Th>Ordem</Th>
+                        <Th>Workshop</Th>
+                        <Th>Facilitador</Th>
+                        <Th>Horário</Th>
+                        <Th>Sala</Th>
+                        <Th>Vendidas / Capacidade</Th>
+                        <Th>Inscritos</Th>
+                        <Th>Estado</Th>
+                        <Th>Ações</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loadingWorkshops ? (
+                        <tr>
+                          <Td colSpan={9}>A carregar workshops…</Td>
+                        </tr>
+                      ) : workshops.length === 0 ? (
+                        <tr>
+                          <Td colSpan={9}>Sem workshops criados.</Td>
+                        </tr>
+                      ) : (
+                        workshops.map((row) => {
+                          const sold = Number(row.sold ?? 0);
+                          const capacity = Number(row.capacity ?? 0);
+                          const full = capacity > 0 && sold >= capacity;
+                          const isSelected = selectedWorkshopId === row.id;
+
+                          return (
+                            <tr
+                              key={row.id}
+                              className={`border-t hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-blue-50/60' : ''}`}
+                              onClick={() => setSelectedWorkshopId(isSelected ? null : row.id)}
+                            >
+                              <Td>{safe(row.sort_order)}</Td>
+                              <Td>
+                                <div className="font-bold text-gray-900">{row.title}</div>
+                                {row.level && <div className="text-xs text-gray-500">{row.level}</div>}
+                              </Td>
+                              <Td>
+                                <div>{safe(row.facilitator_name) || '—'}</div>
+                                {row.facilitator_role && <div className="text-xs text-gray-500">{row.facilitator_role}</div>}
+                              </Td>
+                              <Td>{formatWorkshopSchedule(row) || '—'}</Td>
+                              <Td>{safe(row.room) || '—'}</Td>
+                              <Td>
+                                <span
+                                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${full
+                                    ? 'bg-red-50 text-red-700'
+                                    : 'bg-emerald-50 text-emerald-700'
+                                    }`}
+                                >
+                                  {sold} / {capacity}
+                                </span>
+                                {sold > capacity && (
+                                  <div className="text-xs text-red-600 font-bold mt-1">Acima da capacidade</div>
+                                )}
+                              </Td>
+                              <Td>{loadingAttendees ? '…' : (attendeesCount[row.id] ?? 0)}</Td>
+                              <Td>
+                                <span
+                                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${row.active
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : 'bg-gray-100 text-gray-700'
+                                    }`}
+                                >
+                                  {row.active ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </Td>
+                              <Td>
+                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => setSelectedWorkshopId(isSelected ? null : row.id)}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-3 py-2"
+                                  >
+                                    {isSelected ? 'Fechar inscritos' : 'Ver inscritos'}
+                                  </button>
+                                  {canEdit && (
+                                    <>
+                                      <button
+                                        onClick={() => openEditWorkshopModal(row)}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-3 py-2"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                        Editar
+                                      </button>
+
+                                      <button
+                                        onClick={() => toggleWorkshopActive(row)}
+                                        disabled={updatingId === row.id}
+                                        className="inline-flex items-center gap-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-3 py-2 disabled:opacity-50"
+                                      >
+                                        <Power className="w-4 h-4" />
+                                        {row.active ? 'Desativar' : 'Ativar'}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </Td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {selectedWorkshop ? (
+                  <div className="rounded-3xl bg-white border p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900">Inscritos · {selectedWorkshop.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {[formatWorkshopSchedule(selectedWorkshop), selectedWorkshop.room, selectedWorkshop.facilitator_name]
+                            .filter(Boolean)
+                            .join(' · ') || '—'}
+                        </p>
+                        <p className="text-sm text-gray-700 mt-1">
+                          <strong>{selectedAttendees.length}</strong> inscrito{selectedAttendees.length === 1 ? '' : 's'}
+                          {' · '}
+                          <strong>{selectedAttendees.filter((t) => t.checked_in).length}</strong> com check-in
+                        </p>
+                      </div>
+                      <button
+                        onClick={downloadCsv}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-2 text-sm font-bold"
+                      >
+                        <Download className="w-4 h-4" />
+                        Exportar inscritos
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-2xl border">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50 text-left">
+                          <tr>
+                            <Th>#</Th>
+                            <Th>Nome</Th>
+                            <Th>Email</Th>
+                            <Th>Empresa</Th>
+                            <Th>Check-in</Th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {loadingAttendees ? (
+                            <tr>
+                              <Td colSpan={5}>A carregar inscritos…</Td>
+                            </tr>
+                          ) : selectedAttendees.length === 0 ? (
+                            <tr>
+                              <Td colSpan={5}>Sem inscritos neste workshop.</Td>
+                            </tr>
+                          ) : (
+                            selectedAttendees.map((t, idx) => (
+                              <tr
+                                key={t.id}
+                                className="border-t hover:bg-gray-50 cursor-pointer"
+                                onClick={() => { setSelectedTicket(t); setTicketModalTab('ticket'); }}
+                              >
+                                <Td>{idx + 1}</Td>
+                                <Td>{attendeeDisplayName(t) || '—'}</Td>
+                                <Td>{safe(t.attendee_email) || '—'}</Td>
+                                <Td>{safe(t.attendee_company) || '—'}</Td>
+                                <Td>{t.checked_in ? `Sim · ${formatDatePt(t.check_in_at)}` : 'Não'}</Td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : workshops.length > 0 && (
+                  <p className="text-sm text-gray-500">
+                    Seleciona um workshop para ver a lista de inscritos. O botão “Exportar” no topo exporta os inscritos de todos os workshops.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {tab === 'leads' && (
             <div className="overflow-x-auto rounded-3xl bg-white border">
@@ -1924,6 +2508,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             </div>
                             <div className="text-xs text-gray-500">{safe(row.attendee_email) || '—'}</div>
                             <div className="text-xs text-gray-500">{safe(row.attendee_country) || '—'}</div>
+                            {row.workshop_id && (
+                              <div className="text-xs text-blue-700 mt-0.5">
+                                Workshop: {workshops.find(w => w.id === row.workshop_id)?.title || '—'}
+                              </div>
+                            )}
                           </Td>
                           <Td>
                             <div>{safe(row.attendee_company) || '—'}</div>
@@ -2361,6 +2950,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         ? selectedTicket.attendee_job_function + (selectedTicket.attendee_job_function_other ? ` · ${selectedTicket.attendee_job_function_other}` : '')
                         : '—'],
                       ['T-Shirt', selectedTicket.attendee_tshirt || '—'],
+                      ['Workshop', (() => {
+                        if (!selectedTicket.workshop_id) return 'Sem workshop';
+                        const w = workshops.find(ws => ws.id === selectedTicket.workshop_id);
+                        if (!w) return selectedTicket.workshop_id;
+                        return [w.title, formatWorkshopSchedule(w), w.room].filter(Boolean).join(' · ');
+                      })()],
                       ['Dados SA', selectedTicket.sa_data_sharing_consent ? 'Sim' : 'Não'],
                       ['Marketing SA', selectedTicket.sa_marketing_consent ? 'Sim' : 'Não'],
                       ['Privacidade', selectedTicket.privacy_consent ? 'Sim' : 'Não'],
@@ -3078,6 +3673,13 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
 
                   <Input
+                    label="Preço do workshop (€)"
+                    value={ticketTypeForm.workshop_price}
+                    onChange={(value) => updateTicketTypeForm('workshop_price', value.replace(/[^0-9.,]/g, ''))}
+                    placeholder="0,00"
+                  />
+
+                  <Input
                     label="Moeda"
                     value={ticketTypeForm.currency}
                     onChange={(value) => updateTicketTypeForm('currency', value)}
@@ -3133,6 +3735,190 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     className="rounded-2xl bg-brand-darkBlue text-white px-5 py-3 font-bold disabled:opacity-50"
                   >
                     {savingTicketType ? 'A guardar...' : editingTicketType ? 'Guardar alterações' : 'Criar lote'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {isWorkshopModalOpen && (
+          <div
+            className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
+            onClick={closeWorkshopModal}
+          >
+            <div
+              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900">
+                    {editingWorkshop ? 'Editar workshop' : 'Novo workshop'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Workshops opcionais que decorrem em simultâneo (um por participante)
+                  </p>
+                </div>
+
+                <button
+                  onClick={closeWorkshopModal}
+                  className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={saveWorkshop} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Input
+                      label="Título"
+                      value={workshopForm.title}
+                      onChange={(value) => updateWorkshopForm('title', value)}
+                      placeholder="Ex.: Facilitação de retrospetivas"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Input
+                      label="Descrição curta (cartão)"
+                      value={workshopForm.short_description}
+                      onChange={(value) => updateWorkshopForm('short_description', value)}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Textarea
+                      label="Sobre o workshop"
+                      value={workshopForm.description}
+                      onChange={(value) => updateWorkshopForm('description', value)}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Textarea
+                      label="O que vais levar (um item por linha)"
+                      value={workshopForm.takeaways}
+                      onChange={(value) => updateWorkshopForm('takeaways', value)}
+                      rows={4}
+                    />
+                  </div>
+
+                  <Input
+                    label="Facilitador"
+                    value={workshopForm.facilitator_name}
+                    onChange={(value) => updateWorkshopForm('facilitator_name', value)}
+                  />
+
+                  <Input
+                    label="Cargo · Empresa"
+                    value={workshopForm.facilitator_role}
+                    onChange={(value) => updateWorkshopForm('facilitator_role', value)}
+                  />
+
+                  <div className="md:col-span-2">
+                    <Textarea
+                      label="Bio do facilitador"
+                      value={workshopForm.facilitator_bio}
+                      onChange={(value) => updateWorkshopForm('facilitator_bio', value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <Input
+                    label="URL da foto do facilitador"
+                    value={workshopForm.facilitator_photo_url}
+                    onChange={(value) => updateWorkshopForm('facilitator_photo_url', value)}
+                    placeholder="https://…"
+                  />
+
+                  <Input
+                    label="URL da imagem do workshop"
+                    value={workshopForm.image_url}
+                    onChange={(value) => updateWorkshopForm('image_url', value)}
+                    placeholder="https://…"
+                  />
+
+                  <Input
+                    label="Início"
+                    value={workshopForm.starts_at}
+                    onChange={(value) => updateWorkshopForm('starts_at', value)}
+                    placeholder="14:00"
+                  />
+
+                  <Input
+                    label="Fim"
+                    value={workshopForm.ends_at}
+                    onChange={(value) => updateWorkshopForm('ends_at', value)}
+                    placeholder="17:30"
+                  />
+
+                  <Input
+                    label="Sala"
+                    value={workshopForm.room}
+                    onChange={(value) => updateWorkshopForm('room', value)}
+                  />
+
+                  <Input
+                    label="Nível"
+                    value={workshopForm.level}
+                    onChange={(value) => updateWorkshopForm('level', value)}
+                    placeholder="Ex.: Intermédio"
+                  />
+
+                  <Input
+                    label="Capacidade"
+                    type="number"
+                    value={workshopForm.capacity}
+                    onChange={(value) => updateWorkshopForm('capacity', value)}
+                    placeholder="30"
+                  />
+
+                  <Input
+                    label="Ordem"
+                    type="number"
+                    value={workshopForm.sort_order}
+                    onChange={(value) => updateWorkshopForm('sort_order', value)}
+                    placeholder="0"
+                  />
+
+                  <div className="flex items-end">
+                    <label className="inline-flex items-center gap-3 rounded-2xl border border-gray-300 px-4 py-3 w-full">
+                      <input
+                        type="checkbox"
+                        checked={workshopForm.active}
+                        onChange={(e) => updateWorkshopForm('active', e.target.checked)}
+                      />
+                      <span className="font-medium text-gray-800">Workshop ativo</span>
+                    </label>
+                  </div>
+                </div>
+
+                {editingWorkshop && (
+                  <div className="rounded-2xl bg-gray-50 border px-4 py-3 text-sm text-gray-600">
+                    Vagas vendidas: <strong>{editingWorkshop.sold ?? 0}</strong>
+                    {' · '}
+                    Disponíveis: <strong>{Math.max(0, Number(editingWorkshop.capacity ?? 0) - Number(editingWorkshop.sold ?? 0))}</strong>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeWorkshopModal}
+                    className="rounded-2xl bg-gray-100 text-gray-800 px-5 py-3 font-bold"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={savingWorkshop}
+                    className="rounded-2xl bg-brand-darkBlue text-white px-5 py-3 font-bold disabled:opacity-50"
+                  >
+                    {savingWorkshop ? 'A guardar...' : editingWorkshop ? 'Guardar alterações' : 'Criar workshop'}
                   </button>
                 </div>
               </form>
@@ -3201,6 +3987,33 @@ function Input({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </label>
+  );
+}
+
+function Textarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <label className="block">
+      <div className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">{label}</div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
         className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
       />
     </label>

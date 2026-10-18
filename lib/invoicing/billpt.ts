@@ -1,4 +1,4 @@
-import type { CreateInvoiceInput, CreateInvoiceResult } from './types.js';
+import type { CreateInvoiceInput, CreateInvoiceResult, InvoiceWorkshopLine } from './types.js';
 
 // ==================================================================
 // BILL.PT (DEV/PROD) – Adapter
@@ -77,6 +77,7 @@ async function billCreateDocument(params: {
   ticketName: string;
   amountEuro: number;
   quantity?: number;
+  workshops?: InvoiceWorkshopLine[];
 }) {
   const ep = endpoints(params.baseUrl);
 
@@ -87,9 +88,31 @@ async function billCreateDocument(params: {
   const qty = Math.max(1, params.quantity ?? 1);
   const RECORDING_UNIT = 10.00;
 
-  // Calcula preço unitário do bilhete
+  // Workshops: um produto por workshop (ignora linhas vazias/inválidas)
+  const workshops = (params.workshops || [])
+    .map((w) => ({
+      title: String(w.title || '').trim() || 'Workshop',
+      quantity: Math.max(0, Math.floor(Number(w.quantity) || 0)),
+      unitPriceEuro: money(Number(w.unitPriceEuro) || 0),
+    }))
+    .filter((w) => w.quantity > 0);
+  const workshopsTotal = workshops.reduce((sum, w) => sum + w.unitPriceEuro * w.quantity, 0);
+
+  // Calcula preço unitário do bilhete = (total pago − workshops − gravação legada) / nº de bilhetes
   const recordingTotal = params.includeRecording ? RECORDING_UNIT * qty : 0;
-  const ticketUnitPrice = money((params.amountEuro - recordingTotal) / qty);
+  const ticketUnitPrice = money((params.amountEuro - workshopsTotal - recordingTotal) / qty);
+
+  // Aviso se a soma das linhas não bater com o total pago (arredondamentos)
+  const linesTotal = money(ticketUnitPrice * qty + workshopsTotal + recordingTotal);
+  if (Math.abs(linesTotal - money(params.amountEuro)) >= 0.005) {
+    console.warn('⚠️ Bill.pt: soma das linhas difere do total pago', {
+      amountEuro: params.amountEuro,
+      linesTotal,
+      ticketUnitPrice,
+      workshopsTotal,
+      recordingTotal,
+    });
+  }
 
   const makeProduto = (nome: string, quantidade: number, preco_unitario: number) => {
     const p: Record<string, unknown> = { nome, quantidade, preco_unitario: money(preco_unitario), imposto: taxPercent };
@@ -99,12 +122,21 @@ async function billCreateDocument(params: {
 
   const produtos: Record<string, unknown>[] = [
     makeProduto(
-      'Bilhete de acesso ao Regional Scrum Gathering Lisbon 2026',
+      'Bilhete de acesso ao TugÁgil Experience 2026',
       qty,
       ticketUnitPrice,
     ),
   ];
 
+  for (const w of workshops) {
+    produtos.push(makeProduto(
+      `Workshop: ${w.title} – TugÁgil Experience 2026`,
+      w.quantity,
+      w.unitPriceEuro,
+    ));
+  }
+
+  // Gravação: já não é vendida, mantida só para reemissões de encomendas antigas
   if (params.includeRecording) {
     produtos.push(makeProduto(
       'Acesso às gravações das sessões – RSG Lisbon 2026',
@@ -270,6 +302,7 @@ export async function createInvoiceWithBillpt(input: CreateInvoiceInput): Promis
     ticketName: input.ticketName,
     amountEuro: input.amountEuro,
     quantity: input.quantity ?? 1,
+    workshops: input.workshops,
   });
 
   if (!created.id) {

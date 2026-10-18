@@ -22,7 +22,16 @@ type CouponRow = {
   single_use: boolean;
 };
 
-const RECORDING_PRICE = 1000;
+type WorkshopRow = {
+  id: string;
+  title: string;
+  capacity: number;
+  sold: number;
+  active: boolean;
+};
+
+// Stripe exige pelo menos 30 min; damos 31 para margem.
+const CHECKOUT_EXPIRES_SECONDS = 31 * 60;
 
 async function findValidCoupon(code: string, email: string): Promise<CouponRow | null> {
   const normalizedCode = code.trim().toUpperCase();
@@ -86,7 +95,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const includeRecording = Boolean(shared?.include_recording);
+    // Workshop por participante (opcional, no máximo 1 por pessoa)
+    const workshopIds: string[] = participants.map((p: any) => String(p?.workshop_id || '').trim());
+    const requestedPerWorkshop = new Map<string, number>();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    for (const wsId of workshopIds) {
+      if (wsId && !uuidRegex.test(wsId)) return res.status(400).json({ message: 'Workshop inválido.' });
+      if (wsId) requestedPerWorkshop.set(wsId, (requestedPerWorkshop.get(wsId) || 0) + 1);
+    }
+
+    const workshopsById = new Map<string, WorkshopRow>();
+    if (requestedPerWorkshop.size > 0) {
+      const workshopPrice = Number(ticketType.workshop_price || 0);
+      if (!(workshopPrice > 0)) {
+        return res.status(400).json({ message: 'Os workshops ainda não estão disponíveis para este lote.' });
+      }
+
+      const { data: workshops, error: wsErr } = await supabase
+        .from('workshops')
+        .select('id, title, capacity, sold, active')
+        .in('id', [...requestedPerWorkshop.keys()]);
+
+      if (wsErr) return res.status(500).json({ message: 'Erro ao validar workshops.' });
+
+      for (const w of (workshops || []) as WorkshopRow[]) workshopsById.set(w.id, w);
+
+      for (const [wsId, requested] of requestedPerWorkshop) {
+        const w = workshopsById.get(wsId);
+        if (!w || !w.active) {
+          return res.status(400).json({ message: 'Workshop indisponível.' });
+        }
+        const remaining = Math.max(0, w.capacity - w.sold);
+        if (requested > remaining) {
+          return res.status(409).json({
+            message: remaining === 0
+              ? `O workshop "${w.title}" está esgotado.`
+              : `O workshop "${w.title}" só tem ${remaining} vaga(s).`,
+          });
+        }
+      }
+    }
+
     const couponCode = String(shared?.coupon_code || '').trim().toUpperCase();
     const billingNif = truncate(shared?.billing_nif, 20);
     const billingName = truncate(shared?.billing_name, 100);
@@ -111,29 +160,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const originalPrice = Number(ticketType.price);
+    const workshopPrice = Number(ticketType.workshop_price || 0);
     let finalTicketPrice = originalPrice;
-    let finalRecordingPrice = RECORDING_PRICE;
     let appliedCoupon: CouponRow | null = null;
 
+    // Cupões aplicam-se só ao bilhete (nunca ao workshop)
     if (couponCode) {
       appliedCoupon = await findValidCoupon(couponCode, firstEmail);
       if (!appliedCoupon) return res.status(400).json({ message: 'Cupão inválido para este email.' });
+      // Cupões de gravação deixaram de ter efeito: a gravação já não é vendida
+      if (appliedCoupon.recording_only) return res.status(400).json({ message: 'Este cupão já não é válido.' });
 
-      if (appliedCoupon.recording_only) {
-        if (includeRecording) {
-          if (appliedCoupon.discount_amount != null) {
-            finalRecordingPrice = Math.max(0, RECORDING_PRICE - appliedCoupon.discount_amount);
-          } else if (appliedCoupon.discount_percent != null) {
-            const rawDiscount = Math.round((originalPrice + RECORDING_PRICE) * appliedCoupon.discount_percent / 100);
-            finalRecordingPrice = Math.max(0, RECORDING_PRICE - Math.min(rawDiscount, RECORDING_PRICE));
-          }
-        }
-      } else {
-        if (appliedCoupon.discount_amount != null) {
-          finalTicketPrice = Math.max(0, originalPrice - appliedCoupon.discount_amount);
-        } else if (appliedCoupon.discount_percent != null) {
-          finalTicketPrice = Math.round(originalPrice * (100 - appliedCoupon.discount_percent) / 100);
-        }
+      if (appliedCoupon.discount_amount != null) {
+        finalTicketPrice = Math.max(0, originalPrice - appliedCoupon.discount_amount);
+      } else if (appliedCoupon.discount_percent != null) {
+        finalTicketPrice = Math.round(originalPrice * (100 - appliedCoupon.discount_percent) / 100);
       }
     }
 
@@ -153,21 +194,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     ];
 
-    if (includeRecording) {
+    for (const [wsId, count] of requestedPerWorkshop) {
       lineItems.push({
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'Acesso à Gravação do Evento - RSG Lisbon 2026',
-            description: appliedCoupon?.recording_only
-              ? `Vídeos de todas as sessões do evento. Cupão ${appliedCoupon.code} aplicado.`
-              : 'Vídeos de todas as sessões do evento.',
+            name: `Workshop: ${workshopsById.get(wsId)!.title}`,
+            description: 'Workshop da tarde (adicional ao bilhete).',
           },
-          unit_amount: finalRecordingPrice,
+          unit_amount: workshopPrice,
         },
-        quantity,
+        quantity: count,
       });
     }
+    const workshopsCount = workshopIds.filter(Boolean).length;
 
     // Encode participants as p_0, p_1, ... in metadata (max 500 chars each)
     const participantsMeta: Record<string, string> = {};
@@ -213,10 +253,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         coupon_discount_amount: appliedCoupon?.discount_amount != null ? String(appliedCoupon.discount_amount) : '',
         coupon_recording_only: appliedCoupon ? String(appliedCoupon.recording_only) : '',
         coupon_single_use: appliedCoupon ? String(appliedCoupon.single_use) : '',
-        include_recording: String(includeRecording),
+        include_recording: 'false',
+        // Workshop de cada participante, pela mesma ordem de p_0, p_1, ... (vazio = sem workshop)
+        ws: workshopIds.join(','),
+        workshop_price: String(workshopPrice),
         original_price: String(originalPrice),
-        final_price: String(finalTicketPrice * quantity + (includeRecording ? finalRecordingPrice * quantity : 0)),
+        final_price: String(finalTicketPrice * quantity + workshopPrice * workshopsCount),
       },
+      expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_EXPIRES_SECONDS,
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}?canceled=true#ticket-form`,
     });

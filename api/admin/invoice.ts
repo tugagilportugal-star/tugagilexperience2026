@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { issueInvoiceForOrder } from '../../lib/invoicing/index.js';
+import type { InvoiceWorkshopLine } from '../../lib/invoicing/types.js';
 import { verifyAdminToken, logAction } from '../../lib/admin/auth.js';
 
 const supabase = createClient(
@@ -99,6 +100,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const includeRecording = order.include_recording === true;
 
+  // Workshops da encomenda: agrupa os tickets por workshop_id e usa o preço
+  // de workshop do lote (ticket_types.workshop_price, em cêntimos)
+  const { data: orderTickets } = await supabase
+    .from('tickets')
+    .select('workshop_id, ticket_type_id')
+    .eq('order_id', orderId);
+
+  const ticketsList = orderTickets || [];
+  const ticketQuantity = ticketsList.length > 0 ? ticketsList.length : undefined;
+
+  const workshopCounts = new Map<string, number>();
+  for (const t of ticketsList) {
+    if (!t.workshop_id) continue;
+    const id = String(t.workshop_id);
+    workshopCounts.set(id, (workshopCounts.get(id) || 0) + 1);
+  }
+
+  let workshops: InvoiceWorkshopLine[] | undefined;
+  if (workshopCounts.size > 0) {
+    const ticketTypeId = ticketsList.find((t) => t.workshop_id && t.ticket_type_id)?.ticket_type_id;
+    let workshopUnitEuro = 0;
+    if (ticketTypeId) {
+      const { data: ticketType } = await supabase
+        .from('ticket_types')
+        .select('workshop_price')
+        .eq('id', ticketTypeId)
+        .maybeSingle();
+      workshopUnitEuro = Number(ticketType?.workshop_price || 0) / 100;
+    }
+    if (!workshopUnitEuro) {
+      console.warn('⚠️ Reemissão de fatura: preço do workshop não encontrado no lote; o valor fica no bilhete.', { orderId, ticketTypeId });
+    }
+
+    const { data: workshopRows } = await supabase
+      .from('workshops')
+      .select('id, title')
+      .in('id', Array.from(workshopCounts.keys()));
+    const titleById = new Map<string, string>(
+      (workshopRows || []).map((w: any) => [String(w.id), String(w.title || '')])
+    );
+
+    workshops = Array.from(workshopCounts.entries()).map(([id, count]) => ({
+      title: titleById.get(id) || 'Workshop',
+      quantity: count,
+      unitPriceEuro: workshopUnitEuro,
+    }));
+  }
+
   const amountEuro = (order.total_amount || 0) / 100;
   const isTest = forceTestMode || (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test_');
   const countryIso = countryOverride !== undefined ? (countryOverride || 'PT') : (order.customer_country || 'PT');
@@ -110,9 +159,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     customerEmail: order.customer_email,
     countryIso,
     customerNif,
-    ticketName: 'RSG Lisbon 2026',
+    ticketName: 'TugÁgil Experience 2026',
     includeRecording,
     amountEuro,
+    quantity: ticketQuantity,
+    workshops,
   });
 
   if (!invoiceResult?.invoiceId) {

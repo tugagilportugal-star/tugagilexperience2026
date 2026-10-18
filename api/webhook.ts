@@ -6,6 +6,15 @@ import { issueInvoiceForOrder } from '../lib/invoicing/index.js';
 import type { InvoiceEmailData } from '../lib/invoicing/types.js';
 import { notifyAdmins, type StepResult } from '../lib/notify.js';
 
+// Escapar texto para inserir em HTML (ex: títulos de workshops vindos da BD)
+const escapeHtml = (s: string) =>
+  String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 // ==================================================================
 // 1) EMAIL - BILHETE (Com o novo layout e informações)
 // ==================================================================
@@ -13,7 +22,8 @@ const generateTicketEmail = (
   name: string,
   ticketName: string,
   qrUrl: string,
-  ticketId: string
+  ticketId: string,
+  workshopTitle?: string | null
 ) => `<!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -51,7 +61,8 @@ const generateTicketEmail = (
                             <div style="text-align: center; background:#f0f7fb; border:2px solid #003F59; border-radius:10px; padding: 24px; margin-bottom: 32px;">
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">🎟️ O Teu Bilhete</h2>
                                 <p style="margin:0 0 20px;color:#003F59;font-size:18px;font-weight:700;">${ticketName}</p>
-                                
+                                ${workshopTitle ? `<p style="margin:-8px 0 20px;color:#3c4858;font-size:15px;">Workshop da tarde: <strong>${escapeHtml(workshopTitle)}</strong></p>` : ''}
+
                                 <!-- QR CODE REAL GERADO PELO SISTEMA -->
                                 <img src="${qrUrl}" alt="QR Code do Bilhete" width="180" height="180" style="display:block; margin:0 auto 16px; border-radius:8px;" />
                                 
@@ -317,7 +328,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const meta = (session.metadata || {}) as Record<string, string | undefined>;
 
     const ticketTypeId = meta.ticket_type_id;
-    const qty = Number(meta.quantity || 1);
     const includeRecording = String(meta.include_recording || '').toLowerCase() === 'true';
 
     const couponId = String(meta.coupon_id || '').trim();
@@ -406,8 +416,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const billingNif = meta.billing_nif || null;
     const resolvedNif = stripeTaxId || billingNif || attendeeNif || null;
 
-    notifyCtx.qty = Number(meta.quantity || 1);
-
     // Parse multi-participant metadata (new format) or fall back to single-participant (legacy)
     const participantsCount = Number(meta.participants_count || 1);
     const isMulti = !!(meta.participants_count);
@@ -416,7 +424,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       firstName: string; lastName: string; email: string; country: string;
       company: string; jobFunction: string; jobFunctionOther: string;
       industry: string; tshirt: string; saMarketingConsent: boolean;
+      workshopId: string | null;
     };
+
+    // Workshop por participante: meta.ws = ids separados por vírgula, pela mesma ordem de p_i
+    // (string vazia = sem workshop). Metadata antigo sem `ws` → ninguém tem workshop.
+    const wsIds = String(meta.ws || '').split(',').map(s => s.trim());
 
     const parsedParticipants: ParsedParticipant[] = [];
     if (isMulti) {
@@ -428,6 +441,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             country: raw.co || '', company: raw.cp || '', jobFunction: raw.jf || '',
             jobFunctionOther: raw.jo || '', industry: raw.iy || '',
             tshirt: raw.ts || '', saMarketingConsent: Boolean(raw.mc),
+            workshopId: wsIds[i] || null,
           });
         } catch {
           console.warn(`⚠️ Failed to parse participant p_${i}`);
@@ -441,6 +455,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         company: attendeeCompany || '', jobFunction: attendeeJobFunction || '',
         jobFunctionOther: attendeeJobFunctionOther || '',
         industry: '', tshirt: attendeeTshirt || '', saMarketingConsent,
+        workshopId: wsIds[0] || null,
       });
     }
 
@@ -449,6 +464,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name: `${p.firstName} ${p.lastName}`.trim() || p.email,
       email: p.email,
     }));
+
+    // Quantidade = nº de participantes (o checkout envia participants_count, não quantity)
+    const qty = parsedParticipants.length;
+    notifyCtx.qty = qty;
 
     // 1) Salvar Order
     const { data: order, error: orderErr } = await supabase
@@ -497,6 +516,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sa_data_sharing_consent: saDataSharingConsent,
           sa_marketing_consent: p.saMarketingConsent,
           privacy_consent: privacyConsent,
+          workshop_id: p.workshopId,
           checked_in: false,
         })
         .select()
@@ -531,6 +551,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       console.warn('⚠️ ticket_type_id não encontrado no metadata; não atualizei quantity_sold.');
       steps.push({ step: 'Atualizar contador de bilhetes', ok: false, detail: 'ticket_type_id em falta' });
+    }
+
+    // 2.1b) Workshops: títulos + contador de vagas (um RPC por workshop distinto)
+    const workshopQty = new Map<string, number>();
+    for (const p of parsedParticipants) {
+      if (p.workshopId) {
+        workshopQty.set(p.workshopId, (workshopQty.get(p.workshopId) || 0) + 1);
+      }
+    }
+
+    const workshopTitles = new Map<string, string>();
+    if (workshopQty.size > 0) {
+      const { data: wsRows, error: wsErr } = await supabase
+        .from('workshops')
+        .select('id, title')
+        .in('id', Array.from(workshopQty.keys()));
+
+      if (wsErr) {
+        console.error('⚠️ Erro a buscar workshops:', wsErr.message);
+      }
+      for (const w of wsRows || []) {
+        workshopTitles.set(w.id, w.title);
+      }
+    }
+
+    for (const [workshopId, wsQty] of workshopQty) {
+      const wsLabel = workshopTitles.get(workshopId) || workshopId;
+      const { data: wsRes, error: wsConsumeErr } = await supabase.rpc(
+        'consume_workshop',
+        {
+          p_workshop_id: workshopId,
+          p_qty: wsQty,
+        }
+      );
+
+      if (wsConsumeErr) {
+        console.error('⚠️ consume_workshop RPC error:', wsConsumeErr.message);
+        steps.push({ step: `Atualizar vagas do workshop (${wsLabel})`, ok: false, detail: wsConsumeErr.message });
+      } else if (wsRes?.over_capacity) {
+        console.warn('⚠️ Workshop com capacidade excedida:', wsRes);
+        steps.push({
+          step: `Atualizar vagas do workshop (${wsLabel})`,
+          ok: false,
+          detail: `Capacidade excedida: ${wsRes.sold}/${wsRes.capacity} (+${wsQty} nesta compra)`,
+        });
+      } else {
+        console.log('🛠️ consume_workshop result:', wsRes);
+        steps.push({
+          step: `Atualizar vagas do workshop (${wsLabel})`,
+          ok: true,
+          detail: wsRes ? `${wsRes.sold}/${wsRes.capacity}` : undefined,
+        });
+      }
     }
 
     // 2.2) Desativar cupão single_use após pagamento confirmado
@@ -591,6 +664,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         includeRecording,
         amountEuro,
         quantity: parsedParticipants.length,
+        workshops: Array.from(workshopQty, ([workshopId, wsQty]) => ({
+          title: workshopTitles.get(workshopId) || 'Workshop',
+          quantity: wsQty,
+          unitPriceEuro: Number(meta.workshop_price || 0) / 100,
+        })),
       });
     } catch (e: any) {
       steps.push({ step: 'Emitir fatura', ok: false, detail: e.message });
@@ -647,7 +725,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           from: 'RSG Lisbon 2026 <rsg@rsglisbon.com>',
           to: recipientEmail,
           subject: 'O teu bilhete RSG Lisbon 2026 🎟️',
-          html: generateTicketEmail(recipientName, ticketName, qrUrl, t.id),
+          html: generateTicketEmail(
+            recipientName,
+            ticketName,
+            qrUrl,
+            t.id,
+            t.workshop_id ? (workshopTitles.get(t.workshop_id) || null) : null
+          ),
         });
         if (emailRes.error) {
           console.error(`⚠️ Resend Error (ticket ${t.id}):`, emailRes.error);
