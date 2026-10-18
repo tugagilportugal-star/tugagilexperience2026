@@ -85,20 +85,15 @@ const generateTicketEmail = (
 
                             <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 32px 0;" />
 
-                            <!-- Adicionar à Agenda & Canva -->
+                            ${ev.calendarUrl ? `<!-- Adicionar à Agenda -->
                             <div style="text-align: center;">
                                 <h2 style="font-size: 20px; font-weight: bold; color: #003F59; margin: 0 0 16px;">Prepara a tua chegada</h2>
-                                
-                                ${ev.calendarUrl ? `<a href="${escapeHtml(ev.calendarUrl)}" style="background-color: #003F59; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
+                                <a href="${escapeHtml(ev.calendarUrl)}" style="background-color: #003F59; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
                                     📅 Adicionar ao Calendário
-                                </a>` : ''}
-                                
-                                <a href="https://www.canva.com/design/DAHDA-8uvms/wn8Qsg2n53rO1_MCgtZK7w/edit" style="background-color: #F47A20; border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 8px;">
-                                    📣 Kit Redes Sociais (Canva)
                                 </a>
                             </div>
 
-                            <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 32px 0;" />
+                            <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 32px 0;" />` : ''}
 
                             <p style="font-size: 15px; line-height: 24px; color: #555; text-align: center; margin: 0;">
                                 Se tiveres alguma dúvida, basta responderes a este e-mail ou escrever para <a href="mailto:tuga@tugagil.com" style="color: #009FDA; font-weight: bold; text-decoration: none;">tuga@tugagil.com</a>.<br><br>Até breve! 👋🏼
