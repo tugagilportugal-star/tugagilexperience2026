@@ -1,12 +1,11 @@
 // src/config.ts
 
 // Master switch for showing the ticket-purchase CTAs (Hero, NavBar, Agenda).
-// Turned off on 2026-09-10 because confirmation emails/invoices still
-// reference the old event (RSG Lisbon 2026) instead of TugÁgil Experience —
-// see TICKET_SALES_TOGGLE.md for the full reasoning and how to re-enable.
-// Turned on on 2026-10-18 in feature/lotes-workshops to test the purchase flow
-// in preview-test; only promote to main when sales are ready to open.
-export const TICKETS_ON_SALE = true;
+// Controlled per environment by the Vercel env var VITE_TICKETS_ON_SALE
+// ("true" shows the CTAs; anything else or unset hides them). It is baked in
+// at build time, so changing it requires a redeploy.
+// See TICKET_SALES_TOGGLE.md for the history.
+export const TICKETS_ON_SALE = import.meta.env.VITE_TICKETS_ON_SALE === 'true';
 
 export const ASSETS = {
   // Imagens de fundo
