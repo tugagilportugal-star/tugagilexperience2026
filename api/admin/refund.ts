@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { verifyAdminToken, logAction, canEdit } from '../../lib/admin/auth.js';
+import { checkOrderInEvent } from '../../lib/admin/event.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -32,6 +33,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const motivo = String(req.body?.motivo || '').trim();
 
   if (!orderId) return res.status(400).json({ message: 'order_id é obrigatório.' });
+
+  // A encomenda tem de pertencer ao evento escolhido no admin (?event_id=)
+  const eventCheck = await checkOrderInEvent(req, supabase, orderId);
+  if (!eventCheck.ok) return res.status(eventCheck.status || 400).json({ message: eventCheck.message });
   if (motivo && motivo.length > 500) return res.status(400).json({ message: 'motivo demasiado longo (máx. 500 caracteres).' });
 
   // Fetch order

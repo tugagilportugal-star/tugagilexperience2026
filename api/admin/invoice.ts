@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { issueInvoiceForOrder } from '../../lib/invoicing/index.js';
 import type { InvoiceWorkshopLine } from '../../lib/invoicing/types.js';
 import { verifyAdminToken, logAction } from '../../lib/admin/auth.js';
+import { checkOrderInEvent } from '../../lib/admin/event.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -18,6 +19,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'PATCH') {
     const orderId = String(req.body?.order_id || '').trim();
     if (!orderId) return res.status(400).json({ message: 'order_id é obrigatório.' });
+
+    // A encomenda tem de pertencer ao evento escolhido no admin (?event_id=)
+    const eventCheck = await checkOrderInEvent(req, supabase, orderId);
+    if (!eventCheck.ok) return res.status(eventCheck.status || 400).json({ message: eventCheck.message });
 
     const { customer_country, attendee_nif } = req.body;
     const changes: Record<string, unknown> = {};
@@ -54,6 +59,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!orderId) {
     return res.status(400).json({ message: 'order_id é obrigatório.' });
   }
+
+  // A encomenda tem de pertencer ao evento escolhido no admin (?event_id=)
+  const eventCheck = await checkOrderInEvent(req, supabase, orderId);
+  if (!eventCheck.ok) return res.status(eventCheck.status || 400).json({ message: eventCheck.message });
 
   // Fetch order
   const { data: order, error: orderErr } = await supabase
