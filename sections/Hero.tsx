@@ -75,8 +75,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         </div>
 
         {/* Título Principal */}
-        <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-400 tracking-tighter leading-none mb-6 font-sora">
-          TugÁgil <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 bg-clip-text text-transparent">Experience</span>
+        <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-6 font-sora">
+          <span className="bg-gradient-to-b from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent">TugÁgil</span> <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 bg-clip-text text-transparent">Experience</span>
         </h1>
 
         {/* Tagline de Destaque */}
@@ -125,7 +125,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
             </button>
           )}
 
-          {/* Botão de Patrocinador Secundário ligado ao Google Form */} [1.2.7]
+          {/* Botão de Patrocinador Secundário ligado ao Google Form */}
           <a 
             href="https://forms.gle/hC6sU3WuBQYjjCyZ9" 
             target="_blank" 
