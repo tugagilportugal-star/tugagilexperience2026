@@ -395,18 +395,41 @@ export const TicketPurchaseModal: React.FC = () => {
         </div>
       )}
 
-      {/* Pasta: qty + tabs + conteúdo sem gap entre eles */}
+      {/* Cartão do bilhete: lote, preço por pessoa e quantidade */}
+      <div className="rounded-xl border-2 border-brand-darkBlue overflow-hidden shadow-sm">
+        <div className="h-9 flex items-center px-3.5 bg-brand-darkBlue text-white">
+          <span className="font-sora font-extrabold text-xs tracking-widest uppercase">Bilhete</span>
+        </div>
+        <div className="p-3.5 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-sora text-base font-bold text-brand-darkBlue">{ticketData.name}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Acesso ao evento principal</div>
+          </div>
+          <div className="shrink-0 text-right bg-[#fff3e8] rounded-lg px-3 py-1.5">
+            {pricePerTicket !== originalPrice && (
+              <div className="text-xs text-gray-400 line-through leading-none">{formatCurrency(originalPrice, ticketData.currency)}</div>
+            )}
+            <div className="font-sora text-lg font-extrabold text-[#b4520a] leading-tight">{formatCurrency(pricePerTicket, ticketData.currency)}</div>
+            <div className="text-[10px] text-gray-500 leading-none">por pessoa</div>
+          </div>
+        </div>
+        <div className="px-3.5 py-2.5 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">Quantidade de bilhetes</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => handleQuantityChange(quantity - 1)} disabled={quantity <= 1}
+              aria-label="Menos um bilhete"
+              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30 hover:border-brand-orange hover:text-brand-orange transition-colors font-bold text-lg leading-none">−</button>
+            <span className="w-6 text-center font-bold text-lg text-brand-darkBlue">{quantity}</span>
+            <button type="button" onClick={() => handleQuantityChange(quantity + 1)} disabled={quantity >= 5}
+              aria-label="Mais um bilhete"
+              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30 hover:border-brand-orange hover:text-brand-orange transition-colors font-bold text-lg leading-none">+</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Pasta: tabs + conteúdo sem gap entre eles */}
       <div>
         <div className="flex items-end gap-3">
-          <div className="flex items-center gap-1.5 shrink-0 pb-1.5">
-            <span className="text-sm text-gray-500">Qtd:</span>
-            <button type="button" onClick={() => handleQuantityChange(quantity - 1)} disabled={quantity <= 1}
-              className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30 hover:border-brand-orange hover:text-brand-orange transition-colors font-bold text-lg leading-none">−</button>
-            <span className="w-5 text-center font-bold text-brand-darkBlue">{quantity}</span>
-            <button type="button" onClick={() => handleQuantityChange(quantity + 1)} disabled={quantity >= 5}
-              className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30 hover:border-brand-orange hover:text-brand-orange transition-colors font-bold text-lg leading-none">+</button>
-          </div>
-
           {quantity > 1 && (
             <div className="flex gap-1 flex-1 overflow-x-auto">
               {participants.map((pt, i) => {

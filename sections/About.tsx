@@ -122,7 +122,7 @@ export const About: React.FC = () => {
                     ISLA Gaia
                   </h3>
                   <p className="text-sm text-zinc-400 mt-1 font-jakarta">
-                    R. Diogo Macedo 192, 4400-107 Vila Nova de Gaia, Portugal [1.2.7]
+                    R. Diogo Macedo 192, 4400-107 Vila Nova de Gaia, Portugal
                   </p>
                 </div>
               </div>
