@@ -77,7 +77,9 @@ export const Sponsors: React.FC = () => {
 
   const bronzeSponsors: Sponsor[] = [
     { name: "Ateliê do Software", initials: "AS", url: "https://atelie.software/", logo: "/assets/Logo_Atelie_Software_Transparente.png" },
-    
+    { name: "Aubay", initials: "AU", url: "https://www.aubay.pt/", logo: "/assets/Aubay-logo.png" },
+    { name: "Cleva Solutions", initials: "CS", url: "https://cleva-solutions.ai/en/", logo: "/assets/logo-cleva.webp" },
+    { name: "Scrum.pt", initials: "SPT", url: "https://scrum.pt/", logo: "/assets/logo-scrumpt-color.png" },
   ];
 
   const communitySupporters: Sponsor[] = [

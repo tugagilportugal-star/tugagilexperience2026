@@ -18,6 +18,8 @@ import { TicketStatusProvider } from './hooks/useTicketStatus';
 import { AgendaPage } from './sections/Agenda';
 import { BenefitsPage } from './sections/Benefits';
 import { isEmbedded } from './lib/isEmbedded';
+import { WorkshopsPage } from './sections/Workshops';
+
 
 // Lazy: só carrega (e só inicializa o client Supabase) quando alguém navega
 // para /admin — assim as páginas públicas não dependem de VITE_SUPABASE_URL /
@@ -35,11 +37,13 @@ const HomePage: React.FC<{
     <Hero onOpenTicketModal={openTicket} />
     <About />
     <Program />
+    <WorkshopsPage />
 
     {/* Secções antigas do RSG ocultadas por agora de forma segura.
        Iremos reativá-las uma a uma conforme as formos desenhando! */}
     {/* <WhyAttend />*/}
     <Speakers />
+    
     {/*<Recap onOpenTicketModal={openTicket} />*/}
     <Sponsors />
     <GetInvolved />
