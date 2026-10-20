@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
@@ -51,6 +51,19 @@ const formatTime = (value: string | null): string | null => {
 
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0]!.toUpperCase()).join('');
+
+// Foto do facilitador; se não houver ou não carregar, mostra as iniciais
+const FacilitatorAvatar: React.FC<{ facilitator: WorkshopFacilitator }> = ({ facilitator: f }) => {
+  const [failed, setFailed] = useState(false);
+  return f.photo_url && !failed ? (
+    <img src={f.photo_url} alt={f.name} onError={() => setFailed(true)}
+      className="w-14 h-14 rounded-full object-cover shrink-0 bg-gray-100" />
+  ) : (
+    <span className="w-14 h-14 rounded-full bg-[#e6eef2] text-brand-darkBlue flex items-center justify-center font-sora font-bold shrink-0">
+      {initials(f.name)}
+    </span>
+  );
+};
 
 // Facilitadores com nome, pela ordem definida no admin
 export const workshopFacilitators = (w: { facilitators?: WorkshopFacilitator[] | null }) =>
@@ -138,19 +151,14 @@ export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
 
         <div className="px-6 py-5 flex flex-col gap-5 overflow-y-auto">
           {/* Facilitadores */}
+          {/* Cada um ocupa a largura do seu conteúdo: lado a lado se couberem,
+              em linhas separadas se o nome for comprido ou houver bio */}
           {facilitators.length > 0 && (
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-wrap gap-x-6 gap-y-3.5">
               {facilitators.map((f, i) => (
-                <div key={i} className="flex gap-3.5 items-center">
-                  {f.photo_url ? (
-                    <img src={f.photo_url} alt={f.name}
-                      className="w-14 h-14 rounded-full object-cover shrink-0 bg-gray-100" />
-                  ) : (
-                    <span className="w-14 h-14 rounded-full bg-[#e6eef2] text-brand-darkBlue flex items-center justify-center font-sora font-bold shrink-0">
-                      {initials(f.name)}
-                    </span>
-                  )}
-                  <div className="flex flex-col gap-0.5">
+                <div key={i} className={`flex gap-3.5 items-center min-w-0 ${f.bio ? 'basis-full' : 'flex-[1_1_auto]'}`}>
+                  <FacilitatorAvatar facilitator={f} />
+                  <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-bold text-gray-800">{f.name}</span>
                     {f.role && <span className="text-sm text-gray-600">{f.role}</span>}
                     {f.bio && <span className="text-xs text-gray-500 leading-relaxed">{f.bio}</span>}
