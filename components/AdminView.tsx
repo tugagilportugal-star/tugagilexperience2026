@@ -203,6 +203,12 @@ function toTicketTypeForm(row: TicketTypeRow): TicketTypeForm {
   };
 }
 
+// Modais do admin: o painel rola por dentro e o cabeçalho (título + X) e o
+// rodapé (botões) ficam fixos. As margens negativas compensam o p-6 do painel.
+const MODAL_PANEL = 'max-h-[90vh] overflow-y-auto overscroll-contain';
+const MODAL_HEAD = 'sticky top-0 z-10 bg-white -mx-6 -mt-6 px-6 pt-6';
+const MODAL_FOOT = 'sticky bottom-0 z-10 bg-white -mx-6 -mb-6 px-6 pb-6 pt-4 mt-4 border-t border-gray-100';
+
 type FacilitatorForm = {
   name: string;
   role: string;
@@ -3205,10 +3211,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
             >
               <div
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex justify-between items-center mb-4">
+                <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes da Order</h3>
                   <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
@@ -3239,7 +3245,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   ))}
                 </dl>
                 {canEdit && (
-                  <div className="mt-4 border-t pt-4 flex flex-col gap-2">
+                  <div className={`${MODAL_FOOT} flex flex-col gap-2`}>
                     {selectedOrder.is_duplicate ? (
                       <button
                         onClick={() => { setDuplicateCreditNoteRef(selectedOrder.credit_note_ref || ''); setDuplicateError(null); setDuplicateModal({ orderId: selectedOrder.id, currentRef: selectedOrder.credit_note_ref || '', isDuplicate: true, markType: 'duplicate' }); setSelectedOrder(null); }}
@@ -3276,10 +3282,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
             >
               <div
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex justify-between items-center mb-4">
+                <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes do Ticket</h3>
                   <button onClick={() => setSelectedTicket(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
@@ -3464,7 +3470,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
                 {canEdit && ticketOrder && (
-                  <div className="mt-4 border-t pt-4">
+                  <div className={MODAL_FOOT}>
                     {ticketOrder.is_duplicate ? (
                       <div className="space-y-2">
                         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-gray-700">
@@ -3518,10 +3524,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[215] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-1">
+              <div className={`${MODAL_HEAD} pb-1 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Dados da Fatura</h3>
                 <button onClick={() => setInvoiceModal(null)} disabled={savingInvoiceModal} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3558,16 +3564,18 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
                 </div>
               </div>
-              {invoiceModalError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{invoiceModalError}</p>
-              )}
-              <button
-                onClick={confirmInvoiceModal}
-                disabled={savingInvoiceModal}
-                className="w-full py-2 rounded-lg bg-[#003F59] text-white text-sm font-medium hover:bg-[#005580] disabled:opacity-50"
-              >
-                {savingInvoiceModal ? 'A guardar e gerar…' : 'Confirmar e Gerar Fatura'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {invoiceModalError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{invoiceModalError}</p>
+                )}
+                <button
+                  onClick={confirmInvoiceModal}
+                  disabled={savingInvoiceModal}
+                  className="w-full py-2 rounded-lg bg-[#003F59] text-white text-sm font-medium hover:bg-[#005580] disabled:opacity-50"
+                >
+                  {savingInvoiceModal ? 'A guardar e gerar…' : 'Confirmar e Gerar Fatura'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3577,10 +3585,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Nota de Crédito</h3>
                 <button onClick={() => setCreditNoteModal(null)} disabled={generatingCreditNote} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3612,20 +3620,22 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
                 )}
               </div>
-              {creditNoteError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{creditNoteError}</p>
-              )}
-              <button
-                onClick={() => {
-                  const motivo = creditNoteMotivo === 'Outro' ? creditNoteCustom.trim() : creditNoteMotivo;
-                  if (!motivo) return;
-                  generateCreditNote(creditNoteModal.orderId, motivo);
-                }}
-                disabled={generatingCreditNote || !creditNoteMotivo || (creditNoteMotivo === 'Outro' && !creditNoteCustom.trim())}
-                className="w-full py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
-              >
-                {generatingCreditNote ? 'A emitir…' : 'Confirmar Nota de Crédito'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {creditNoteError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{creditNoteError}</p>
+                )}
+                <button
+                  onClick={() => {
+                    const motivo = creditNoteMotivo === 'Outro' ? creditNoteCustom.trim() : creditNoteMotivo;
+                    if (!motivo) return;
+                    generateCreditNote(creditNoteModal.orderId, motivo);
+                  }}
+                  disabled={generatingCreditNote || !creditNoteMotivo || (creditNoteMotivo === 'Outro' && !creditNoteCustom.trim())}
+                  className="w-full py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {generatingCreditNote ? 'A emitir…' : 'Confirmar Nota de Crédito'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3635,10 +3645,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Emitir Estorno</h3>
                 <button onClick={() => { setRefundModal(null); setRefundError(null); }} disabled={markingRefund} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3680,19 +3690,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
                 O sistema irá validar que o estorno foi efetuado no Stripe antes de registar.
               </div>
-              {refundError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{refundError}</p>
-              )}
-              <button
-                onClick={() => {
-                  const motivo = refundMotivo === 'Outro' ? refundCustom.trim() : refundMotivo;
-                  markAsRefunded(refundModal.orderId, !refundModal.hasCreditNote ? motivo : undefined);
-                }}
-                disabled={markingRefund || (!refundModal.hasCreditNote && (!refundMotivo || (refundMotivo === 'Outro' && !refundCustom.trim())))}
-                className="w-full py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-              >
-                {markingRefund ? 'A validar no Stripe…' : 'Validar e Registar Estorno'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {refundError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{refundError}</p>
+                )}
+                <button
+                  onClick={() => {
+                    const motivo = refundMotivo === 'Outro' ? refundCustom.trim() : refundMotivo;
+                    markAsRefunded(refundModal.orderId, !refundModal.hasCreditNote ? motivo : undefined);
+                  }}
+                  disabled={markingRefund || (!refundModal.hasCreditNote && (!refundMotivo || (refundMotivo === 'Outro' && !refundCustom.trim())))}
+                  className="w-full py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {markingRefund ? 'A validar no Stripe…' : 'Validar e Registar Estorno'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3702,10 +3714,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">
                   {duplicateModal.isDuplicate
                     ? (duplicateModal.markType === 'test' ? 'Editar Teste' : 'Editar Duplicado')
@@ -3730,7 +3742,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </>
               )}
               {duplicateError && <p className="text-red-600 text-xs mb-3">{duplicateError}</p>}
-              <div className="flex gap-2">
+              <div className={`${MODAL_FOOT} flex gap-2`}>
                 {duplicateModal.isDuplicate && (
                   <button
                     onClick={() => markOrderAsDuplicate(duplicateModal.orderId, duplicateModal.markType, false, '')}
@@ -3757,10 +3769,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingCoupon ? 'Editar coupon' : 'Novo coupon'}
@@ -3925,7 +3937,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
+              <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                 <button
                   onClick={() => {
                     setCouponModalOpen(false);
@@ -3952,10 +3964,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">Lead</h3>
                   <p className="text-sm text-gray-500 mb-2">
@@ -3998,10 +4010,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingTicketType ? 'Editar lote' : 'Novo lote'}
@@ -4088,7 +4100,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                   <button
                     type="button"
                     onClick={closeTicketTypeModal}
@@ -4115,10 +4127,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingWorkshop ? 'Editar workshop' : 'Novo workshop'}
@@ -4286,7 +4298,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                   <button
                     type="button"
                     onClick={closeWorkshopModal}
