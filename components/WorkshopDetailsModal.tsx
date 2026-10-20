@@ -65,6 +65,37 @@ const FacilitatorAvatar: React.FC<{ facilitator: WorkshopFacilitator }> = ({ fac
   );
 };
 
+// Bio cortada a 3 linhas; o botão só aparece se o texto não couber
+const FacilitatorBio: React.FC<{ bio: string }> = ({ bio }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => { if (!expanded) setOverflows(el.scrollHeight > el.clientHeight + 1); };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [bio, expanded]);
+
+  return (
+    <>
+      <span ref={ref} className={`text-xs text-gray-500 leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-3'}`}>
+        {bio}
+      </span>
+      {(overflows || expanded) && (
+        <button type="button" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}
+          className="self-start text-xs font-bold text-brand-darkBlue underline underline-offset-2 hover:text-brand-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue rounded">
+          {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+        </button>
+      )}
+    </>
+  );
+};
+
 // Facilitadores com nome, pela ordem definida no admin
 export const workshopFacilitators = (w: { facilitators?: WorkshopFacilitator[] | null }) =>
   (w.facilitators || []).filter(f => f && f.name && f.name.trim());
@@ -156,12 +187,12 @@ export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
           {facilitators.length > 0 && (
             <div className="flex flex-wrap gap-x-6 gap-y-3.5">
               {facilitators.map((f, i) => (
-                <div key={i} className={`flex gap-3.5 items-center min-w-0 ${f.bio ? 'basis-full' : 'flex-[1_1_auto]'}`}>
+                <div key={i} className={`flex gap-3.5 min-w-0 ${f.bio ? 'basis-full items-start' : 'flex-[1_1_auto] items-center'}`}>
                   <FacilitatorAvatar facilitator={f} />
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-bold text-gray-800">{f.name}</span>
                     {f.role && <span className="text-sm text-gray-600">{f.role}</span>}
-                    {f.bio && <span className="text-xs text-gray-500 leading-relaxed">{f.bio}</span>}
+                    {f.bio && <FacilitatorBio bio={f.bio} />}
                   </div>
                 </div>
               ))}
