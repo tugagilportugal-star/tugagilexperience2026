@@ -2,16 +2,20 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
+export type WorkshopFacilitator = {
+  name: string;
+  role?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+};
+
 export type WorkshopData = {
   id: string;
   title: string;
   short_description: string | null;
   description: string | null;
   takeaways: string[] | null;
-  facilitator_name: string | null;
-  facilitator_role: string | null;
-  facilitator_bio: string | null;
-  facilitator_photo_url: string | null;
+  facilitators: WorkshopFacilitator[] | null;
   image_url: string | null;
   starts_at: string | null;
   ends_at: string | null;
@@ -47,6 +51,16 @@ const formatTime = (value: string | null): string | null => {
 
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0]!.toUpperCase()).join('');
+
+// Facilitadores com nome, pela ordem definida no admin
+export const workshopFacilitators = (w: { facilitators?: WorkshopFacilitator[] | null }) =>
+  (w.facilitators || []).filter(f => f && f.name && f.name.trim());
+
+// "Ana", "Ana e Rui", "Ana, Rui e Sofia"
+export const facilitatorNames = (w: { facilitators?: WorkshopFacilitator[] | null }) => {
+  const names = workshopFacilitators(w).map(f => f.name.trim());
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}` : names[0] || '';
+};
 
 export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
   workshop: w, tag, accent, priceLabel, participantLabel, available, isSelected, soldOut,
@@ -92,6 +106,7 @@ export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
   ].filter((m): m is { k: string; v: string } => !!m.v);
 
   const takeaways = (w.takeaways || []).filter(t => t && t.trim());
+  const facilitators = workshopFacilitators(w);
   const titleId = `ws-details-title-${w.id}`;
 
   return createPortal(
@@ -122,22 +137,26 @@ export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
         </div>
 
         <div className="px-6 py-5 flex flex-col gap-5 overflow-y-auto">
-          {/* Facilitador */}
-          {w.facilitator_name && (
-            <div className="flex gap-3.5 items-center">
-              {w.facilitator_photo_url ? (
-                <img src={w.facilitator_photo_url} alt={w.facilitator_name}
-                  className="w-14 h-14 rounded-full object-cover shrink-0 bg-gray-100" />
-              ) : (
-                <span className="w-14 h-14 rounded-full bg-[#e6eef2] text-brand-darkBlue flex items-center justify-center font-sora font-bold shrink-0">
-                  {initials(w.facilitator_name)}
-                </span>
-              )}
-              <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-gray-800">{w.facilitator_name}</span>
-                {w.facilitator_role && <span className="text-sm text-gray-600">{w.facilitator_role}</span>}
-                {w.facilitator_bio && <span className="text-xs text-gray-500 leading-relaxed">{w.facilitator_bio}</span>}
-              </div>
+          {/* Facilitadores */}
+          {facilitators.length > 0 && (
+            <div className="flex flex-col gap-3.5">
+              {facilitators.map((f, i) => (
+                <div key={i} className="flex gap-3.5 items-center">
+                  {f.photo_url ? (
+                    <img src={f.photo_url} alt={f.name}
+                      className="w-14 h-14 rounded-full object-cover shrink-0 bg-gray-100" />
+                  ) : (
+                    <span className="w-14 h-14 rounded-full bg-[#e6eef2] text-brand-darkBlue flex items-center justify-center font-sora font-bold shrink-0">
+                      {initials(f.name)}
+                    </span>
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-bold text-gray-800">{f.name}</span>
+                    {f.role && <span className="text-sm text-gray-600">{f.role}</span>}
+                    {f.bio && <span className="text-xs text-gray-500 leading-relaxed">{f.bio}</span>}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

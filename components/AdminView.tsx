@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Pencil, Plus, Power, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { WorkshopFacilitator, workshopFacilitators, facilitatorNames } from './WorkshopDetailsModal';
 
 type LeadStatus = 'Pending' | 'InProgress' | 'Completed' | 'Deleted';
 
@@ -85,10 +86,7 @@ type WorkshopRow = {
   short_description?: string | null;
   description?: string | null;
   takeaways?: string[] | null;
-  facilitator_name?: string | null;
-  facilitator_role?: string | null;
-  facilitator_bio?: string | null;
-  facilitator_photo_url?: string | null;
+  facilitators?: WorkshopFacilitator[] | null;
   image_url?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
@@ -148,10 +146,7 @@ type WorkshopForm = {
   short_description: string;
   description: string;
   takeaways: string;
-  facilitator_name: string;
-  facilitator_role: string;
-  facilitator_bio: string;
-  facilitator_photo_url: string;
+  facilitators: FacilitatorForm[];
   image_url: string;
   starts_at: string;
   ends_at: string;
@@ -208,16 +203,24 @@ function toTicketTypeForm(row: TicketTypeRow): TicketTypeForm {
   };
 }
 
+type FacilitatorForm = {
+  name: string;
+  role: string;
+  bio: string;
+  photo_url: string;
+};
+
+function emptyFacilitatorForm(): FacilitatorForm {
+  return { name: '', role: '', bio: '', photo_url: '' };
+}
+
 function emptyWorkshopForm(): WorkshopForm {
   return {
     title: '',
     short_description: '',
     description: '',
     takeaways: '',
-    facilitator_name: '',
-    facilitator_role: '',
-    facilitator_bio: '',
-    facilitator_photo_url: '',
+    facilitators: [emptyFacilitatorForm()],
     image_url: '',
     starts_at: '',
     ends_at: '',
@@ -235,10 +238,14 @@ function toWorkshopForm(row: WorkshopRow): WorkshopForm {
     short_description: row.short_description ?? '',
     description: row.description ?? '',
     takeaways: (row.takeaways ?? []).join('\n'),
-    facilitator_name: row.facilitator_name ?? '',
-    facilitator_role: row.facilitator_role ?? '',
-    facilitator_bio: row.facilitator_bio ?? '',
-    facilitator_photo_url: row.facilitator_photo_url ?? '',
+    facilitators: (row.facilitators ?? []).length
+      ? (row.facilitators ?? []).map((f) => ({
+          name: f.name ?? '',
+          role: f.role ?? '',
+          bio: f.bio ?? '',
+          photo_url: f.photo_url ?? '',
+        }))
+      : [emptyFacilitatorForm()],
     image_url: row.image_url ?? '',
     starts_at: row.starts_at ?? '',
     ends_at: row.ends_at ?? '',
@@ -1572,6 +1579,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setWorkshopForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function updateFacilitator(index: number, key: keyof FacilitatorForm, value: string) {
+    setWorkshopForm((prev) => ({
+      ...prev,
+      facilitators: prev.facilitators.map((f, i) => (i === index ? { ...f, [key]: value } : f)),
+    }));
+  }
+
+  function addFacilitator() {
+    setWorkshopForm((prev) => ({ ...prev, facilitators: [...prev.facilitators, emptyFacilitatorForm()] }));
+  }
+
+  function removeFacilitator(index: number) {
+    setWorkshopForm((prev) => ({ ...prev, facilitators: prev.facilitators.filter((_, i) => i !== index) }));
+  }
+
   async function saveWorkshop(e: React.FormEvent) {
     e.preventDefault();
     const eventId = eventIdRef.current;
@@ -1611,10 +1633,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           .split(/\r?\n/)
           .map((line) => line.trim())
           .filter(Boolean),
-        facilitator_name: workshopForm.facilitator_name,
-        facilitator_role: workshopForm.facilitator_role,
-        facilitator_bio: workshopForm.facilitator_bio,
-        facilitator_photo_url: workshopForm.facilitator_photo_url,
+        facilitators: workshopForm.facilitators.filter((f) => f.name.trim()),
         image_url: workshopForm.image_url,
         starts_at: workshopForm.starts_at,
         ends_at: workshopForm.ends_at,
@@ -2497,8 +2516,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 {row.level && <div className="text-xs text-gray-500">{row.level}</div>}
                               </Td>
                               <Td>
-                                <div>{safe(row.facilitator_name) || '—'}</div>
-                                {row.facilitator_role && <div className="text-xs text-gray-500">{row.facilitator_role}</div>}
+                                {workshopFacilitators(row).length ? workshopFacilitators(row).map((f, i) => (
+                                  <div key={i} className={i > 0 ? 'mt-1' : undefined}>
+                                    <div>{f.name}</div>
+                                    {f.role && <div className="text-xs text-gray-500">{f.role}</div>}
+                                  </div>
+                                )) : '—'}
                               </Td>
                               <Td>{formatWorkshopSchedule(row) || '—'}</Td>
                               <Td>{safe(row.room) || '—'}</Td>
@@ -2570,7 +2593,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <div>
                         <h3 className="text-lg font-black text-gray-900">Inscritos · {selectedWorkshop.title}</h3>
                         <p className="text-sm text-gray-500">
-                          {[formatWorkshopSchedule(selectedWorkshop), selectedWorkshop.room, selectedWorkshop.facilitator_name]
+                          {[formatWorkshopSchedule(selectedWorkshop), selectedWorkshop.room, facilitatorNames(selectedWorkshop)]
                             .filter(Boolean)
                             .join(' · ') || '—'}
                         </p>
@@ -4151,33 +4174,47 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     />
                   </div>
 
-                  <Input
-                    label="Facilitador"
-                    value={workshopForm.facilitator_name}
-                    onChange={(value) => updateWorkshopForm('facilitator_name', value)}
-                  />
-
-                  <Input
-                    label="Cargo · Empresa"
-                    value={workshopForm.facilitator_role}
-                    onChange={(value) => updateWorkshopForm('facilitator_role', value)}
-                  />
-
-                  <div className="md:col-span-2">
-                    <Textarea
-                      label="Bio do facilitador"
-                      value={workshopForm.facilitator_bio}
-                      onChange={(value) => updateWorkshopForm('facilitator_bio', value)}
-                      rows={3}
-                    />
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Facilitadores</div>
+                    {workshopForm.facilitators.map((f, i) => (
+                      <div key={i} className="rounded-2xl border border-gray-200 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-gray-700">Facilitador {i + 1}</span>
+                          {workshopForm.facilitators.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeFacilitator(i)}
+                              className="inline-flex items-center gap-1 text-sm font-bold text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" /> Remover
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <Input label="Nome" value={f.name} onChange={(value) => updateFacilitator(i, 'name', value)} />
+                          <Input label="Cargo · Empresa" value={f.role} onChange={(value) => updateFacilitator(i, 'role', value)} />
+                          <div className="md:col-span-2">
+                            <Textarea label="Bio" value={f.bio} onChange={(value) => updateFacilitator(i, 'bio', value)} rows={3} />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Input
+                              label="URL da foto"
+                              value={f.photo_url}
+                              onChange={(value) => updateFacilitator(i, 'photo_url', value)}
+                              placeholder="https://…"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addFacilitator}
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar facilitador
+                    </button>
                   </div>
-
-                  <Input
-                    label="URL da foto do facilitador"
-                    value={workshopForm.facilitator_photo_url}
-                    onChange={(value) => updateWorkshopForm('facilitator_photo_url', value)}
-                    placeholder="https://…"
-                  />
 
                   <Input
                     label="URL da imagem do workshop"

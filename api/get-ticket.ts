@@ -11,8 +11,8 @@ const supabase = createClient(
 const TICKET_FIELDS = 'id,name,price,currency,active,quantity_total,quantity_sold,sort_order,workshop_price';
 
 const WORKSHOP_FIELDS =
-  'id,title,short_description,description,takeaways,facilitator_name,facilitator_role,' +
-  'facilitator_bio,facilitator_photo_url,image_url,starts_at,ends_at,room,level,capacity,sold,sort_order';
+  'id,title,short_description,description,takeaways,facilitators,' +
+  'image_url,starts_at,ends_at,room,level,capacity,sold,sort_order';
 
 type WorkshopRow = {
   id: string;
@@ -20,10 +20,7 @@ type WorkshopRow = {
   short_description: string | null;
   description: string | null;
   takeaways: string[];
-  facilitator_name: string | null;
-  facilitator_role: string | null;
-  facilitator_bio: string | null;
-  facilitator_photo_url: string | null;
+  facilitators: { name: string; role?: string; bio?: string; photo_url?: string }[] | null;
   image_url: string | null;
   starts_at: string | null;
   ends_at: string | null;

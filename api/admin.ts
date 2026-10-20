@@ -89,10 +89,6 @@ function normalizeTicketTypeInput(body: any, partial = false) {
 const WORKSHOP_TEXT_FIELDS = [
   'short_description',
   'description',
-  'facilitator_name',
-  'facilitator_role',
-  'facilitator_bio',
-  'facilitator_photo_url',
   'image_url',
   'starts_at',
   'ends_at',
@@ -111,6 +107,25 @@ function normalizeTakeaways(value: unknown): string[] | null {
   if (!raw) return null;
   if (raw.some((item) => typeof item !== 'string')) return null;
   return raw.map((item) => String(item).trim()).filter(Boolean);
+}
+
+const FACILITATOR_FIELDS = ['name', 'role', 'bio', 'photo_url'] as const;
+
+// Lista de facilitadores; ignora entradas sem nome
+function normalizeFacilitators(value: unknown): Record<string, string>[] | null {
+  if (value === null || value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  if (value.some((item) => !item || typeof item !== 'object')) return null;
+  return value
+    .map((item: any) => {
+      const f: Record<string, string> = {};
+      for (const field of FACILITATOR_FIELDS) {
+        const v = item[field] == null ? '' : String(item[field]).trim();
+        if (v) f[field] = v;
+      }
+      return f;
+    })
+    .filter((f) => f.name);
 }
 
 // Nunca aceita `sold` do cliente: é gerido pelo sistema (consume_workshop).
@@ -138,6 +153,14 @@ function normalizeWorkshopInput(body: any, partial = false) {
       return { error: 'takeaways inválido' };
     }
     next.takeaways = takeaways;
+  }
+
+  if (!partial || body?.facilitators !== undefined) {
+    const facilitators = normalizeFacilitators(body?.facilitators);
+    if (!facilitators) {
+      return { error: 'facilitators inválido' };
+    }
+    next.facilitators = facilitators;
   }
 
   if (!partial || body?.capacity !== undefined) {

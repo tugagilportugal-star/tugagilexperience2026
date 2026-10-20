@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './UIComponents';
 import { Check, CheckCircle2, Info, Lock, ShieldCheck, Ticket } from 'lucide-react';
-import { WorkshopDetailsModal, WorkshopData } from './WorkshopDetailsModal';
+import { WorkshopDetailsModal, WorkshopData, facilitatorNames } from './WorkshopDetailsModal';
 
 type TicketTypeData = {
   id: string;
@@ -603,7 +603,7 @@ export const TicketPurchaseModal: React.FC = () => {
                     </span>
                     <span className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5 flex-grow">
                       <span className="font-sora text-sm font-bold text-gray-800 leading-snug">{ws.title}</span>
-                      {ws.facilitator_name && <span className="text-xs text-gray-600">com {ws.facilitator_name}</span>}
+                      {facilitatorNames(ws) && <span className="text-xs text-gray-600">com {facilitatorNames(ws)}</span>}
                       {spots && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-md self-start ${spots.cls}`}>{spots.label}</span>
                       )}
