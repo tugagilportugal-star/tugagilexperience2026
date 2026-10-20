@@ -38,9 +38,9 @@ type ParticipantForm = {
 // Primeiro nome, só para rótulos curtos (separadores, pop-up)
 const firstWord = (fullName: string) => fullName.trim().split(/\s+/)[0] || '';
 
-// Workshops da tarde: letra pela ordem devolvida pela API e cor de topo do cartão
+// Workshops da tarde: número pela ordem devolvida pela API e cor de topo do cartão
 const WORKSHOP_ACCENTS = ['#007BAA', '#B4520A', '#00693E'];
-const workshopTag = (i: number) => `Workshop ${String.fromCharCode(65 + i)}`;
+const workshopTag = (i: number) => `Workshop ${i + 1}`;
 const workshopAccent = (i: number) => WORKSHOP_ACCENTS[i % WORKSHOP_ACCENTS.length];
 
 const JOB_FUNCTIONS = [
