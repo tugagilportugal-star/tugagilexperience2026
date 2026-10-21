@@ -239,6 +239,24 @@ function eventLog(event: AdminEvent) {
 
 const NOT_IN_EVENT = 'Registo não encontrado neste evento.';
 
+// Base de produção, só para "Enviar para produção". As variáveis PROD_* existem
+// apenas no ambiente Preview da Vercel; em produção (ou se apontarem para a
+// própria base) o envio fica indisponível.
+function prodSupabase() {
+  const url = process.env.PROD_SUPABASE_URL;
+  const key = process.env.PROD_SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key || url === process.env.SUPABASE_URL) return null;
+  return createClient(url, key);
+}
+
+// key: coluna usada para encontrar o registo em produção quando o id não existe lá.
+// counters: colunas de vendas/uso que nunca são copiadas (ficam as de produção).
+const PROMOTE_TABLES: Record<string, { table: string; key: string; counters: string[] }> = {
+  'ticket-types': { table: 'ticket_types', key: 'name', counters: ['quantity_sold'] },
+  workshops: { table: 'workshops', key: 'title', counters: ['sold'] },
+  coupons: { table: 'discount_coupons', key: 'code', counters: ['used_at', 'used_by_order_id'] },
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -619,6 +637,93 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) return res.status(500).json({ message: error.message });
       return res.status(200).json(data || []);
+    }
+
+    // =========================
+    // PROMOTE (copiar lotes/workshops/cupões da base de teste para produção)
+    // =========================
+    if (resource === 'promote') {
+      const prod = prodSupabase();
+
+      if (req.method === 'GET') {
+        return res.status(200).json({ available: Boolean(prod) && admin.role === 'superadmin' });
+      }
+      if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+      if (admin.role !== 'superadmin') return res.status(403).json({ message: 'Só superadmin pode enviar para produção.' });
+      if (!prod) return res.status(400).json({ message: 'Envio para produção não está configurado neste ambiente.' });
+
+      const resolved = await resolveEvent(req);
+      if ('error' in resolved) return res.status(400).json({ message: resolved.error });
+      const testEvent = resolved.event;
+
+      const body = parseBody(req);
+      const spec = PROMOTE_TABLES[String(body?.table ?? '')];
+      if (!spec) return res.status(400).json({ message: 'table inválida (ticket-types, workshops ou coupons).' });
+      const ids: string[] | null = Array.isArray(body?.ids) ? body.ids.map(String) : null;
+
+      // Evento correspondente em produção (os uuids diferem entre bases; o slug é o mesmo)
+      const { data: prodEvent, error: prodEventError } = await prod
+        .from('events').select('id').eq('slug', testEvent.slug).maybeSingle();
+      if (prodEventError) return res.status(500).json({ message: `Produção: ${prodEventError.message}` });
+      if (!prodEvent) {
+        return res.status(400).json({ message: `O evento "${testEvent.name}" (slug ${testEvent.slug}) não existe na base de produção.` });
+      }
+
+      let query = supabase.from(spec.table).select('*').eq('event_id', testEvent.id);
+      if (ids) query = query.in('id', ids);
+      const { data: rows, error: rowsError } = await query;
+      if (rowsError) return res.status(500).json({ message: rowsError.message });
+      if (!rows || rows.length === 0) return res.status(404).json({ message: 'Nada para enviar.' });
+
+      // Lotes ativos por último: a produção só aceita um lote ativo por evento
+      rows.sort((a: any, b: any) => Number(Boolean(a.active)) - Number(Boolean(b.active)));
+
+      const results: Array<{ id: string; label: string; status: 'criado' | 'atualizado' | 'erro'; message?: string }> = [];
+
+      for (const row of rows as any[]) {
+        const label = String(row[spec.key] ?? row.id);
+        const payload: Record<string, unknown> = { ...row, event_id: prodEvent.id };
+        for (const col of ['id', 'created_at', 'updated_at', ...spec.counters]) delete payload[col];
+        if (spec.table === 'workshops') payload.updated_at = new Date().toISOString();
+
+        // Mesmo id (enviado antes) ou, se não houver, mesmo nome/título/código no evento
+        let { data: existing } = await prod
+          .from(spec.table).select('id').eq('id', row.id).eq('event_id', prodEvent.id).maybeSingle();
+        if (!existing) {
+          ({ data: existing } = await prod
+            .from(spec.table).select('id').eq('event_id', prodEvent.id).eq(spec.key, row[spec.key]).limit(1).maybeSingle());
+        }
+
+        const { error } = existing
+          ? await prod.from(spec.table).update(payload).eq('id', existing.id)
+          : await prod.from(spec.table).insert({ ...payload, id: row.id });
+
+        if (error) {
+          const message = error.code === '23505' && spec.table === 'ticket_types'
+            ? 'Já existe outro lote ativo em produção; desativa-o primeiro.'
+            : error.message;
+          results.push({ id: row.id, label, status: 'erro', message });
+        } else {
+          results.push({ id: row.id, label, status: existing ? 'atualizado' : 'criado' });
+        }
+      }
+
+      const details = {
+        ...eventLog(testEvent),
+        table: spec.table,
+        results: results.map(({ label, status, message }) => ({ label, status, message })),
+      };
+      await logAction(admin.email, 'enviar_para_producao', spec.table, ids?.length === 1 ? ids[0] : undefined, details);
+      const { error: prodLogError } = await prod.from('admin_audit_log').insert({
+        admin_email: admin.email,
+        action: 'recebido_de_teste',
+        entity_type: spec.table,
+        entity_id: ids?.length === 1 ? ids[0] : null,
+        details,
+      });
+      if (prodLogError) console.error('[promote] failed to write prod audit log:', prodLogError.message);
+
+      return res.status(200).json({ results });
     }
 
     // =========================
