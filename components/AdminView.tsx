@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Pencil, Plus, Power, Trash2, X } from 'lucide-react';
+import { Download, Pencil, Plus, Power, Send, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { WorkshopFacilitator, workshopFacilitators, facilitatorNames } from './WorkshopDetailsModal';
 
@@ -463,6 +463,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const authHeader = token ? `Bearer ${token}` : null;
   const canEdit = adminUser?.role === 'edit' || adminUser?.role === 'superadmin';
   const isSuperAdmin = adminUser?.role === 'superadmin';
+
+  // "Enviar para produção": só aparece no admin de teste, para superadmin, quando o servidor está configurado
+  const [promoteAvailable, setPromoteAvailable] = useState(false);
+  const [promoting, setPromoting] = useState<string | null>(null);
+  const [promoteMsg, setPromoteMsg] = useState<string | null>(null);
 
   // Limpa TODOS os dados ligados ao evento (listas, seleções, modais e mensagens)
   function clearEventData() {
@@ -1761,6 +1766,46 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     fetchEvents();
   }, [adminUser?.email]);
 
+  useEffect(() => {
+    setPromoteAvailable(false);
+    if (!adminUser || !authHeader || adminUser.role !== 'superadmin') return;
+    fetch('/api/admin/promote', { headers: { Authorization: authHeader } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => setPromoteAvailable(Boolean(json?.available)))
+      .catch(() => setPromoteAvailable(false));
+  }, [adminUser?.email, adminUser?.role]);
+
+  // Copia registos deste evento para a base de produção (cria ou atualiza; vendas/usos não são copiados)
+  async function promoteToProd(table: 'ticket-types' | 'workshops' | 'coupons', what: string, ids?: string[]) {
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (!confirm(`Enviar ${what} do evento "${currentEventName}" para PRODUÇÃO?\n\nO que já existir lá com o mesmo nome é atualizado; vendas e usos de produção ficam como estão.`)) return;
+
+    setPromoting(ids?.length === 1 ? ids[0] : table);
+    setPromoteMsg(null);
+    try {
+      const res = await fetch(withEventId('/api/admin/promote', eventId), {
+        method: 'POST',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table, ids }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.message || 'Falha ao enviar para produção');
+        return;
+      }
+      const results: Array<{ label: string; status: string; message?: string }> = json?.results || [];
+      const failed = results.filter((r) => r.status === 'erro');
+      const ok = results.filter((r) => r.status !== 'erro');
+      if (ok.length) setPromoteMsg(`Enviado para produção: ${ok.map((r) => `${r.label} (${r.status})`).join(', ')}`);
+      if (failed.length) setError(`Não enviado: ${failed.map((r) => `${r.label}: ${r.message}`).join(' · ')}`);
+    } catch {
+      setError('Erro inesperado ao enviar para produção');
+    } finally {
+      setPromoting(null);
+    }
+  }
+
   // Dados do separador atual, sempre do evento selecionado (nada é pedido sem evento)
   useEffect(() => {
     if (!adminUser) return;
@@ -2207,6 +2252,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </button>
             )}
 
+            {promoteAvailable && (tab === 'ticketTypes' || tab === 'workshops' || tab === 'coupons') && (
+              <button
+                onClick={() => {
+                  if (tab === 'ticketTypes') promoteToProd('ticket-types', 'todos os lotes');
+                  if (tab === 'workshops') promoteToProd('workshops', 'todos os workshops');
+                  if (tab === 'coupons') promoteToProd('coupons', 'todos os coupons');
+                }}
+                disabled={promoting !== null}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 text-sm font-bold disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+                Enviar tudo para produção
+              </button>
+            )}
+
             {isEventTab && (
               <button
                 onClick={downloadCsv}
@@ -2299,6 +2359,20 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               · {isEventTab ? ev.name : 'todos os eventos'}
             </span>
           </h2>
+
+          {promoteMsg && (
+            <div className="mb-4 flex items-start gap-3 rounded-2xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+              <span className="flex-1">{promoteMsg}</span>
+              <button
+                type="button"
+                onClick={() => setPromoteMsg(null)}
+                aria-label="Fechar mensagem"
+                className="text-green-600 hover:text-green-800 text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Erro fixo por cima de tudo (incluindo pop-ups abertos), até ser fechado */}
           {error && (
@@ -2434,6 +2508,17 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     <Trash2 className="w-4 h-4" />
                                     Remover
                                   </button>
+
+                                  {promoteAvailable && (
+                                    <button
+                                      onClick={() => promoteToProd('ticket-types', `o lote "${row.name}"`, [row.id])}
+                                      disabled={promoting !== null}
+                                      className="inline-flex items-center gap-1 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-2 disabled:opacity-50"
+                                    >
+                                      <Send className="w-4 h-4" />
+                                      {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </Td>
@@ -2581,6 +2666,17 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                         <Power className="w-4 h-4" />
                                         {row.active ? 'Desativar' : 'Ativar'}
                                       </button>
+
+                                      {promoteAvailable && (
+                                        <button
+                                          onClick={() => promoteToProd('workshops', `o workshop "${row.title}"`, [row.id])}
+                                          disabled={promoting !== null}
+                                          className="inline-flex items-center gap-1 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-2 disabled:opacity-50"
+                                        >
+                                          <Send className="w-4 h-4" />
+                                          {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                        </button>
+                                      )}
                                     </>
                                   )}
                                 </div>
@@ -3047,6 +3143,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               >
                                 Apagar
                               </button>
+
+                              {promoteAvailable && (
+                                <button
+                                  onClick={() => promoteToProd('coupons', `o coupon "${row.code}"`, [row.id])}
+                                  disabled={promoting !== null}
+                                  className="rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                                >
+                                  {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                </button>
+                              )}
                             </div>
                           )}
                         </Td>
