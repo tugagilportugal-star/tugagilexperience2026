@@ -71,6 +71,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  // Venda fechada (VITE_TICKETS_ON_SALE != "true"): só passa o modo "test" com a chave certa
+  const saleMode = process.env.VITE_TICKETS_ON_SALE;
+  if (saleMode !== 'true') {
+    const testKey = process.env.TICKETS_TEST_KEY;
+    if (saleMode !== 'test' || !testKey || String(req.body?.saleKey ?? '') !== testKey) {
+      return res.status(403).json({ message: 'As vendas ainda não estão abertas.' });
+    }
+  }
+
   try {
     const { ticketTypeId, participants, shared } = req.body;
 

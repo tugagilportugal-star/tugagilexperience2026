@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Pencil, Plus, Power, Trash2, X } from 'lucide-react';
+import { Download, Pencil, Plus, Power, Send, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { WorkshopFacilitator, workshopFacilitators, facilitatorNames } from './WorkshopDetailsModal';
 
 type LeadStatus = 'Pending' | 'InProgress' | 'Completed' | 'Deleted';
 
@@ -85,10 +86,7 @@ type WorkshopRow = {
   short_description?: string | null;
   description?: string | null;
   takeaways?: string[] | null;
-  facilitator_name?: string | null;
-  facilitator_role?: string | null;
-  facilitator_bio?: string | null;
-  facilitator_photo_url?: string | null;
+  facilitators?: WorkshopFacilitator[] | null;
   image_url?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
@@ -148,10 +146,7 @@ type WorkshopForm = {
   short_description: string;
   description: string;
   takeaways: string;
-  facilitator_name: string;
-  facilitator_role: string;
-  facilitator_bio: string;
-  facilitator_photo_url: string;
+  facilitators: FacilitatorForm[];
   image_url: string;
   starts_at: string;
   ends_at: string;
@@ -208,16 +203,32 @@ function toTicketTypeForm(row: TicketTypeRow): TicketTypeForm {
   };
 }
 
+// Modais do admin: o painel rola por dentro e o cabeçalho (título + X) e o
+// rodapé (botões) ficam fixos. As margens negativas compensam o p-6 do painel.
+const MODAL_PANEL = 'max-h-[90vh] overflow-y-auto overscroll-contain';
+// -top-6 / -bottom-6: o sticky conta a partir do padding do painel (p-6); sem isto o
+// cabeçalho desce 24px e tapa as etiquetas dos primeiros campos (e o rodapé sobe 24px)
+const MODAL_HEAD = 'sticky -top-6 z-10 bg-white -mx-6 -mt-6 px-6 pt-6';
+const MODAL_FOOT = 'sticky -bottom-6 z-10 bg-white -mx-6 -mb-6 px-6 pb-6 pt-4 mt-4 border-t border-gray-100';
+
+type FacilitatorForm = {
+  name: string;
+  role: string;
+  bio: string;
+  photo_url: string;
+};
+
+function emptyFacilitatorForm(): FacilitatorForm {
+  return { name: '', role: '', bio: '', photo_url: '' };
+}
+
 function emptyWorkshopForm(): WorkshopForm {
   return {
     title: '',
     short_description: '',
     description: '',
     takeaways: '',
-    facilitator_name: '',
-    facilitator_role: '',
-    facilitator_bio: '',
-    facilitator_photo_url: '',
+    facilitators: [emptyFacilitatorForm()],
     image_url: '',
     starts_at: '',
     ends_at: '',
@@ -235,10 +246,14 @@ function toWorkshopForm(row: WorkshopRow): WorkshopForm {
     short_description: row.short_description ?? '',
     description: row.description ?? '',
     takeaways: (row.takeaways ?? []).join('\n'),
-    facilitator_name: row.facilitator_name ?? '',
-    facilitator_role: row.facilitator_role ?? '',
-    facilitator_bio: row.facilitator_bio ?? '',
-    facilitator_photo_url: row.facilitator_photo_url ?? '',
+    facilitators: (row.facilitators ?? []).length
+      ? (row.facilitators ?? []).map((f) => ({
+          name: f.name ?? '',
+          role: f.role ?? '',
+          bio: f.bio ?? '',
+          photo_url: f.photo_url ?? '',
+        }))
+      : [emptyFacilitatorForm()],
     image_url: row.image_url ?? '',
     starts_at: row.starts_at ?? '',
     ends_at: row.ends_at ?? '',
@@ -450,6 +465,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const authHeader = token ? `Bearer ${token}` : null;
   const canEdit = adminUser?.role === 'edit' || adminUser?.role === 'superadmin';
   const isSuperAdmin = adminUser?.role === 'superadmin';
+
+  // "Enviar para produção": só aparece no admin de teste, para superadmin, quando o servidor está configurado
+  const [promoteAvailable, setPromoteAvailable] = useState(false);
+  const [promoting, setPromoting] = useState<string | null>(null);
+  const [promoteMsg, setPromoteMsg] = useState<string | null>(null);
 
   // Limpa TODOS os dados ligados ao evento (listas, seleções, modais e mensagens)
   function clearEventData() {
@@ -1572,6 +1592,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setWorkshopForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function updateFacilitator(index: number, key: keyof FacilitatorForm, value: string) {
+    setWorkshopForm((prev) => ({
+      ...prev,
+      facilitators: prev.facilitators.map((f, i) => (i === index ? { ...f, [key]: value } : f)),
+    }));
+  }
+
+  function addFacilitator() {
+    setWorkshopForm((prev) => ({ ...prev, facilitators: [...prev.facilitators, emptyFacilitatorForm()] }));
+  }
+
+  function removeFacilitator(index: number) {
+    setWorkshopForm((prev) => ({ ...prev, facilitators: prev.facilitators.filter((_, i) => i !== index) }));
+  }
+
   async function saveWorkshop(e: React.FormEvent) {
     e.preventDefault();
     const eventId = eventIdRef.current;
@@ -1611,10 +1646,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           .split(/\r?\n/)
           .map((line) => line.trim())
           .filter(Boolean),
-        facilitator_name: workshopForm.facilitator_name,
-        facilitator_role: workshopForm.facilitator_role,
-        facilitator_bio: workshopForm.facilitator_bio,
-        facilitator_photo_url: workshopForm.facilitator_photo_url,
+        facilitators: workshopForm.facilitators.filter((f) => f.name.trim()),
         image_url: workshopForm.image_url,
         starts_at: workshopForm.starts_at,
         ends_at: workshopForm.ends_at,
@@ -1735,6 +1767,46 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     if (!adminUser) return;
     fetchEvents();
   }, [adminUser?.email]);
+
+  useEffect(() => {
+    setPromoteAvailable(false);
+    if (!adminUser || !authHeader || adminUser.role !== 'superadmin') return;
+    fetch('/api/admin/promote', { headers: { Authorization: authHeader } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => setPromoteAvailable(Boolean(json?.available)))
+      .catch(() => setPromoteAvailable(false));
+  }, [adminUser?.email, adminUser?.role]);
+
+  // Copia registos deste evento para a base de produção (cria ou atualiza; vendas/usos não são copiados)
+  async function promoteToProd(table: 'ticket-types' | 'workshops' | 'coupons', what: string, ids?: string[]) {
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (!confirm(`Enviar ${what} do evento "${currentEventName}" para PRODUÇÃO?\n\nO que já existir lá com o mesmo nome é atualizado; vendas e usos de produção ficam como estão.`)) return;
+
+    setPromoting(ids?.length === 1 ? ids[0] : table);
+    setPromoteMsg(null);
+    try {
+      const res = await fetch(withEventId('/api/admin/promote', eventId), {
+        method: 'POST',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table, ids }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.message || 'Falha ao enviar para produção');
+        return;
+      }
+      const results: Array<{ label: string; status: string; message?: string }> = json?.results || [];
+      const failed = results.filter((r) => r.status === 'erro');
+      const ok = results.filter((r) => r.status !== 'erro');
+      if (ok.length) setPromoteMsg(`Enviado para produção: ${ok.map((r) => `${r.label} (${r.status})`).join(', ')}`);
+      if (failed.length) setError(`Não enviado: ${failed.map((r) => `${r.label}: ${r.message}`).join(' · ')}`);
+    } catch {
+      setError('Erro inesperado ao enviar para produção');
+    } finally {
+      setPromoting(null);
+    }
+  }
 
   // Dados do separador atual, sempre do evento selecionado (nada é pedido sem evento)
   useEffect(() => {
@@ -2182,6 +2254,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </button>
             )}
 
+            {promoteAvailable && (tab === 'ticketTypes' || tab === 'workshops' || tab === 'coupons') && (
+              <button
+                onClick={() => {
+                  if (tab === 'ticketTypes') promoteToProd('ticket-types', 'todos os lotes');
+                  if (tab === 'workshops') promoteToProd('workshops', 'todos os workshops');
+                  if (tab === 'coupons') promoteToProd('coupons', 'todos os coupons');
+                }}
+                disabled={promoting !== null}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 text-sm font-bold disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+                Enviar tudo para produção
+              </button>
+            )}
+
             {isEventTab && (
               <button
                 onClick={downloadCsv}
@@ -2274,6 +2361,20 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               · {isEventTab ? ev.name : 'todos os eventos'}
             </span>
           </h2>
+
+          {promoteMsg && (
+            <div className="mb-4 flex items-start gap-3 rounded-2xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+              <span className="flex-1">{promoteMsg}</span>
+              <button
+                type="button"
+                onClick={() => setPromoteMsg(null)}
+                aria-label="Fechar mensagem"
+                className="text-green-600 hover:text-green-800 text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Erro fixo por cima de tudo (incluindo pop-ups abertos), até ser fechado */}
           {error && (
@@ -2409,6 +2510,17 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     <Trash2 className="w-4 h-4" />
                                     Remover
                                   </button>
+
+                                  {promoteAvailable && (
+                                    <button
+                                      onClick={() => promoteToProd('ticket-types', `o lote "${row.name}"`, [row.id])}
+                                      disabled={promoting !== null}
+                                      className="inline-flex items-center gap-1 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-2 disabled:opacity-50"
+                                    >
+                                      <Send className="w-4 h-4" />
+                                      {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </Td>
@@ -2497,8 +2609,12 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 {row.level && <div className="text-xs text-gray-500">{row.level}</div>}
                               </Td>
                               <Td>
-                                <div>{safe(row.facilitator_name) || '—'}</div>
-                                {row.facilitator_role && <div className="text-xs text-gray-500">{row.facilitator_role}</div>}
+                                {workshopFacilitators(row).length ? workshopFacilitators(row).map((f, i) => (
+                                  <div key={i} className={i > 0 ? 'mt-1' : undefined}>
+                                    <div>{f.name}</div>
+                                    {f.role && <div className="text-xs text-gray-500">{f.role}</div>}
+                                  </div>
+                                )) : '—'}
                               </Td>
                               <Td>{formatWorkshopSchedule(row) || '—'}</Td>
                               <Td>{safe(row.room) || '—'}</Td>
@@ -2552,6 +2668,17 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                         <Power className="w-4 h-4" />
                                         {row.active ? 'Desativar' : 'Ativar'}
                                       </button>
+
+                                      {promoteAvailable && (
+                                        <button
+                                          onClick={() => promoteToProd('workshops', `o workshop "${row.title}"`, [row.id])}
+                                          disabled={promoting !== null}
+                                          className="inline-flex items-center gap-1 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-2 disabled:opacity-50"
+                                        >
+                                          <Send className="w-4 h-4" />
+                                          {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                        </button>
+                                      )}
                                     </>
                                   )}
                                 </div>
@@ -2570,7 +2697,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <div>
                         <h3 className="text-lg font-black text-gray-900">Inscritos · {selectedWorkshop.title}</h3>
                         <p className="text-sm text-gray-500">
-                          {[formatWorkshopSchedule(selectedWorkshop), selectedWorkshop.room, selectedWorkshop.facilitator_name]
+                          {[formatWorkshopSchedule(selectedWorkshop), selectedWorkshop.room, facilitatorNames(selectedWorkshop)]
                             .filter(Boolean)
                             .join(' · ') || '—'}
                         </p>
@@ -3018,6 +3145,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               >
                                 Apagar
                               </button>
+
+                              {promoteAvailable && (
+                                <button
+                                  onClick={() => promoteToProd('coupons', `o coupon "${row.code}"`, [row.id])}
+                                  disabled={promoting !== null}
+                                  className="rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                                >
+                                  {promoting === row.id ? 'A enviar…' : 'Produção'}
+                                </button>
+                              )}
                             </div>
                           )}
                         </Td>
@@ -3182,10 +3319,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
             >
               <div
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex justify-between items-center mb-4">
+                <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes da Order</h3>
                   <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
@@ -3216,7 +3353,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   ))}
                 </dl>
                 {canEdit && (
-                  <div className="mt-4 border-t pt-4 flex flex-col gap-2">
+                  <div className={`${MODAL_FOOT} flex flex-col gap-2`}>
                     {selectedOrder.is_duplicate ? (
                       <button
                         onClick={() => { setDuplicateCreditNoteRef(selectedOrder.credit_note_ref || ''); setDuplicateError(null); setDuplicateModal({ orderId: selectedOrder.id, currentRef: selectedOrder.credit_note_ref || '', isDuplicate: true, markType: 'duplicate' }); setSelectedOrder(null); }}
@@ -3253,10 +3390,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
             >
               <div
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex justify-between items-center mb-4">
+                <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                   <h3 className="text-lg font-bold text-[#003F59]">Detalhes do Ticket</h3>
                   <button onClick={() => setSelectedTicket(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                 </div>
@@ -3441,7 +3578,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
                 {canEdit && ticketOrder && (
-                  <div className="mt-4 border-t pt-4">
+                  <div className={MODAL_FOOT}>
                     {ticketOrder.is_duplicate ? (
                       <div className="space-y-2">
                         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-gray-700">
@@ -3495,10 +3632,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[215] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-1">
+              <div className={`${MODAL_HEAD} pb-1 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Dados da Fatura</h3>
                 <button onClick={() => setInvoiceModal(null)} disabled={savingInvoiceModal} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3535,16 +3672,18 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
                 </div>
               </div>
-              {invoiceModalError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{invoiceModalError}</p>
-              )}
-              <button
-                onClick={confirmInvoiceModal}
-                disabled={savingInvoiceModal}
-                className="w-full py-2 rounded-lg bg-[#003F59] text-white text-sm font-medium hover:bg-[#005580] disabled:opacity-50"
-              >
-                {savingInvoiceModal ? 'A guardar e gerar…' : 'Confirmar e Gerar Fatura'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {invoiceModalError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{invoiceModalError}</p>
+                )}
+                <button
+                  onClick={confirmInvoiceModal}
+                  disabled={savingInvoiceModal}
+                  className="w-full py-2 rounded-lg bg-[#003F59] text-white text-sm font-medium hover:bg-[#005580] disabled:opacity-50"
+                >
+                  {savingInvoiceModal ? 'A guardar e gerar…' : 'Confirmar e Gerar Fatura'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3554,10 +3693,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Nota de Crédito</h3>
                 <button onClick={() => setCreditNoteModal(null)} disabled={generatingCreditNote} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3589,20 +3728,22 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
                 )}
               </div>
-              {creditNoteError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{creditNoteError}</p>
-              )}
-              <button
-                onClick={() => {
-                  const motivo = creditNoteMotivo === 'Outro' ? creditNoteCustom.trim() : creditNoteMotivo;
-                  if (!motivo) return;
-                  generateCreditNote(creditNoteModal.orderId, motivo);
-                }}
-                disabled={generatingCreditNote || !creditNoteMotivo || (creditNoteMotivo === 'Outro' && !creditNoteCustom.trim())}
-                className="w-full py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
-              >
-                {generatingCreditNote ? 'A emitir…' : 'Confirmar Nota de Crédito'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {creditNoteError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{creditNoteError}</p>
+                )}
+                <button
+                  onClick={() => {
+                    const motivo = creditNoteMotivo === 'Outro' ? creditNoteCustom.trim() : creditNoteMotivo;
+                    if (!motivo) return;
+                    generateCreditNote(creditNoteModal.orderId, motivo);
+                  }}
+                  disabled={generatingCreditNote || !creditNoteMotivo || (creditNoteMotivo === 'Outro' && !creditNoteCustom.trim())}
+                  className="w-full py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {generatingCreditNote ? 'A emitir…' : 'Confirmar Nota de Crédito'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3612,10 +3753,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">Emitir Estorno</h3>
                 <button onClick={() => { setRefundModal(null); setRefundError(null); }} disabled={markingRefund} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
               </div>
@@ -3657,19 +3798,21 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
                 O sistema irá validar que o estorno foi efetuado no Stripe antes de registar.
               </div>
-              {refundError && (
-                <p className="text-red-600 text-xs mb-3 break-words">{refundError}</p>
-              )}
-              <button
-                onClick={() => {
-                  const motivo = refundMotivo === 'Outro' ? refundCustom.trim() : refundMotivo;
-                  markAsRefunded(refundModal.orderId, !refundModal.hasCreditNote ? motivo : undefined);
-                }}
-                disabled={markingRefund || (!refundModal.hasCreditNote && (!refundMotivo || (refundMotivo === 'Outro' && !refundCustom.trim())))}
-                className="w-full py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-              >
-                {markingRefund ? 'A validar no Stripe…' : 'Validar e Registar Estorno'}
-              </button>
+              <div className={MODAL_FOOT}>
+                {refundError && (
+                  <p className="text-red-600 text-xs mb-3 break-words">{refundError}</p>
+                )}
+                <button
+                  onClick={() => {
+                    const motivo = refundMotivo === 'Outro' ? refundCustom.trim() : refundMotivo;
+                    markAsRefunded(refundModal.orderId, !refundModal.hasCreditNote ? motivo : undefined);
+                  }}
+                  disabled={markingRefund || (!refundModal.hasCreditNote && (!refundMotivo || (refundMotivo === 'Outro' && !refundCustom.trim())))}
+                  className="w-full py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {markingRefund ? 'A validar no Stripe…' : 'Validar e Registar Estorno'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3679,10 +3822,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
+              className={`bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className={`${MODAL_HEAD} pb-4 flex justify-between items-center`}>
                 <h3 className="text-lg font-bold text-[#003F59]">
                   {duplicateModal.isDuplicate
                     ? (duplicateModal.markType === 'test' ? 'Editar Teste' : 'Editar Duplicado')
@@ -3707,7 +3850,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </>
               )}
               {duplicateError && <p className="text-red-600 text-xs mb-3">{duplicateError}</p>}
-              <div className="flex gap-2">
+              <div className={`${MODAL_FOOT} flex gap-2`}>
                 {duplicateModal.isDuplicate && (
                   <button
                     onClick={() => markOrderAsDuplicate(duplicateModal.orderId, duplicateModal.markType, false, '')}
@@ -3734,10 +3877,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingCoupon ? 'Editar coupon' : 'Novo coupon'}
@@ -3902,7 +4045,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
+              <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                 <button
                   onClick={() => {
                     setCouponModalOpen(false);
@@ -3929,10 +4072,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[210] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">Lead</h3>
                   <p className="text-sm text-gray-500 mb-2">
@@ -3975,10 +4118,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingTicketType ? 'Editar lote' : 'Novo lote'}
@@ -4065,7 +4208,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                   <button
                     type="button"
                     onClick={closeTicketTypeModal}
@@ -4092,10 +4235,10 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             className="fixed inset-0 z-[220] bg-black/40 flex items-center justify-center p-4"
           >
             <div
-              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
+              className={`w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl ${MODAL_PANEL}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-6">
+              <div className={`${MODAL_HEAD} pb-6 flex items-start justify-between gap-4`}>
                 <div>
                   <h3 className="text-2xl font-black text-gray-900">
                     {editingWorkshop ? 'Editar workshop' : 'Novo workshop'}
@@ -4151,33 +4294,47 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     />
                   </div>
 
-                  <Input
-                    label="Facilitador"
-                    value={workshopForm.facilitator_name}
-                    onChange={(value) => updateWorkshopForm('facilitator_name', value)}
-                  />
-
-                  <Input
-                    label="Cargo · Empresa"
-                    value={workshopForm.facilitator_role}
-                    onChange={(value) => updateWorkshopForm('facilitator_role', value)}
-                  />
-
-                  <div className="md:col-span-2">
-                    <Textarea
-                      label="Bio do facilitador"
-                      value={workshopForm.facilitator_bio}
-                      onChange={(value) => updateWorkshopForm('facilitator_bio', value)}
-                      rows={3}
-                    />
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Facilitadores</div>
+                    {workshopForm.facilitators.map((f, i) => (
+                      <div key={i} className="rounded-2xl border border-gray-200 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-gray-700">Facilitador {i + 1}</span>
+                          {workshopForm.facilitators.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeFacilitator(i)}
+                              className="inline-flex items-center gap-1 text-sm font-bold text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" /> Remover
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <Input label="Nome" value={f.name} onChange={(value) => updateFacilitator(i, 'name', value)} />
+                          <Input label="Cargo · Empresa" value={f.role} onChange={(value) => updateFacilitator(i, 'role', value)} />
+                          <div className="md:col-span-2">
+                            <Textarea label="Bio" value={f.bio} onChange={(value) => updateFacilitator(i, 'bio', value)} rows={3} />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Input
+                              label="URL da foto"
+                              value={f.photo_url}
+                              onChange={(value) => updateFacilitator(i, 'photo_url', value)}
+                              placeholder="https://…"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addFacilitator}
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar facilitador
+                    </button>
                   </div>
-
-                  <Input
-                    label="URL da foto do facilitador"
-                    value={workshopForm.facilitator_photo_url}
-                    onChange={(value) => updateWorkshopForm('facilitator_photo_url', value)}
-                    placeholder="https://…"
-                  />
 
                   <Input
                     label="URL da imagem do workshop"
@@ -4249,7 +4406,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className={`${MODAL_FOOT} flex justify-end gap-3`}>
                   <button
                     type="button"
                     onClick={closeWorkshopModal}

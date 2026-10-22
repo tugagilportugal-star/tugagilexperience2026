@@ -1,6 +1,8 @@
 # Venda de Bilhetes — Desativação Temporária (2026-09-10)
 
 > **Atualização 2026-10-18:** a flag deixou de estar fixa no código. `TICKETS_ON_SALE` em `config.ts` lê a variável da Vercel `VITE_TICKETS_ON_SALE` (`true` mostra os botões). Hoje: Preview = `true` (testes), Production = `false`. Para abrir as vendas: mudar Production para `true` na Vercel e fazer redeploy.
+>
+> **Atualização 2026-10-22:** valor intermédio `test`. Os botões ficam escondidos para o público, mas aparecem para quem abrir o site com `?venda=<chave>` (ex.: `https://experience.tugagil.com/?venda=minhachave`). A chave é a env var `TICKETS_TEST_KEY` (só servidor). `/api/checkout` passa a recusar compras (403) sempre que `VITE_TICKETS_ON_SALE` não é `true`, exceto no modo `test` com a chave certa.
 
 ## Porque foi desligada
 

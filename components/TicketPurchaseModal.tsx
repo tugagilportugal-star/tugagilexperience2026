@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './UIComponents';
 import { Check, CheckCircle2, Info, Lock, ShieldCheck, Ticket } from 'lucide-react';
-import { WorkshopDetailsModal, WorkshopData } from './WorkshopDetailsModal';
+import { WorkshopDetailsModal, WorkshopData, facilitatorNames } from './WorkshopDetailsModal';
+import { TICKETS_SALE_KEY } from '../config';
 
 type TicketTypeData = {
   id: string;
@@ -38,9 +39,9 @@ type ParticipantForm = {
 // Primeiro nome, só para rótulos curtos (separadores, pop-up)
 const firstWord = (fullName: string) => fullName.trim().split(/\s+/)[0] || '';
 
-// Workshops da tarde: letra pela ordem devolvida pela API e cor de topo do cartão
+// Workshops da tarde: número pela ordem devolvida pela API e cor de topo do cartão
 const WORKSHOP_ACCENTS = ['#007BAA', '#B4520A', '#00693E'];
-const workshopTag = (i: number) => `Workshop ${String.fromCharCode(65 + i)}`;
+const workshopTag = (i: number) => `Workshop ${i + 1}`;
 const workshopAccent = (i: number) => WORKSHOP_ACCENTS[i % WORKSHOP_ACCENTS.length];
 
 const JOB_FUNCTIONS = [
@@ -262,7 +263,6 @@ export const TicketPurchaseModal: React.FC = () => {
       if (!pt.company.trim())                                            return { id: `p${i}-company`,          tab: i };
       if (!pt.jobFunction)                                               return { id: `p${i}-jobFunction`,      tab: i };
       if (pt.jobFunction === 'Outros' && !pt.jobFunctionOther.trim())   return { id: `p${i}-jobFunctionOther`, tab: i };
-      if (!pt.industry.trim())                                           return { id: `p${i}-industry`,         tab: i };
       if (!pt.country)                                                   return { id: `p${i}-country`,          tab: i };
     }
     if (!privacyConsent)       return { id: 'privacy',    tab: -1 };
@@ -290,6 +290,7 @@ export const TicketPurchaseModal: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticketTypeId: ticketData.id,
+          saleKey: TICKETS_SALE_KEY,
           participants: participants.map(p => ({
             // Nome completo num só campo (guardado em tickets.attendee_name)
             name: p.fullName.trim(),
@@ -366,7 +367,7 @@ export const TicketPurchaseModal: React.FC = () => {
   const isParticipantComplete = (pt: ParticipantForm) => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pt.email.trim());
     return pt.fullName.trim() && emailOk &&
-      pt.company.trim() && pt.jobFunction && pt.industry.trim() && pt.country &&
+      pt.company.trim() && pt.jobFunction && pt.country &&
       (pt.jobFunction !== 'Outros' || pt.jobFunctionOther.trim());
   };
 
@@ -538,12 +539,11 @@ export const TicketPurchaseModal: React.FC = () => {
         {/* Indústria + País */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Indústria <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Indústria</label>
             <input id={`p${activeTab}-industry`} type="text" value={p.industry}
               onChange={e => updateParticipant(activeTab, { industry: e.target.value })}
               placeholder="Ex: Tecnologia, Saúde…"
-              className={errClass(showErrors && !p.industry.trim())} />
-            {showErrors && !p.industry.trim() && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
+              className={fieldClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">País <span className="text-red-500">*</span></label>
@@ -564,7 +564,7 @@ export const TicketPurchaseModal: React.FC = () => {
                   Workshop da tarde <span className="font-medium text-gray-500 text-sm">(opcional)</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-0.5">
-                  Os workshops decorrem ao mesmo tempo — escolhe no máximo um. Toca num workshop para ver os detalhes.
+                  Os workshops decorrem ao mesmo tempo — escolhe no máximo um. Toca no círculo para escolher ou no cartão para ver os detalhes.
                 </p>
               </div>
               <span className="self-start sm:self-auto whitespace-nowrap text-xs font-bold text-[#b4520a] bg-[#fff3e8] px-3 py-1.5 rounded-full">
@@ -586,24 +586,20 @@ export const TicketPurchaseModal: React.FC = () => {
                       ? { label: avail === 1 ? 'Última vaga' : `Últimas ${avail} vagas`, cls: 'text-orange-800 bg-orange-100' }
                       : { label: `${avail} vagas`, cls: 'text-brand-green bg-[#e3f3eb]' };
                 return (
-                  <button key={ws.id} type="button" aria-haspopup="dialog"
+                  <div key={ws.id} className="relative flex transition duration-150 hover:-translate-y-0.5">
+                  <button type="button" aria-haspopup="dialog"
                     aria-label={`${workshopTag(wi)}: ${ws.title}${selected ? ' (escolhido)' : ''}${soldOut ? ' (esgotado)' : ''} — ver detalhes`}
                     onClick={() => setOpenWorkshopId(ws.id)}
                     style={selected ? { borderColor: accent } : undefined}
-                    className={`text-left cursor-pointer rounded-xl border-2 overflow-hidden flex flex-col bg-white transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                    className={`w-full text-left cursor-pointer rounded-xl border-2 overflow-hidden flex flex-col bg-white transition duration-150 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
                       selected ? '' : 'border-gray-200 hover:border-gray-300'
                     } ${soldOut ? 'opacity-70' : ''}`}>
-                    <span className="h-11 w-full flex items-center justify-between px-3.5 text-white" style={{ backgroundColor: accent }}>
+                    <span className="h-11 w-full flex items-center px-3.5 text-white" style={{ backgroundColor: accent }}>
                       <span className="font-sora font-extrabold text-xs tracking-widest uppercase">{workshopTag(wi)}</span>
-                      {selected && (
-                        <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center" style={{ color: accent }}>
-                          <Check className="w-4 h-4" strokeWidth={3} />
-                        </span>
-                      )}
                     </span>
                     <span className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5 flex-grow">
                       <span className="font-sora text-sm font-bold text-gray-800 leading-snug">{ws.title}</span>
-                      {ws.facilitator_name && <span className="text-xs text-gray-600">com {ws.facilitator_name}</span>}
+                      {facilitatorNames(ws) && <span className="text-xs text-gray-600">com {facilitatorNames(ws)}</span>}
                       {spots && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-md self-start ${spots.cls}`}>{spots.label}</span>
                       )}
@@ -613,6 +609,24 @@ export const TicketPurchaseModal: React.FC = () => {
                       </span>
                     </span>
                   </button>
+
+                  {/* Escolher/remover direto no cartão, sem abrir os detalhes */}
+                  {!soldOut && (
+                    <button type="button" aria-pressed={selected}
+                      aria-label={selected ? `Remover ${workshopTag(wi)}: ${ws.title}` : `Escolher ${workshopTag(wi)}: ${ws.title}`}
+                      title={selected ? 'Remover' : 'Escolher'}
+                      onClick={() => updateParticipant(activeTab, { workshopId: selected ? null : ws.id })}
+                      className="group absolute top-1.5 right-2.5 p-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                      <span
+                        className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center transition ${
+                          selected ? 'bg-white' : 'bg-white/10 group-hover:bg-white/30'
+                        }`}
+                        style={selected ? { color: accent } : undefined}>
+                        {selected && <Check className="w-4 h-4" strokeWidth={3} />}
+                      </span>
+                    </button>
+                  )}
+                  </div>
                 );
               })}
 
@@ -625,12 +639,14 @@ export const TicketPurchaseModal: React.FC = () => {
                     className={`text-left cursor-pointer rounded-xl border-2 p-4 flex flex-col gap-2 transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
                       noneSel ? 'border-brand-darkBlue bg-[#f4f8fa]' : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}>
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      noneSel ? 'border-brand-darkBlue bg-brand-darkBlue text-white' : 'border-gray-300 bg-white'
-                    }`}>
-                      {noneSel && <Check className="w-3 h-3" strokeWidth={3} />}
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="font-sora text-sm font-bold text-gray-800">Sem workshop</span>
+                      <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        noneSel ? 'border-brand-darkBlue bg-brand-darkBlue text-white' : 'border-gray-300 bg-white'
+                      }`}>
+                        {noneSel && <Check className="w-4 h-4" strokeWidth={3} />}
+                      </span>
                     </span>
-                    <span className="font-sora text-sm font-bold text-gray-800">Sem workshop</span>
                     <span className="text-xs text-gray-600 leading-relaxed">
                       Só o bilhete do evento. Podes participar nas sessões da tarde do programa principal.
                     </span>
