@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './UIComponents';
 import { Check, CheckCircle2, Info, Lock, ShieldCheck, Ticket } from 'lucide-react';
 import { WorkshopDetailsModal, WorkshopData, facilitatorNames } from './WorkshopDetailsModal';
+import { TICKETS_SALE_KEY } from '../config';
 
 type TicketTypeData = {
   id: string;
@@ -290,6 +291,7 @@ export const TicketPurchaseModal: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticketTypeId: ticketData.id,
+          saleKey: TICKETS_SALE_KEY,
           participants: participants.map(p => ({
             // Nome completo num só campo (guardado em tickets.attendee_name)
             name: p.fullName.trim(),

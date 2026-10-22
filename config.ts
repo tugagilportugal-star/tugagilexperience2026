@@ -1,11 +1,29 @@
 // src/config.ts
 
 // Master switch for showing the ticket-purchase CTAs (Hero, NavBar, Agenda).
-// Controlled per environment by the Vercel env var VITE_TICKETS_ON_SALE
-// ("true" shows the CTAs; anything else or unset hides them). It is baked in
-// at build time, so changing it requires a redeploy.
+// Controlled per environment by the Vercel env var VITE_TICKETS_ON_SALE:
+//   "true"  → venda aberta ao público
+//   "test"  → venda fechada, exceto para quem abre o site com ?venda=<chave>
+//             (a chave é validada no servidor contra TICKETS_TEST_KEY)
+//   outro / vazio → venda fechada
+// It is baked in at build time, so changing it requires a redeploy.
 // See TICKET_SALES_TOGGLE.md for the history.
-export const TICKETS_ON_SALE = import.meta.env.VITE_TICKETS_ON_SALE === 'true';
+const TICKETS_SALE_MODE = import.meta.env.VITE_TICKETS_ON_SALE;
+
+// Chave do modo "test": lida do URL e guardada na sessão para sobreviver à navegação
+function readSaleKey(): string | null {
+  if (TICKETS_SALE_MODE !== 'test' || typeof window === 'undefined') return null;
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('venda');
+    if (fromUrl) window.sessionStorage.setItem('venda', fromUrl);
+    return fromUrl || window.sessionStorage.getItem('venda');
+  } catch {
+    return null;
+  }
+}
+
+export const TICKETS_SALE_KEY = readSaleKey();
+export const TICKETS_ON_SALE = TICKETS_SALE_MODE === 'true' || Boolean(TICKETS_SALE_KEY);
 
 export const ASSETS = {
   // Imagens de fundo
