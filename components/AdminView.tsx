@@ -205,8 +205,9 @@ function toTicketTypeForm(row: TicketTypeRow): TicketTypeForm {
 
 // Modais do admin: o painel rola por dentro e o cabeçalho (título + X) e o
 // rodapé (botões) ficam fixos. As margens negativas compensam o p-6 do painel.
-const MODAL_PANEL = 'max-h-[90vh] overflow-y-auto overscroll-contain';
-const MODAL_HEAD = 'sticky top-0 z-10 bg-white -mx-6 -mt-6 px-6 pt-6';
+// scroll-pt/pb: ao focar um campo, o browser deixa-o (e a etiqueta) fora do cabeçalho e do rodapé fixos
+const MODAL_PANEL = 'max-h-[90vh] overflow-y-auto overscroll-contain scroll-pt-56 scroll-pb-32';
+const MODAL_HEAD = 'sticky top-0 z-10 bg-white -mx-6 -mt-6 px-6 pt-6 mb-5 border-b border-gray-100';
 const MODAL_FOOT = 'sticky bottom-0 z-10 bg-white -mx-6 -mb-6 px-6 pb-6 pt-4 mt-4 border-t border-gray-100';
 
 type FacilitatorForm = {
