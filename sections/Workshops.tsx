@@ -14,26 +14,27 @@ interface Facilitator {
   name: string;
   role?: string;
   avatar?: string;
+  linkedin?: string;
 }
 
 interface Workshop {
   id: string;
   track: TrackKey;
   title: string;
-  tagline?: string;            // frase de destaque (ex: a pergunta provocadora)
-  description?: string[];      // um item por parágrafo; sem isto aparece "Mais detalhes em breve"
-  learnings?: string[];        // "O que vai levar"
+  tagline?: string;
+  description?: string[];
+  learnings?: string[];
   audience?: string;
   level?: 'Iniciante' | 'Intermédio' | 'Avançado' | 'Todos os níveis';
-  format?: string;             // ex: "Hands-on", "Masterclass"
-  schedule?: string[];         // sessões (ex: Parte 1 / Parte 2)
+  format?: string;
+  schedule?: string[];
   duration?: string;
   location?: string;
   capacity?: number;
   facilitators?: Facilitator[];
 }
 
-/** Identidade visual de cada trilha (alinhada com o Program.tsx) */
+/** Identidade visual de cada trilha */
 const TRACKS: Record<TrackKey, { label: string; text: string; border: string; bg: string }> = {
   gestao:     { label: 'Gestão & Liderança',          text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
   engenharia: { label: 'Engenharia de Software',      text: 'text-sky-400',     border: 'border-sky-500/30',     bg: 'bg-sky-500/10' },
@@ -49,11 +50,18 @@ const WORKSHOPS: Workshop[] = [
     track: 'design',
     title: 'Decoding Product: The Immersive Lab',
     description: [
-      'Mais detalhes sobre a dinâmica e os objetivos deste laboratório imersivo serão revelados em breve.',
+      'Numa terça-feira aparentemente normal, os dashboards de analytics disparam o alerta vermelho: a utilização do teu produto principal acabou de sofrer uma queda abrupta e inexplicável. A liderança executiva exige explicações imediatas, os clientes enviam sinais contraditórios e a equipa de engenharia quer lançar correções às cegas. E agora?',
+      'Decoding Product: The Immersive Lab é uma experiência prática em formato de simulação de crise. Em equipa, assumes o comando de uma força de intervenção destacada para investigar a cena do crime, analisar evidências reais (métricas, transcrições de clientes, atas e emails confidenciais) e interrogar stakeholders com agendas próprias.',
+      'O objetivo vai muito além de "apagar o fogo": trata-se de descobrir se a tua equipa consegue manter o rigor do continuous discovery e priorizar a aprendizagem sob stress — ou se vai cair exatamente nas mesmas armadilhas cognitivas e vícios de entrega que atiraram o produto para o abismo.'
     ],
-    schedule: ['Horário a confirmar'],
+    schedule: ['14:30 - 17:00'],
     location: 'Sala a confirmar',
-    facilitators: [{ name: 'Ricardo Fernandes' }],
+    facilitators: [
+      { 
+        name: 'Ricardo Fernandes',
+        linkedin: 'https://www.linkedin.com/in/ricardo-fernandes-agile/'
+      }
+    ],
   },
   {
     id: 'leadership-experiment',
@@ -63,9 +71,14 @@ const WORKSHOPS: Workshop[] = [
     description: [
       'Um experimento provocador sobre liderança, inteligência artificial e os mecanismos invisíveis que influenciam as nossas decisões. Prepare-se para questionar não apenas a technology, mas também a sua própria forma de liderar.',
     ],
-    schedule: ['Horário a confirmar'],
+    schedule: ['14:30 - 17:00'],
     location: 'Sala a confirmar',
-    facilitators: [{ name: 'Anthony Simões' }],
+    facilitators: [
+      { 
+        name: 'Anthony Simões',
+        linkedin: 'https://www.linkedin.com/in/anthonysimoes/'
+      }
+    ],
   },
   {
     id: 'ai-software-factory',
@@ -76,9 +89,18 @@ const WORKSHOPS: Workshop[] = [
       'Neste workshop imersivo, vamos explorar como funcionam os sistemas de desenvolvimento orientados por agentes de IA. Através de demonstrações ao vivo e desafios práticos, os participantes irão experimentar a construção de um pequeno produto, desde a especificação até à implementação e validação.',
       'Uma experiência para descobrir as possibilidades, limitações e novos desafios da engenharia de software na era da inteligência artificial.',
     ],
-    schedule: ['Horário a confirmar'],
+    schedule: ['14:30 - 17:00'],
     location: 'Sala a confirmar',
-    facilitators: [{ name: 'Matheus Haddad' }, { name: 'Fabio Castro' }],
+    facilitators: [
+      { 
+        name: 'Matheus Haddad',
+        linkedin: 'https://www.linkedin.com/in/matheushaddad/'
+      },
+      { 
+        name: 'Fabio Castro',
+        linkedin: 'https://www.linkedin.com/in/frmcastro/'
+      }
+    ],
   },
 ];
 
@@ -86,8 +108,8 @@ const WORKSHOPS: Workshop[] = [
 /*  COMPONENTES                                                        */
 /* ------------------------------------------------------------------ */
 
-const Avatar: React.FC<{ facilitator: Facilitator; size?: string }> = ({ facilitator, size = 'w-12 h-12' }) =>
-  facilitator.avatar ? (
+const Avatar: React.FC<{ facilitator: Facilitator; size?: string }> = ({ facilitator, size = 'w-12 h-12' }) => {
+  const avatarContent = facilitator.avatar ? (
     <img
       src={facilitator.avatar}
       alt={facilitator.name}
@@ -101,7 +123,24 @@ const Avatar: React.FC<{ facilitator: Facilitator; size?: string }> = ({ facilit
     </div>
   );
 
-/** Cartão pequeno: nome, horário, sala e facilitadores. Clica-se para abrir os detalhes. */
+  if (facilitator.linkedin) {
+    return (
+      <a
+        href={facilitator.linkedin}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:opacity-80 transition-opacity"
+        aria-label={`LinkedIn de ${facilitator.name}`}
+      >
+        {avatarContent}
+      </a>
+    );
+  }
+
+  return avatarContent;
+};
+
+/** Cartão pequeno */
 const WorkshopCard: React.FC<{ workshop: Workshop; onOpen: () => void }> = ({ workshop, onOpen }) => {
   const track = TRACKS[workshop.track];
   const isSchedulePending = workshop.schedule?.some(s => s.toLowerCase().includes('confirmar') || s.toLowerCase().includes('breve'));
@@ -150,7 +189,19 @@ const WorkshopCard: React.FC<{ workshop: Workshop; onOpen: () => void }> = ({ wo
           {workshop.facilitators.map((f, i) => (
             <div key={i} className="flex items-center gap-2">
               <Avatar facilitator={f} size="w-8 h-8 text-xs" />
-              <span className="text-sm font-bold text-zinc-200 font-sora">{f.name}</span>
+              {f.linkedin ? (
+                <a
+                  href={f.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-bold text-zinc-200 font-sora hover:text-emerald-400 transition-colors"
+                  onClick={(e) => e.stopPropagation()} // Impede que o clique no link abra o modal do cartão
+                >
+                  {f.name}
+                </a>
+              ) : (
+                <span className="text-sm font-bold text-zinc-200 font-sora">{f.name}</span>
+              )}
             </div>
           ))}
         </div>
@@ -163,7 +214,7 @@ const WorkshopCard: React.FC<{ workshop: Workshop; onOpen: () => void }> = ({ wo
   );
 };
 
-/** Janela com a descrição completa, sem sair da página. */
+/** Janela com a descrição completa */
 const WorkshopModal: React.FC<{ workshop: Workshop; onClose: () => void }> = ({
   workshop,
   onClose,
@@ -172,7 +223,6 @@ const WorkshopModal: React.FC<{ workshop: Workshop; onClose: () => void }> = ({
   const isSchedulePending = workshop.schedule?.some(s => s.toLowerCase().includes('confirmar') || s.toLowerCase().includes('breve'));
   const isLocationPending = workshop.location?.toLowerCase().includes('confirmar') || workshop.location?.toLowerCase().includes('breve');
 
-  // Fechar com Esc e bloquear o scroll da página por trás
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
@@ -295,7 +345,18 @@ const WorkshopModal: React.FC<{ workshop: Workshop; onClose: () => void }> = ({
                 <div key={i} className="flex items-center gap-4 bg-zinc-900/30 border border-zinc-900 rounded-xl p-3">
                   <Avatar facilitator={f} />
                   <div>
-                    <h4 className="text-base font-bold text-zinc-200 font-sora">{f.name}</h4>
+                    {f.linkedin ? (
+                      <a
+                        href={f.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-base font-bold text-zinc-200 font-sora hover:text-emerald-400 transition-colors"
+                      >
+                        {f.name}
+                      </a>
+                    ) : (
+                      <h4 className="text-base font-bold text-zinc-200 font-sora">{f.name}</h4>
+                    )}
                     {f.role && <p className="text-sm text-zinc-500 font-jakarta">{f.role}</p>}
                   </div>
                 </div>
@@ -323,7 +384,7 @@ export const WorkshopsPage: React.FC = () => {
           <p className="text-zinc-400 mt-4 text-base font-jakarta max-w-2xl">{PAGE_INTRO}</p>
         </div>
 
-        {/* GRELHA DE CARTÕES (adapta-se automaticamente a novos workshops) */}
+        {/* GRELHA DE CARTÕES */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {WORKSHOPS.map((workshop) => (
             <WorkshopCard key={workshop.id} workshop={workshop} onOpen={() => setSelectedId(workshop.id)} />

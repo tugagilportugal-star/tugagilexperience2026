@@ -64,16 +64,14 @@ export const Sponsors: React.FC = () => {
 
   const goldSponsors: Sponsor[] = [
     { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia-Logo.png"},
-    { name: "Growing Centuries", initials: "GC", url: "https://growingcenturies.pt/", logo: "/assets/NAMING_PRETO_N_P.png" },
+    
     
   ];
   
- // const silverSponsors: Sponsor[] = [
-   // { name: "Spotify", initials: "SP", url: "https://spotify.com" },
-    //{ name: "Slack", initials: "SL", url: "https://slack.com" },
-    //{ name: "Notion", initials: "NO", url: "https://notion.so" },
-    //{ name: "Figma", initials: "FI", url: "https://figma.com" },
-  //];
+  const silverSponsors: Sponsor[] = [
+    { name: "Growing Centuries", initials: "GC", url: "https://growingcenturies.pt/", logo: "/assets/NAMING_PRETO_N_P.png" },
+    
+  ];
 
   const bronzeSponsors: Sponsor[] = [
     { name: "Ateliê do Software", initials: "AS", url: "https://atelie.software/", logo: "/assets/Logo_Atelie_Software_Transparente.png" },
@@ -142,7 +140,7 @@ export const Sponsors: React.FC = () => {
           </div>
         )}
 
-        {/* SILVER SPONSORS /}
+        {/* SILVER SPONSORS */}
         {silverSponsors.length > 0 && (
           <div className="mb-24">
             <span className="text-base font-bold tracking-[0.2em] text-zinc-400 uppercase mb-12 block font-sora">
@@ -166,7 +164,7 @@ export const Sponsors: React.FC = () => {
               ))}
             </div>
           </div>
-        )}*
+        )}
 
         {/* BRONZE SPONSORS */}
         <div className="mb-24">
