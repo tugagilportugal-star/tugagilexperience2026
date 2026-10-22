@@ -263,7 +263,6 @@ export const TicketPurchaseModal: React.FC = () => {
       if (!pt.company.trim())                                            return { id: `p${i}-company`,          tab: i };
       if (!pt.jobFunction)                                               return { id: `p${i}-jobFunction`,      tab: i };
       if (pt.jobFunction === 'Outros' && !pt.jobFunctionOther.trim())   return { id: `p${i}-jobFunctionOther`, tab: i };
-      if (!pt.industry.trim())                                           return { id: `p${i}-industry`,         tab: i };
       if (!pt.country)                                                   return { id: `p${i}-country`,          tab: i };
     }
     if (!privacyConsent)       return { id: 'privacy',    tab: -1 };
@@ -368,7 +367,7 @@ export const TicketPurchaseModal: React.FC = () => {
   const isParticipantComplete = (pt: ParticipantForm) => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pt.email.trim());
     return pt.fullName.trim() && emailOk &&
-      pt.company.trim() && pt.jobFunction && pt.industry.trim() && pt.country &&
+      pt.company.trim() && pt.jobFunction && pt.country &&
       (pt.jobFunction !== 'Outros' || pt.jobFunctionOther.trim());
   };
 
@@ -540,12 +539,11 @@ export const TicketPurchaseModal: React.FC = () => {
         {/* Indústria + País */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Indústria <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Indústria</label>
             <input id={`p${activeTab}-industry`} type="text" value={p.industry}
               onChange={e => updateParticipant(activeTab, { industry: e.target.value })}
               placeholder="Ex: Tecnologia, Saúde…"
-              className={errClass(showErrors && !p.industry.trim())} />
-            {showErrors && !p.industry.trim() && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
+              className={fieldClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">País <span className="text-red-500">*</span></label>
