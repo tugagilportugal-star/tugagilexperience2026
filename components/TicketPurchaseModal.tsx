@@ -564,7 +564,7 @@ export const TicketPurchaseModal: React.FC = () => {
                   Workshop da tarde <span className="font-medium text-gray-500 text-sm">(opcional)</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-0.5">
-                  Os workshops decorrem ao mesmo tempo — escolhe no máximo um. Toca num workshop para ver os detalhes.
+                  Os workshops decorrem ao mesmo tempo — escolhe no máximo um. Toca no círculo para escolher ou no cartão para ver os detalhes.
                 </p>
               </div>
               <span className="self-start sm:self-auto whitespace-nowrap text-xs font-bold text-[#b4520a] bg-[#fff3e8] px-3 py-1.5 rounded-full">
@@ -586,20 +586,16 @@ export const TicketPurchaseModal: React.FC = () => {
                       ? { label: avail === 1 ? 'Última vaga' : `Últimas ${avail} vagas`, cls: 'text-orange-800 bg-orange-100' }
                       : { label: `${avail} vagas`, cls: 'text-brand-green bg-[#e3f3eb]' };
                 return (
-                  <button key={ws.id} type="button" aria-haspopup="dialog"
+                  <div key={ws.id} className="relative flex transition duration-150 hover:-translate-y-0.5">
+                  <button type="button" aria-haspopup="dialog"
                     aria-label={`${workshopTag(wi)}: ${ws.title}${selected ? ' (escolhido)' : ''}${soldOut ? ' (esgotado)' : ''} — ver detalhes`}
                     onClick={() => setOpenWorkshopId(ws.id)}
                     style={selected ? { borderColor: accent } : undefined}
-                    className={`text-left cursor-pointer rounded-xl border-2 overflow-hidden flex flex-col bg-white transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                    className={`w-full text-left cursor-pointer rounded-xl border-2 overflow-hidden flex flex-col bg-white transition duration-150 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
                       selected ? '' : 'border-gray-200 hover:border-gray-300'
                     } ${soldOut ? 'opacity-70' : ''}`}>
-                    <span className="h-11 w-full flex items-center justify-between px-3.5 text-white" style={{ backgroundColor: accent }}>
+                    <span className="h-11 w-full flex items-center px-3.5 text-white" style={{ backgroundColor: accent }}>
                       <span className="font-sora font-extrabold text-xs tracking-widest uppercase">{workshopTag(wi)}</span>
-                      {selected && (
-                        <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center" style={{ color: accent }}>
-                          <Check className="w-4 h-4" strokeWidth={3} />
-                        </span>
-                      )}
                     </span>
                     <span className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5 flex-grow">
                       <span className="font-sora text-sm font-bold text-gray-800 leading-snug">{ws.title}</span>
@@ -613,6 +609,24 @@ export const TicketPurchaseModal: React.FC = () => {
                       </span>
                     </span>
                   </button>
+
+                  {/* Escolher/remover direto no cartão, sem abrir os detalhes */}
+                  {!soldOut && (
+                    <button type="button" aria-pressed={selected}
+                      aria-label={selected ? `Remover ${workshopTag(wi)}: ${ws.title}` : `Escolher ${workshopTag(wi)}: ${ws.title}`}
+                      title={selected ? 'Remover' : 'Escolher'}
+                      onClick={() => updateParticipant(activeTab, { workshopId: selected ? null : ws.id })}
+                      className="group absolute top-1.5 right-2.5 p-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                      <span
+                        className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center transition ${
+                          selected ? 'bg-white' : 'bg-white/10 group-hover:bg-white/30'
+                        }`}
+                        style={selected ? { color: accent } : undefined}>
+                        {selected && <Check className="w-4 h-4" strokeWidth={3} />}
+                      </span>
+                    </button>
+                  )}
+                  </div>
                 );
               })}
 
