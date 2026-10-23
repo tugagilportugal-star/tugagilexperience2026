@@ -57,7 +57,7 @@ export const Speakers: React.FC = () => {
     //   id: "s5", 
     //   name: "Filipa Gomes", 
     //   role: "Enterprise Agile Coach", 
-    //   image: "/assets/Filipa-Gomes.png", 
+    //   image: "/assets/filipa-gomes.png", 
     //   linkedin: "https://www.linkedin.com/in/filipagagomes", 
     //   isRevealed: true 
     // },

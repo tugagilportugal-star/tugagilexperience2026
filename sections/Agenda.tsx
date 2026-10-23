@@ -1,5 +1,5 @@
 // src/sections/Agenda.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +14,10 @@ interface ScheduleItem {
 
 export const AgendaPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'morning' | 'afternoon'>('morning');
+
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
 
   // --- CRONOGRAMA DA MANHÃ ---
   const morningSchedule: ScheduleItem[] = [
