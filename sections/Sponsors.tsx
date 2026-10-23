@@ -13,7 +13,7 @@ interface Sponsor {
 
 const SponsorLogo: React.FC<{ 
   sponsor: Sponsor;
-  tier: 'gold' | 'silver' | 'bronze' | 'community';
+  tier: 'gold' | 'silver' | 'bronze' | 'community' | 'partner';
   className?: string;
 }> = ({ sponsor, tier, className = '' }) => {
   if (sponsor.logo) {
@@ -23,6 +23,7 @@ const SponsorLogo: React.FC<{
       silver: 'ring-1 ring-zinc-400/40',
       bronze: 'ring-1 ring-orange-400/40',
       community: 'ring-1 ring-emerald-400/40',
+      partner:'ring-1 ring-emerald-400/40',
     }[tier];
 
   return (
@@ -40,7 +41,8 @@ const SponsorLogo: React.FC<{
     gold:      { bg: 'rgba(234,179,8,0.08)',   text: '#fbbf24', border: 'rgba(234,179,8,0.3)' },
     silver:    { bg: 'rgba(148,163,184,0.08)', text: '#94a3b8', border: 'rgba(148,163,184,0.3)' },
     bronze:    { bg: 'rgba(249,115,22,0.08)',  text: '#fb923c', border: 'rgba(249,115,22,0.3)' },
-    community: { bg: 'rgba(16,185,129,0.08)',  text: '#10b981', border: 'rgba(16,185,129,0.3)' }
+    community: { bg: 'rgba(16,185,129,0.08)',  text: '#10b981', border: 'rgba(16,185,129,0.3)' },
+    partner: { bg: 'rgba(16, 19, 185, 0.08)',  text: '#1021b9', border: 'rgba(17, 52, 126, 0.3)' }
   };
 
   const colors = colorSchemes[tier];
@@ -77,11 +79,16 @@ export const Sponsors: React.FC = () => {
     { name: "Ateliê do Software", initials: "AS", url: "https://atelie.software/", logo: "/assets/Logo_Atelie_Software_Transparente.png" },
     { name: "Aubay", initials: "AU", url: "https://www.aubay.pt/", logo: "/assets/Aubay-logo.png" },
     { name: "Cleva Solutions", initials: "CS", url: "https://cleva-solutions.ai/en/", logo: "/assets/logo-cleva.webp" },
-    { name: "Scrum.pt", initials: "SPT", url: "https://scrum.pt/", logo: "/assets/logo-scrumpt-color.png" },
+    { name: "Scrum.pt", initials: "SPT", url: "https://scrum.pt/", logo: "/assets/scrum-pt.jpeg" },
   ];
 
   const communitySupporters: Sponsor[] = [
     { name: "Porto Tech Hub", initials: "PTH", url: "https://portotechhub.com/", logo: "/assets/Logo-principal.png", customClass: "scale-150" },
+    
+  ];
+
+  const partnersCompanies: Sponsor[] = [
+    { name: "wGood", initials: "WG", url: "https://wgood.app/", logo: "/assets/wgood.png", customClass: "scale-150" },
     
   ];
 
@@ -207,6 +214,30 @@ export const Sponsors: React.FC = () => {
                   <SponsorLogo 
                     sponsor={sponsor}
                     tier="community"
+                    className="w-full h-20 group-hover:scale-105 transition-transform"
+                  />
+                </a>
+              ))}
+            </div>
+        </div>
+
+         {/* EMPRESAS E MARCAS PARECIRAS */}
+        <div className="mb-24">
+            <span className="text-sm font-bold tracking-[0.2em] text-blue-400 uppercase mb-12 block font-sora">
+                Empresas & Marcas Parceiras
+            </span>
+            <div className="flex flex-wrap justify-center gap-4 md:gap-10 items-center">
+              {partnersCompanies.map((sponsor, idx) => (
+                <a 
+                  key={idx} 
+                  href={sponsor.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="group bg-zinc-900 rounded-xl hover:shadow-md transition-all duration-300 border border-zinc-800 flex items-center justify-center h-28 w-[45%] md:w-60 p-6"
+                >
+                  <SponsorLogo 
+                    sponsor={sponsor}
+                    tier="partner"
                     className="w-full h-20 group-hover:scale-105 transition-transform"
                   />
                 </a>
