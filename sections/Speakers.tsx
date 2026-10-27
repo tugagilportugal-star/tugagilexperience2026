@@ -37,8 +37,16 @@ export const Speakers: React.FC = () => {
       linkedin: "https://www.linkedin.com/in/luciano-alves-2085b920/", 
       isRevealed: true 
     },
+    { 
+       id: "s3", 
+      name: "Anthony Simões", 
+      role: "OKR & Strategic Execution Specialist", 
+       image: "/assets/anthony_simoes.jpg", 
+       linkedin: "https://www.linkedin.com/in/anthonysimoes/", 
+       isRevealed: true 
+     },
     // { 
-    //   id: "s3", 
+    //   id: "s7", 
     //   name: "Fábio Perrotta", 
     //   role: "Agile Leadership & Systems Thinking", 
     //   image: "/assets/fabio-perrotta.png", 
@@ -69,14 +77,8 @@ export const Speakers: React.FC = () => {
     //   linkedin: "https://www.linkedin.com/in/ricardo-fernandes-agile/", 
     //   isRevealed: true 
     // },
-    // { 
-    //   id: "s7", 
-    //   name: "Anthony Simões", 
-    //   role: "OKR & Strategic Execution Specialist", 
-    //   image: "/assets/anthony_simoes.jpg", 
-    //   linkedin: "https://www.linkedin.com/in/anthonysimoes/", 
-    //   isRevealed: true 
-    // },
+    
+   
     // { 
     //   id: "s8", 
     //   name: "Matheus Haddad", 
