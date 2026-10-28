@@ -45,6 +45,14 @@ export const Speakers: React.FC = () => {
        linkedin: "https://www.linkedin.com/in/anthonysimoes/", 
        isRevealed: true 
      },
+    { 
+        id: "s4", 
+       name: "Filipa Gomes", 
+       role: "Enterprise Agile Coach", 
+       image: "/assets/filipa-gomes.png", 
+       linkedin: "https://www.linkedin.com/in/filipagagomes", 
+       isRevealed: true 
+     },
     // { 
     //   id: "s7", 
     //   name: "Fábio Perrotta", 
@@ -61,14 +69,8 @@ export const Speakers: React.FC = () => {
     //   linkedin: "https://www.linkedin.com/in/silasmoreira/", 
     //   isRevealed: true 
     // },
-    // { 
-    //   id: "s5", 
-    //   name: "Filipa Gomes", 
-    //   role: "Enterprise Agile Coach", 
-    //   image: "/assets/filipa-gomes.png", 
-    //   linkedin: "https://www.linkedin.com/in/filipagagomes", 
-    //   isRevealed: true 
-    // },
+    
+   
     // { 
     //   id: "s6", 
     //   name: "Ricardo Fernandes", 
