@@ -89,7 +89,7 @@ export const Sponsors: React.FC = () => {
 
   const partnersCompanies: Sponsor[] = [
     { name: "wGood", initials: "WG", url: "https://wgood.app/", logo: "/assets/wgood.png", customClass: "scale-150" },
-    
+    { name: "ANIMALABS", initials: "AL", url: "", logo: "/assets/Logo_ANIMA_LABS.png", customClass: "scale-150" },
   ];
 
   return (
