@@ -19,6 +19,7 @@ import { AgendaPage } from './sections/Agenda';
 import { BenefitsPage } from './sections/Benefits';
 import { isEmbedded } from './lib/isEmbedded';
 import { WorkshopsPage } from './sections/Workshops';
+import { Partnerships } from './sections/Partnerships';
 
 
 // Lazy: só carrega (e só inicializa o client Supabase) quando alguém navega
@@ -111,6 +112,7 @@ const App: React.FC = () => {
             {/* Rota para a Página Dedicada de Agenda */}
             <Route path="/agenda" element={<AgendaPage />} />
             <Route path="/beneficios-exclusivos" element={<BenefitsPage />} />
+            <Route path="/parcerias" element={<Partnerships />} />
           </Routes>
 
           {/* Botão Admin */}

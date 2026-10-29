@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
 
   const navLinks: NavLink[] = [
     { label: 'O EVENTO', href: '/#about', isRoute: false },
-    { label: 'PROGRAMA', href: '/#program', isRoute: false },
+    { label: 'AGENDA', href: '/agenda', isRoute: false },
   ];
 
   return (
