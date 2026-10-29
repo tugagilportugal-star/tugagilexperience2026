@@ -44,13 +44,21 @@ export const Speakers: React.FC = () => {
        image: "/assets/anthony_simoes.jpg", 
        linkedin: "https://www.linkedin.com/in/anthonysimoes/", 
        isRevealed: true 
-     },
+    },
     { 
         id: "s4", 
        name: "Filipa Gomes", 
        role: "Enterprise Agile Coach", 
        image: "/assets/filipa-gomes.png", 
        linkedin: "https://www.linkedin.com/in/filipagagomes", 
+       isRevealed: true 
+    },
+    { 
+       id: "s5", 
+       name: "Silas Moreira", 
+       role: "Product Owner & Tech Innovation", 
+       image: "/assets/silas-moreira.png", 
+       linkedin: "https://www.linkedin.com/in/silasmoreira/", 
        isRevealed: true 
      },
     // { 
@@ -61,14 +69,7 @@ export const Speakers: React.FC = () => {
     //   linkedin: "https://www.linkedin.com/in/fabio-perrotta-de-andrade", 
     //   isRevealed: true 
     // },
-    // { 
-    //   id: "s4", 
-    //   name: "Silas Moreira", 
-    //   role: "Product Owner & Tech Innovation", 
-    //   image: "/assets/silas-moreira.png", 
-    //   linkedin: "https://www.linkedin.com/in/silasmoreira/", 
-    //   isRevealed: true 
-    // },
+     
     
    
     // { 
@@ -265,7 +266,7 @@ export const Speakers: React.FC = () => {
         
 
         {/* Banner Call for Speakers */}
-        <div className="mt-16 p-8 md:p-12 bg-gradient-to-br from-[#00331F] via-[#00693E] to-[#00875A] text-center w-full rounded-3xl shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
+        {/* <div className="mt-16 p-8 md:p-12 bg-gradient-to-br from-[#00331F] via-[#00693E] to-[#00875A] text-center w-full rounded-3xl shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#E31E2D] opacity-10 rounded-full"></div>
           <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-[#E31E2D] opacity-10 rounded-full"></div>
           
@@ -295,7 +296,7 @@ export const Speakers: React.FC = () => {
               Candidatar-me
             </a>
           </div>
-        </div>
+        </div> */}
       </div>
     </Section>
   );
