@@ -112,13 +112,22 @@ export const Partnerships: React.FC = () => {
 
       {/* STATS SECTION */}
       <section className="py-16 px-6 bg-zinc-900/30 border-b border-zinc-900">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((stat, idx) => (
-            <div key={idx}>
-              <div className="text-3xl md:text-4xl font-black text-white font-sora mb-2">{stat.value}</div>
-              <div className="text-sm text-zinc-500 font-medium uppercase tracking-wider">{stat.label}</div>
+        <div className="max-w-5xl mx-auto">
+        
+            <div className="text-center mb-10">
+                <h2 className="text-lg md:text-xl font-bold text-[#D3122A] uppercase tracking-wide font-sora mb-2">
+                Números Alcançados no RSG 2025 & 2026
+                </h2>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, idx) => (
+                <div key={idx}>
+                <div className="text-3xl md:text-4xl font-black text-white font-sora mb-2">{stat.value}</div>
+                <div className="text-sm text-zinc-500 font-medium uppercase tracking-wider">{stat.label}</div>
+                </div>
+            
           ))}
+          </div>
         </div>
       </section>
 
