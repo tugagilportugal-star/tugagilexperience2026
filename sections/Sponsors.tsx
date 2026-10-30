@@ -62,7 +62,7 @@ const SponsorLogo: React.FC<{
 };
 
 export const Sponsors: React.FC = () => {
-  const MEDIA_KIT_URL = "https://drive.google.com/file/d/1Cai1MrG1hbuli8ud7Y7K_HAqPx4IcSYR/view?usp=drive_link";
+  const MEDIA_KIT_URL = "https://drive.google.com/file/d/12HLrrHCa2q42IAriMAqg_dgTKaYzuj8O/view?usp=sharing";
 
   const goldSponsors: Sponsor[] = [
     { name: "Isla Gaia", initials: "IGS", url: "https://www.islagaia.pt", logo: "/assets/Isla-Gaia-Logo.png"},
@@ -81,6 +81,7 @@ export const Sponsors: React.FC = () => {
 
   const communitySupporters: Sponsor[] = [
     { name: "Porto Tech Hub", initials: "PTH", url: "https://portotechhub.com/", logo: "/assets/Logo-principal.png", customClass: "scale-150" },
+    { name: "Ladies that UX Lisbon", initials: "LTUX", url: "https://ladiesthatux.com/lisbon/", logo: "/assets/Ladies-that-UX-Lisbon.jpeg"},
   ];
 
   const partnersCompanies: Sponsor[] = [
