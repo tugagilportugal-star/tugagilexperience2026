@@ -44,8 +44,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTicketModal }) => {
     : 'bg-gradient-to-b from-black/80 to-transparent py-4';
 
   const navLinks: NavLink[] = [
-    { label: 'O EVENTO', href: '/#about', isRoute: false },
-    { label: 'PROGRAMA', href: '/#program', isRoute: false },
+    { label: 'SEJA PARCEIRO', href: '/parcerias', isRoute: false },
+    { label: 'AGENDA', href: '/agenda', isRoute: false },
   ];
 
   return (
