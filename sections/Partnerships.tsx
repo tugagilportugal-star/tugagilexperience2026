@@ -6,9 +6,9 @@ import {
 } from 'lucide-react';
 
 export const Partnerships: React.FC = () => {
-  const [activeFilter, setActiveFilter] = useState<string>('Marca e talento'); // Começa com um selecionado por padrão
+  const [activeFilter, setActiveFilter] = useState<string>('Marca e talento'); 
   
-  // Scroll para o topo ao carregar a página
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -18,7 +18,7 @@ export const Partnerships: React.FC = () => {
     "Impacto comunitário", "Marca empregadora"
   ];
 
-  // Dicionário com textos únicos e personalizados para cada filtro
+
   const filterDescriptions: Record<string, string> = {
     "Marca e talento": "Seja reconhecido pelos profissionais que quer atrair. Aproxime a sua organização de profissionais especializados e torne visível a sua cultura, competências e compromisso com o desenvolvimento profissional.",
     "Produto e tecnologia": "Mostre o que a sua empresa faz de melhor. Crie espaços de demonstração, workshops práticos ou sessões técnicas onde os participantes possam experimentar e validar as vossas soluções no terreno.",
@@ -251,7 +251,7 @@ export const Partnerships: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a 
-                href="https://drive.google.com/file/d/1Cai1MrG1hbuli8ud7Y7K_HAqPx4IcSYR/view?usp=drive_link"
+                href="https://drive.google.com/file/d/12HLrrHCa2q42IAriMAqg_dgTKaYzuj8O/view?usp=sharing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-zinc-600 text-zinc-300 hover:text-white hover:border-white hover:bg-zinc-800 transition-all font-bold font-sora"
