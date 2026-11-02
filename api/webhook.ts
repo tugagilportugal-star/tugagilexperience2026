@@ -6,6 +6,7 @@ import { issueInvoiceForOrder } from '../lib/invoicing/index.js';
 import type { InvoiceEmailData } from '../lib/invoicing/types.js';
 import { notifyAdmins, type StepResult } from '../lib/notify.js';
 import { getCurrentEvent } from '../lib/event.js';
+import { couponFromSessionMetadata } from '../lib/coupon.js';
 import { EMAIL_FROM, EMPTY_EMAIL_EVENT, SITE_URL, escapeHtml, getEmailEvent, type EmailEvent } from '../lib/email.js';
 
 // Todo o texto dinâmico (nomes, lotes, workshops, evento...) é escapado com escapeHtml
@@ -509,6 +510,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error(`DB Order Error: ${orderErr.message}`);
     }
     steps.push({ step: 'Gravar Order (DB)', ok: true, detail: `order_id: ${order.id}` });
+
+    // 1.1) Cupão usado. Update à parte: se as colunas ainda não existirem
+    // (migração 20261102_order_coupon por correr), a venda segue na mesma.
+    const orderCoupon = couponFromSessionMetadata(meta);
+    if (orderCoupon) {
+      const { error: orderCouponErr } = await supabase
+        .from('orders')
+        .update(orderCoupon)
+        .eq('id', order.id);
+      if (orderCouponErr) {
+        console.error('⚠️ Order coupon error:', orderCouponErr.message);
+        steps.push({ step: `Gravar cupão na order (${orderCoupon.coupon_code})`, ok: false, detail: orderCouponErr.message });
+      } else {
+        steps.push({ step: `Gravar cupão na order (${orderCoupon.coupon_code})`, ok: true });
+      }
+    }
 
     // 2) Salvar Tickets (um por participante)
     const tickets: any[] = [];
