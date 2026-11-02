@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
 import { verifyAdminToken, logAction, canEdit } from '../lib/admin/auth.js';
+import { couponFromSessionMetadata } from '../lib/coupon.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -206,7 +208,7 @@ type AdminEvent = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Recursos cujos dados pertencem a um evento: exigem ?event_id=<uuid>.
-const EVENT_SCOPED_RESOURCES = new Set(['leads', 'ticket-types', 'workshops', 'orders', 'tickets']);
+const EVENT_SCOPED_RESOURCES = new Set(['leads', 'ticket-types', 'workshops', 'orders', 'tickets', 'backfill-coupons']);
 
 // Lê ?event_id= e confirma que o evento existe. Nunca usa event_id do body.
 async function resolveEvent(req: VercelRequest): Promise<{ event: AdminEvent } | { error: string }> {
@@ -637,6 +639,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) return res.status(500).json({ message: error.message });
       return res.status(200).json(data || []);
+    }
+
+    // =========================
+    // BACKFILL-COUPONS (preencher o cupão das orders antigas a partir do Stripe)
+    // =========================
+    // POST ?event_id=...&dry=1 → só mostra o que seria gravado.
+    // Só toca em orders sem coupon_code; pode ser corrido várias vezes.
+    if (resource === 'backfill-coupons' && event) {
+      if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+      if (admin.role !== 'superadmin') return res.status(403).json({ message: 'Sem permissão.' });
+      if (!process.env.STRIPE_SECRET_KEY) return res.status(400).json({ message: 'STRIPE_SECRET_KEY não configurada.' });
+
+      const rawDry = (req.query as any).dry;
+      const dry = ['1', 'true'].includes(String(Array.isArray(rawDry) ? rawDry[0] : rawDry ?? ''));
+
+      const { data: pending, error } = await supabase
+        .from('orders')
+        .select('id, stripe_session_id, customer_email')
+        .eq('event_id', event.id)
+        .is('coupon_code', null)
+        .not('stripe_session_id', 'is', null)
+        .limit(2000);
+      if (error) return res.status(500).json({ message: error.message });
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+      const found: { order_id: string; customer_email: string | null; coupon_code: string; coupon_discount_cents: number | null }[] = [];
+      const failed: { order_id: string; error: string }[] = [];
+      let checked = 0;
+
+      // Poucos pedidos em paralelo para não bater no rate limit do Stripe
+      const queue = [...(pending || [])];
+      async function worker() {
+        for (let o = queue.shift(); o; o = queue.shift()) {
+          try {
+            const session = await stripe.checkout.sessions.retrieve(o.stripe_session_id as string);
+            checked++;
+            const coupon = couponFromSessionMetadata(session.metadata as Record<string, string>);
+            if (!coupon) continue;
+            if (!dry) {
+              const { error: upErr } = await supabase
+                .from('orders')
+                .update(coupon)
+                .eq('id', o.id)
+                .is('coupon_code', null);
+              if (upErr) { failed.push({ order_id: o.id, error: upErr.message }); continue; }
+            }
+            found.push({ order_id: o.id, customer_email: o.customer_email, coupon_code: coupon.coupon_code, coupon_discount_cents: coupon.coupon_discount_cents });
+          } catch (e: any) {
+            failed.push({ order_id: o.id, error: e?.message || String(e) });
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: 6 }, worker));
+
+      if (!dry && found.length > 0) {
+        await logAction(admin.email, 'preencher_cupoes_orders', 'order', undefined, { ...eventLog(event), updated: found.length, failed: failed.length });
+      }
+      return res.status(200).json({ dry, pending: pending?.length || 0, checked, found, failed });
     }
 
     // =========================

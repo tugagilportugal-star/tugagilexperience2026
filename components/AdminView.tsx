@@ -54,6 +54,9 @@ type OrderRow = {
   is_duplicate?: boolean | null;
   is_test?: boolean | null;
   credit_note_ref?: string | null;
+  coupon_id?: string | null;
+  coupon_code?: string | null;
+  coupon_discount_cents?: number | null;
 };
 
 type TicketRow = {
@@ -470,6 +473,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [promoteAvailable, setPromoteAvailable] = useState(false);
   const [promoting, setPromoting] = useState<string | null>(null);
   const [promoteMsg, setPromoteMsg] = useState<string | null>(null);
+  const [backfillingCoupons, setBackfillingCoupons] = useState(false);
 
   // Limpa TODOS os dados ligados ao evento (listas, seleções, modais e mensagens)
   function clearEventData() {
@@ -1808,6 +1812,36 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   }
 
+  // Preenche o cupão das orders antigas com os metadados das sessões do Stripe
+  async function backfillOrderCoupons() {
+    const eventId = eventIdRef.current;
+    if (!authHeader || !eventId) return;
+    if (!confirm(`Ler do Stripe o cupão das orders do evento "${currentEventName}" que ainda não o têm?\n\nSó preenche orders sem cupão; nada mais é alterado.`)) return;
+
+    setBackfillingCoupons(true);
+    setPromoteMsg(null);
+    try {
+      const res = await fetch(withEventId('/api/admin/backfill-coupons', eventId), {
+        method: 'POST',
+        headers: { Authorization: authHeader },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.message || 'Falha ao preencher cupões');
+        return;
+      }
+      const found: Array<{ coupon_code: string }> = json?.found || [];
+      const failed: Array<{ order_id: string; error: string }> = json?.failed || [];
+      setPromoteMsg(`Cupões: ${json?.checked ?? 0} order(s) verificada(s) no Stripe, ${found.length} com cupão preenchida(s)${found.length ? ` (${found.map(f => f.coupon_code).join(', ')})` : ''}.`);
+      if (failed.length) setError(`Falhou em ${failed.length} order(s): ${failed.map(f => `${f.order_id.slice(0, 8)}: ${f.error}`).join(' · ')}`);
+      await fetchOrders();
+    } catch {
+      setError('Erro inesperado ao preencher cupões');
+    } finally {
+      setBackfillingCoupons(false);
+    }
+  }
+
   // Dados do separador atual, sempre do evento selecionado (nada é pedido sem evento)
   useEffect(() => {
     if (!adminUser) return;
@@ -1919,6 +1953,8 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'customer_country',
         'customer_nif',
         'invoice_id',
+        'coupon_code',
+        'coupon_discount_cents',
         'is_duplicate',
         'credit_note_ref',
       ];
@@ -1959,9 +1995,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         'checked_in',
         'check_in_at',
         'workshop_id',
+        'coupon_code',
       ];
 
-      const exportTickets = showHidden ? tickets : tickets.filter(t => { const o = orders.find(ord => ord.id === t.order_id); return !o?.is_duplicate && !o?.is_test; });
+      const exportTickets = (showHidden ? tickets : tickets.filter(t => { const o = orders.find(ord => ord.id === t.order_id); return !o?.is_duplicate && !o?.is_test; }))
+        .map(t => ({ ...t, coupon_code: orders.find(o => o.id === t.order_id)?.coupon_code ?? null }));
       const lines = csvLines(headers, rowsFrom(headers, exportTickets));
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -2251,6 +2289,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 className={`rounded-xl px-4 py-2 text-sm font-bold ${showHidden ? 'bg-red-100 text-red-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
               >
                 {showHidden ? 'Ocultar testes/duplicados' : 'Mostrar testes/duplicados'}
+              </button>
+            )}
+
+            {isSuperAdmin && tab === 'orders' && (
+              <button
+                onClick={backfillOrderCoupons}
+                disabled={backfillingCoupons}
+                className="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 text-sm font-bold disabled:opacity-50"
+              >
+                {backfillingCoupons ? 'A ler o Stripe…' : 'Preencher cupões (Stripe)'}
               </button>
             )}
 
@@ -2854,6 +2902,7 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <Th>Cliente</Th>
                     <Th>Email</Th>
                     <Th>Total</Th>
+                    <Th>Cupão</Th>
                     <Th>Estado</Th>
                     <Th>Fatura</Th>
                   </tr>
@@ -2861,11 +2910,11 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <tbody>
                   {loadingOrders ? (
                     <tr>
-                      <Td colSpan={6}>A carregar orders…</Td>
+                      <Td colSpan={7}>A carregar orders…</Td>
                     </tr>
                   ) : orders.length === 0 ? (
                     <tr>
-                      <Td colSpan={6}>Sem orders.</Td>
+                      <Td colSpan={7}>Sem orders.</Td>
                     </tr>
                   ) : (
                     orders.filter(o => showHidden || (!o.is_duplicate && !o.is_test)).map((row) => (
@@ -2878,6 +2927,16 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </Td>
                         <Td>{safe(row.customer_email)}</Td>
                         <Td>{formatMoneyEURFromCents(row.total_amount)}</Td>
+                        <Td>
+                          {row.coupon_code ? (
+                            <>
+                              <span className="font-medium text-gray-900">{row.coupon_code}</span>
+                              {row.coupon_discount_cents != null && (
+                                <div className="text-xs text-gray-500">-{formatMoneyEURFromCents(row.coupon_discount_cents)}</div>
+                              )}
+                            </>
+                          ) : '—'}
+                        </Td>
                         <Td>{safe(row.status)}</Td>
                         <Td>
                           {row.invoice_id
@@ -3015,6 +3074,9 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     <span className="ml-1 text-gray-400">(order: {formatMoneyEURFromCents(order.total_amount)})</span>
                                   )}
                                 </div>
+                                {order.coupon_code && (
+                                  <div className="text-xs text-gray-700">Cupão: <span className="font-medium">{order.coupon_code}</span></div>
+                                )}
                                 {order.invoice_id
                                   ? <>
                                       <span className="text-xs text-green-600 font-medium">{order.invoice_number || order.invoice_id}</span>
@@ -3341,6 +3403,9 @@ export const AdminView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     ['NIF', orderTicket?.attendee_nif || '—'],
                     ['País', selectedOrder.customer_country || '—'],
                     ['Total', formatMoneyEURFromCents(selectedOrder.total_amount)],
+                    ['Cupão', selectedOrder.coupon_code
+                      ? `${selectedOrder.coupon_code}${selectedOrder.coupon_discount_cents != null ? ` (-${formatMoneyEURFromCents(selectedOrder.coupon_discount_cents)})` : ''}`
+                      : '—'],
                     ['Estado', selectedOrder.status || '—'],
                     ['Nº Fatura', selectedOrder.invoice_number || selectedOrder.invoice_id || 'Pendente'],
                     ['Stripe Session', selectedOrder.stripe_session_id || '—'],
