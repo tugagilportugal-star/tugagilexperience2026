@@ -61,6 +61,15 @@ export const Speakers: React.FC = () => {
        linkedin: "https://www.linkedin.com/in/silasmoreira/", 
        isRevealed: true 
      },
+     { 
+       id: "s6", 
+       name: "Bianca Peixoto", 
+       role: "Fundadora – ANIMA LABS", 
+       image: "/assets/bianca-peixoto.jpeg", 
+       linkedin: "https://www.linkedin.com/in/biancapeixoto/", 
+       isRevealed: true 
+     },
+
     // { 
     //   id: "s7", 
     //   name: "Fábio Perrotta", 
