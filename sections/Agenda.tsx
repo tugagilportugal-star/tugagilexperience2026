@@ -52,10 +52,10 @@ export const AgendaPage: React.FC = () => {
     { time: "14:15 - 14:20", title: "Regresso ao auditório", isBreak: true },
     { time: "14:20 - 14:40", title: "O Custo de Ignorar o Sistema", speaker: "Fábio Perrotta" },
     { time: "14:45 - 15:05", title: "Desconstruindo com IA: E se o maior problema não for a tecnologia?", speaker: "Luciano Alves" },
-    { time: "15:10 - 15:30", title: "Talk 6", speaker: "A confirmar", isPending: true },
+    //{ time: "15:10 - 15:30", title: "Talk 6", speaker: "A confirmar", isPending: true },
     { time: "15:35 - 15:55", title: "O futuro é de segunda mão: como a tecnologia está a reinventar o valor daquilo que já existe", speaker: "Silas Moreira" },
     { time: "16:00 - 16:20", title: "Quiet Bravery: The Leadership Growth No One Sees Until It Blossoms", speaker: "Filipa Gomes" },
-    { time: "16:25 - 16:45", title: "Talk 9", speaker: "A confirmar", isPending: true },
+    //{ time: "16:25 - 16:45", title: "Talk 9", speaker: "A confirmar", isPending: true },
     { time: "16:50 - 17:20", title: "Sessão de encerramento" },
     { time: "17:20 - 17:30", title: "Encerramento TugÁgil" },
   ];
