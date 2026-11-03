@@ -36,11 +36,6 @@ export const Team: React.FC = () => {
       linkedin: "https://www.linkedin.com/in/matheushaddad/"
     },
     {
-      name: "Natasha Doria",
-      image: "/assets/Natasha.png",
-      linkedin: "https://www.linkedin.com/in/natasha-doria-18070448/"
-    },
-    {
       name: "Aline Alvim",
       image: "/assets/Aline-Alvim.png",
       linkedin: "https://www.linkedin.com/in/alvimaline"
@@ -66,9 +61,9 @@ export const Team: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-x-8 gap-y-12 max-w-5xl mx-auto">
+         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12 max-w-4xl mx-auto">
           {team.map((member, idx) => (
-            <div key={idx} className="group text-center w-36 md:w-48">
+            <div key={idx} className="group text-center w-full">
               
               <div className="relative mb-4 mx-auto w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-lg shadow-emerald-500/10 group-hover:shadow-2xl group-hover:shadow-emerald-500/20 transition-all duration-300 transform group-hover:-translate-y-2 border-[5px] border-emerald-500/40 group-hover:border-emerald-400 bg-zinc-900">
                 
