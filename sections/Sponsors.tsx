@@ -82,6 +82,7 @@ export const Sponsors: React.FC = () => {
   const communitySupporters: Sponsor[] = [
     { name: "Porto Tech Hub", initials: "PTH", url: "https://portotechhub.com/", logo: "/assets/Logo-principal.png", customClass: "scale-150" },
     { name: "Ladies that UX Lisbon", initials: "LTUX", url: "https://ladiesthatux.com/lisbon/", logo: "/assets/Ladies-that-UX-Lisbon.jpeg"},
+    { name: "Human x Intelligent", initials: "HxI", url: "https://humanxintelligent.com/", logo: "assets/logo-cb-human-intel.png"},
   ];
 
   const partnersCompanies: Sponsor[] = [

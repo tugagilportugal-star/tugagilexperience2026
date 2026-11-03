@@ -69,51 +69,49 @@ export const Speakers: React.FC = () => {
        linkedin: "https://www.linkedin.com/in/biancapeixoto/", 
        isRevealed: true 
      },
+     { 
+       id: "s7", 
+       name: "Fábio Perrotta", 
+       role: "Agile Leadership & Systems Thinking", 
+       image: "/assets/fabio-perrotta.png", 
+       linkedin: "https://www.linkedin.com/in/fabio-perrotta-de-andrade", 
+       isRevealed: true 
+    },
+    
+    { 
+      id: "s8", 
+      name: "Ricardo Fernandes", 
+      role: "Leadership & Teams Coach", 
+      image: "/assets/ricardo-fernandes.jpg", 
+      linkedin: "https://www.linkedin.com/in/ricardo-fernandes-agile/", 
+        isRevealed: true 
+    },
+   
+    { 
+      id: "s9", 
+      name: "Matheus Haddad", 
+      role: "Author of Feedback Canvas", 
+      image: "/assets/Matheus.png", 
+      linkedin: "https://www.linkedin.com/in/matheushaddad/", 
+      isRevealed: true 
+    },
 
-    // { 
-    //   id: "s7", 
-    //   name: "Fábio Perrotta", 
-    //   role: "Agile Leadership & Systems Thinking", 
-    //   image: "/assets/fabio-perrotta.png", 
-    //   linkedin: "https://www.linkedin.com/in/fabio-perrotta-de-andrade", 
-    //   isRevealed: true 
-    // },
-     
-    
-   
-    // { 
-    //   id: "s6", 
-    //   name: "Ricardo Fernandes", 
-    //   role: "Leadership & Teams Coach", 
-    //   image: "/assets/ricardo-fernandes.jpg", 
-    //   linkedin: "https://www.linkedin.com/in/ricardo-fernandes-agile/", 
-    //   isRevealed: true 
-    // },
-    
-   
-    // { 
-    //   id: "s8", 
-    //   name: "Matheus Haddad", 
-    //   role: "Author of Feedback Canvas", 
-    //   image: "/assets/Matheus.png", 
-    //   linkedin: "https://www.linkedin.com/in/matheushaddad/", 
-    //   isRevealed: true 
-    // },
-    // { 
-    //   id: "s9", 
-    //   name: "Fábio Castro", 
-    //   role: "Scrum Master", 
-    //   image: "/assets/Fabio.png", 
-    //   linkedin: "https://www.linkedin.com/in/frmcastro/", 
-    //   isRevealed: true 
-    // },
-    // { 
-    //   id: "s10", 
-    //   name: "Manuel Pimenta", 
-    //   role: "Facilitador & Gamificação", 
-    //   image: "/assets/manuel-pimenta.jpg", 
-    //   isRevealed: true 
-    // },
+    { 
+       id: "s10", 
+       name: "Fábio Castro", 
+       role: "Scrum Master", 
+       image: "/assets/Fabio.png", 
+       linkedin: "https://www.linkedin.com/in/frmcastro/", 
+       isRevealed: true 
+    },
+    { 
+       id: "s11", 
+       name: "Fátima Ferreira", 
+       role: "Head of Product Design", 
+       image: "/assets/fatima-ferreira.JPEG", 
+       linkedin: "https://www.linkedin.com/in/f%C3%A1tima-ferreira-35852915/", 
+       isRevealed: true 
+    },
   ];
 
   const KeynoteCard = ({ data }: { data: SpeakerData }) => {
