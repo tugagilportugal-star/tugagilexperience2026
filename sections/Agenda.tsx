@@ -38,7 +38,7 @@ export const AgendaPage: React.FC = () => {
     { time: "08:30 - 09:00", title: "Check-in e receção",  isBreak: true },
     { time: "09:00 - 09:10", title: "Abertura TugÁgil",  },
     { time: "09:10 - 09:20", title: "ISLA — Boas-vindas",  },
-    { time: "09:20 - 10:00", title: "Building AI-Ready Teams: Culture Before Technology", speaker: "A confirmar",  isPending: true },
+    { time: "09:20 - 10:00", title: "Building AI-Ready Teams: Culture Before Technology", speaker: "Fátima Ferreira"},
     { time: "10:05 - 10:45", title: "Liderança Adaptativa", speaker: "Bianca Peixoto",  },
     { time: "10:45 - 11:05", title: "☕ Coffee Break", location: "Área de Convivência", isBreak: true },
     { time: "11:10 - 11:50", title: "Product Management na era dos agentes: menos backlog, mais decisões", speaker: "Pedro Oliveira",  },
