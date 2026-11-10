@@ -16,7 +16,7 @@ export const FAQ: React.FC<{ onOpenTicketModal?: () => void }> = () => {
         },
         {
             question: "Qual a data do evento?",
-            answer: "21 de Novembro de 2026. Reserve na sua agenda!"
+            answer: "20 de Fevereiro de 2027. Reserve na sua agenda!"
         },
         {
             question: "O evento será em inglês ou português?",
