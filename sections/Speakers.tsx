@@ -112,6 +112,14 @@ export const Speakers: React.FC = () => {
        linkedin: "https://www.linkedin.com/in/f%C3%A1tima-ferreira-35852915/", 
        isRevealed: true 
     },
+    { 
+       id: "s12", 
+       name: "Milena Maganin", 
+       role: "D2C Websites Lead", 
+       image: "/assets/Milena_Maganin.png", 
+       linkedin: "https://www.linkedin.com/in/milenamaganin/", 
+       isRevealed: true 
+    },
   ];
 
   const KeynoteCard = ({ data }: { data: SpeakerData }) => {
@@ -287,7 +295,7 @@ export const Speakers: React.FC = () => {
             </h3>
             
             <p className="text-emerald-100 text-base mb-6 max-w-3xl mx-auto leading-relaxed font-jakarta">
-              A 21 de novembro, no ISLA Gaia, temos três trilhas à tua espera: 
+              A 20 de fevereiro, no ISLA Gaia, temos três trilhas à tua espera: 
               <br />
               <strong className="text-white">Gestão & Liderança · Engenharia de Software · Design & Produto</strong>. 
               <br />

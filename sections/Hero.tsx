@@ -8,8 +8,8 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
-   // Configuração do Alvo: 21 de Novembro de 2026 às 08:00
-  const targetDate = new Date('2026-11-21T08:00:00').getTime();
+   // Configuração do Alvo: 20 de Fevereiro de 2027 às 08:00
+  const targetDate = new Date('2027-02-20T08:00:00').getTime();
 
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -71,7 +71,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTicketModal }) => {
         
         {/* Badge Minimalista do Topo */}
         <div className="text-xs md:text-sm font-black text-emerald-400 uppercase tracking-[0.2em] mb-6 font-sora">
-          1ª Edição Presencial • 21 Novembro de 2026
+          1ª Edição Presencial • 20 Fevereiro de 2027
         </div>
 
         {/* Título Principal */}

@@ -105,7 +105,7 @@ export const Partnerships: React.FC = () => {
 
           <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-500 bg-zinc-900/50 px-4 py-2 rounded-full border border-zinc-800">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            21 NOV 2026 · ISLA, VILA NOVA DE GAIA · PARCERIAS À MEDIDA
+            20 FEV 2027 · ISLA, VILA NOVA DE GAIA · PARCERIAS À MEDIDA
           </div>
         </div>
       </section>
